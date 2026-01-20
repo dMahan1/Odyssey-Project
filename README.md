@@ -9,8 +9,8 @@ This is our design document workspace
 # Jeremy
 This is our mascot Jeremy
 
-![Alt text](Jeremy.jpg)
+<img src="Jeremy.jpg" alt="Alt Text" width="300">
 
 and this is his friend bork
 
-![Alt text](Screenshot_20210218-150059_YouTube.jpg)
+<img src="Bork.jpg" alt="Alt Text" width="300">
