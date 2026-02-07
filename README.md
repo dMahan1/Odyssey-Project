@@ -10,7 +10,3 @@ This is our design document workspace
 This is our mascot Jeremy
 
 <img src="Jeremy.jpg" alt="Alt Text" width="300">
-
-and this is his friend bork
-
-<img src="Bork.jpg" alt="Alt Text" width="300">
