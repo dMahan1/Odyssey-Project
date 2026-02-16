@@ -6,63 +6,129 @@ class Location {
     private:
         int id;
         std::string name;
-        float longitude;
-        float latitude;
+        double longitude;
+        double latitude;
     public:
-        Location(int id, std::string name, float longitude, float latitude);
+        Location(int id, std::string name, double longitude, double latitude);
         int get_id();
         std::string get_name();
-        float get_longitude();
-        float get_latitude();
+        double get_longitude();
+        double get_latitude();
         void set_id(int id);
         void set_name(std::string name);
-        void set_longitude(float longitude);
-        void set_latitude(float latitude);
-        float distance_to(Location other);
+        void set_longitude(double longitude);
+        void set_latitude(double latitude);
+        double distance_to(Location other);
 };
 
-Location::Location(int id, std::string name, float longitude, float latitude) {
+/**
+ * @brief Construct a new Location object
+ *
+ * @param id The unique identifier for the location
+ * @param name The name of the location
+ * @param longitude The longitude of the location
+ * @param latitude The latitude of the location
+ *
+ * @return A new Location object initialized with the provided parameters
+ */
+Location::Location(int id, std::string name, double longitude, double latitude) {
     this->id = id;
     this->name = name;
     this->longitude = longitude;
     this->latitude = latitude;
 }
+
+/**
+ * @brief Get the unique identifier of the location
+ *
+ * @return The unique identifier of the location
+ */
 int Location::get_id() {
     return id;
 }
+
+/**
+ * @brief Get the name of the location
+ *
+ * @return The name of the location
+ */
 std::string Location::get_name() {
     return name;
 }
-float Location::get_longitude() {
+
+/**
+ * @brief Get the longitude of the location
+ *
+ * @return The longitude of the location
+ */
+double Location::get_longitude() {
     return longitude;
 }
-float Location::get_latitude() {
+
+/**
+ * @brief Get the latitude of the location
+ *
+ * @return The latitude of the location
+ */
+double Location::get_latitude() {
     return latitude;
 }
+
+/**
+ * @brief Set the unique identifier of the location
+ *
+ * @param id The new unique identifier for the location
+ */
 void Location::set_id(int id) {
     this->id = id;
 }
+
+/**
+ * @brief Set the name of the location
+ *
+ * @param name The new name for the location
+ */
 void Location::set_name(std::string name) {
     this->name = name;
 }
-void Location::set_longitude(float longitude) {
+
+/**
+ * @brief Set the longitude of the location
+ *
+ * @param longitude The new longitude for the location
+ */
+void Location::set_longitude(double longitude) {
     this->longitude = longitude;
 }
-void Location::set_latitude(float latitude) {
+
+/**
+ * @brief Set the latitude of the location
+ *
+ * @param latitude The new latitude for the location
+ */
+void Location::set_latitude(double latitude) {
     this->latitude = latitude;
 }
-float Location::distance_to(Location other) {
-    auto to_radians = [](float degree) {
+
+/**
+ * @brief Calculate the distance in meters between this
+ * location and another location using the Haversine formula
+ *
+ * @param other The other location to calculate the distance to
+ * @return The distance in meters between the two locations
+ */
+double Location::distance_to(Location other) {
+    auto to_radians = [](double degree) {
         return degree * M_PI / 180.0;
     };
-    float lat1 = to_radians(this->latitude);
-    float lat2 = to_radians(other.latitude);
-    float delta_lat = lat1 - lat2;
-    float delta_lon = to_radians(other.longitude - this->longitude);
-    float a = sin(delta_lat / 2) * sin(delta_lat / 2) +
-              cos(lat1) * cos(lat2) *
-              sin(delta_lon / 2) * sin(delta_lon / 2);
-    float c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    const float EARTH_RADIUS_M = 6371000.0;
-    return EARTH_RADIUS_M * c;
+    double lat1 = to_radians(this->latitude);
+    double lat2 = to_radians(other.latitude);
+    double delta_lat = lat1 - lat2;
+    double delta_lon = to_radians(other.longitude - this->longitude);
+    double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
+               cos(lat1) * cos(lat2) *
+               sin(delta_lon / 2) * sin(delta_lon / 2);
+    double angular_dist = 2 * atan2(sqrt(a), sqrt(1 - a));
+    const double EARTH_RADIUS_M = 6371000;
+    return EARTH_RADIUS_M * angular_dist;
 }
