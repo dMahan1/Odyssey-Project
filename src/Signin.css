@@ -1,0 +1,35 @@
+body {
+    background-color: #ABABAB;
+}
+
+p {
+    color: red;
+}
+
+.logo {
+    display: block;
+    margin: auto;
+    width: 25%;
+    height: auto;
+    position: relative;
+    z-index: 1;
+}
+
+/*.color-block {*/
+/*    background-color: black; */
+/*    width: 100%;           */
+/*    height: auto;          */
+/*    padding: 15px;*/
+/*    position: absolute;*/
+/*    top: 0;*/
+/*    left: 0;*/
+/*}*/
+
+.signin-background {
+    display: block;
+    width: 100px;
+    height: 200px;
+    margin: auto;
+    background-color: #E8A2A7;
+    outline: #B41923 solid 3px;
+}
