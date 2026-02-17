@@ -1,23 +1,22 @@
 #include <cmath>
 #include <string>
-using namespace std;
 
 class Location {
     private:
         int id;
         std::string name;
-        double longitude;
         double latitude;
+        double longitude;
     public:
-        Location(int id, std::string name, double longitude, double latitude);
+        Location(int id, std::string name, double latitude, double longitude);
         int get_id();
         std::string get_name();
-        double get_longitude();
         double get_latitude();
+        double get_longitude();
         void set_id(int id);
         void set_name(std::string name);
-        void set_longitude(double longitude);
         void set_latitude(double latitude);
+        void set_longitude(double longitude);
         double distance_to(Location other);
 };
 
@@ -31,11 +30,11 @@ class Location {
  *
  * @return A new Location object initialized with the provided parameters
  */
-Location::Location(int id, std::string name, double longitude, double latitude) {
+Location::Location(int id, std::string name, double latitude, double longitude) {
     this->id = id;
     this->name = name;
-    this->longitude = longitude;
     this->latitude = latitude;
+    this->longitude = longitude;
 }
 
 /**
@@ -66,21 +65,21 @@ double Location::get_longitude() {
 }
 
 /**
- * @brief Get the latitude of the location
- *
- * @return The latitude of the location
- */
-double Location::get_latitude() {
-    return latitude;
-}
-
-/**
  * @brief Set the unique identifier of the location
  *
  * @param id The new unique identifier for the location
  */
 void Location::set_id(int id) {
     this->id = id;
+}
+
+/**
+ * @brief Get the latitude of the location
+ *
+ * @return The latitude of the location
+ */
+double Location::get_latitude() {
+    return latitude;
 }
 
 /**
@@ -123,12 +122,13 @@ double Location::distance_to(Location other) {
     };
     double lat1 = to_radians(this->latitude);
     double lat2 = to_radians(other.latitude);
-    double delta_lat = lat1 - lat2;
+    double delta_lat = to_radians(other.latitude - this->latitude);
     double delta_lon = to_radians(other.longitude - this->longitude);
+
     double a = sin(delta_lat / 2) * sin(delta_lat / 2) +
                cos(lat1) * cos(lat2) *
                sin(delta_lon / 2) * sin(delta_lon / 2);
     double angular_dist = 2 * atan2(sqrt(a), sqrt(1 - a));
-    const double EARTH_RADIUS_M = 6371000;
+    const double EARTH_RADIUS_M = 6'371'000;
     return EARTH_RADIUS_M * angular_dist;
 }
