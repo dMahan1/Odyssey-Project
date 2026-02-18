@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "Location.cpp"
-
+#include "Location.h"
 
 bool test_zero_dist() {
     Location loc1 = Location(0, "Location 1", 0, 0);

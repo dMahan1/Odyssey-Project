@@ -1,24 +1,6 @@
 #include <cmath>
 #include <string>
-
-class Location {
-    private:
-        int id;
-        std::string name;
-        double latitude;
-        double longitude;
-    public:
-        Location(int id, std::string name, double latitude, double longitude);
-        int get_id();
-        std::string get_name();
-        double get_latitude();
-        double get_longitude();
-        void set_id(int id);
-        void set_name(std::string name);
-        void set_latitude(double latitude);
-        void set_longitude(double longitude);
-        double distance_to(Location other);
-};
+#include "Location.h"
 
 /**
  * @brief Construct a new Location object
@@ -42,7 +24,7 @@ Location::Location(int id, std::string name, double latitude, double longitude) 
  *
  * @return The unique identifier of the location
  */
-int Location::get_id() {
+int Location::get_id() const {
     return id;
 }
 
@@ -51,7 +33,7 @@ int Location::get_id() {
  *
  * @return The name of the location
  */
-std::string Location::get_name() {
+std::string Location::get_name() const {
     return name;
 }
 
@@ -60,7 +42,7 @@ std::string Location::get_name() {
  *
  * @return The longitude of the location
  */
-double Location::get_longitude() {
+double Location::get_longitude() const {
     return longitude;
 }
 
@@ -73,14 +55,6 @@ void Location::set_id(int id) {
     this->id = id;
 }
 
-/**
- * @brief Get the latitude of the location
- *
- * @return The latitude of the location
- */
-double Location::get_latitude() {
-    return latitude;
-}
 
 /**
  * @brief Set the name of the location
@@ -89,6 +63,15 @@ double Location::get_latitude() {
  */
 void Location::set_name(std::string name) {
     this->name = name;
+}
+
+/**
+ * @brief Get the latitude of the location
+ *
+ * @return The latitude of the location
+ */
+double Location::get_latitude() const {
+    return latitude;
 }
 
 /**
@@ -116,7 +99,7 @@ void Location::set_latitude(double latitude) {
  * @param other The other location to calculate the distance to
  * @return The distance in meters between the two locations
  */
-double Location::distance_to(Location other) {
+double Location::distance_to(const Location& other) const {
     auto to_radians = [](double degree) {
         return degree * M_PI / 180.0;
     };
