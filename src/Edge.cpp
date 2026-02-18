@@ -1,3 +1,5 @@
+#include <cstdint>
+
 class Edge {
     private:
         int vertex1;
@@ -7,15 +9,15 @@ class Edge {
     public:
         Edge(int vertex1, int vertex2, double weight, uint8_t flags);
         Edge(int vertex1, int vertex2, double weight, bool indoor, bool walk, bool bike, bool car, bool bus);
-        int get_vertex1();
-        int get_vertex2();
-        double get_weight();
-        uint8_t get_flags();
+        int get_vertex1() const;
+        int get_vertex2() const;
+        double get_weight() const;
+        uint8_t get_flags() const;
         void set_vertex1(int vertex1);
         void set_vertex2(int vertex2);
         void set_weight(double weight);
         void set_flags(uint8_t flags);
-        bool is_indoor();
+        bool is_indoor() const;
         bool is_walkable();
         bool is_bikeable();
         bool is_drivable_by_car();
@@ -70,7 +72,7 @@ Edge::Edge(int vertex1, int vertex2, double weight, bool indoor, bool walk, bool
  *
  * @return The first vertex of the edge
  */
-int Edge::get_vertex1() {
+const int Edge::get_vertex1() {
     return vertex1;
 }
 
@@ -79,7 +81,7 @@ int Edge::get_vertex1() {
  *
  * @return The second vertex of the edge
  */
-int Edge::get_vertex2() {
+const int Edge::get_vertex2() {
     return vertex2;
 }
 
