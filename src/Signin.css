@@ -9,8 +9,8 @@ p {
 .logo {
     display: block;
     margin: auto;
-    width: 30%;
-    height: 50%;
+    width: 25%;
+    height: auto;
     position: relative;
     z-index: 1;
 }
@@ -28,5 +28,6 @@ p {
     height: 200px;
     margin: auto;
     background-color: #E8A2A7;
-    outline: #B41923 solid 3px;
+    outline: #B41923 solid 1px;
+    position: relative;
 }
