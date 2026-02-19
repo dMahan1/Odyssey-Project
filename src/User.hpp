@@ -14,32 +14,32 @@ class User{
         int id;
         std::string username;
         std::string email;
-        vector<int> friend_ids = {};
+        std::vector<int> friend_ids = {};
         std::pair<double,double> curr_location;
-        vector<Location> dropped_pins = {};
+        std::vector<Location> dropped_pins = {};
         int toucoins = 0;
-        vector<int> owned_feature_ids = {};
+        std::vector<int> owned_feature_ids = {};
         std::string icon_image_path; // = defaultIconPath;
         bool location_public = true;
         bool is_admin = false;
-        vector<std::string> new_messages = {};
-        vector<int> attended_event_ids = {};
+        std::vector<std::string> new_messages = {};
+        std::vector<int> attended_event_ids = {};
     public:
         User(std::string username, std::string email);
 
         int get_id();
         std::string get_username();
         std::string get_email();
-        vector<int> get_friend_ids();
+        std::vector<int> get_friend_ids();
         std::pair<double,double> get_curr_location();
-        vector<Location> get_dropped_pins();
+        std::vector<Location> get_dropped_pins();
         int get_toucoins();
-        vector<int> get_owned_feature_ids();
+        std::vector<int> get_owned_feature_ids();
         std::string get_icon_image_path();
         bool get_location_public();
         bool get_is_admin();
-        vector<std::string> get_new_messages();
-        vector<int> get_attended_event_ids();
+        std::vector<std::string> get_new_messages();
+        std::vector<int> get_attended_event_ids();
 
         void set_id(int id);
         void set_username(std::string username);
