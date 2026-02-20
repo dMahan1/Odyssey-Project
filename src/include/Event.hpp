@@ -29,10 +29,10 @@ class Event{
         time_t get_start_time();
         time_t get_end_time();
 
-        void set_creator_id();
-        void set_id();
-        void set_attendee_ids();
-        void set_location_id();
-        void set_start_time();
-        void set_end_time();
+        void set_creator_id(std::string creator_id);
+        void set_id(std::string id);
+        void set_attendee_ids(std::vector<std::string>attendee_ids);
+        void set_location_id(Location location_id);
+        void set_start_time(time_t start_time);
+        void set_end_time(time_t end_time);
 };       
