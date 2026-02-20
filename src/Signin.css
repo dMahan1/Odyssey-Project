@@ -2,6 +2,7 @@ body {
     background-color: #ABABAB;
     margin: 0;
     padding: 0;
+
 }
 
 #whole_page {
@@ -41,13 +42,23 @@ body {
     background-color: #EDDEAB;
     width: 75%;
     height: 10%;
-    margin-top: 90px;
+    margin-top: 75px;
     color: black;
     font-size: 25px;
     font-family: Rockwell, monaco, monospace;
 }
 
+#button {
+    background-color: #D4AF37;
+    color: black;
+    width: 50%;
+    height: 10%;
+    margin-top: 50px;
+    font-size: 25px;
+    font-family: Rockwell, monaco, monospace;
+}
+
 ::placeholder {
-    color: #7A7A7A; /* Change to your desired color, e.g., blue, red, hex value, etc. */
+    color: #7A7A7A;
 
 }
