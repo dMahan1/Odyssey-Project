@@ -58,6 +58,12 @@ body {
     font-family: Rockwell, monaco, monospace;
 }
 
+#sign_here {
+    text-align: center;
+    font-family: Rockwell, monaco, monospace;
+    font-size: 15px;
+}
+
 ::placeholder {
     color: #7A7A7A;
 
