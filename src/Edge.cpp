@@ -1,33 +1,5 @@
 #include <cstdint>
-
-class Edge {
-    private:
-        int vertex1;
-        int vertex2;
-        double weight;
-        uint8_t flags;
-    public:
-        Edge(int vertex1, int vertex2, double weight, uint8_t flags);
-        Edge(int vertex1, int vertex2, double weight, bool indoor, bool walk, bool bike, bool car, bool bus);
-        int get_vertex1() const;
-        int get_vertex2() const;
-        double get_weight() const;
-        uint8_t get_flags() const;
-        void set_vertex1(int vertex1);
-        void set_vertex2(int vertex2);
-        void set_weight(double weight);
-        void set_flags(uint8_t flags);
-        bool is_indoor() const;
-        bool is_walkable();
-        bool is_bikeable();
-        bool is_drivable_by_car();
-        bool is_drivable_by_bus();
-        void set_indoor(bool indoor);
-        void set_walkable(bool walk);
-        void set_bikeable(bool bike);
-        void set_drivable_by_car(bool car);
-        void set_drivable_by_bus(bool bus);
-}
+#include "Edge.hpp"
 
 /**
  * @brief Construct a new Edge object
@@ -39,7 +11,7 @@ class Edge {
  *
  * @return A new Edge object initialized with the provided parameters
  */
-Edge::Edge(int vertex1, int vertex2, double weight, uint8_t flags) {
+Edge::Edge(const std::string& vertex1, const std::string& vertex2, double weight, uint8_t flags) {
     this->vertex1 = vertex1;
     this->vertex2 = vertex2;
     this->weight = weight;
@@ -60,7 +32,7 @@ Edge::Edge(int vertex1, int vertex2, double weight, uint8_t flags) {
  *
  * @return A new Edge object initialized with the provided parameters
  */
-Edge::Edge(int vertex1, int vertex2, double weight, bool indoor, bool walk, bool bike, bool car, bool bus) {
+Edge::Edge(const std::string& vertex1, const std::string& vertex2, double weight, bool indoor, bool walk, bool bike, bool car, bool bus) {
     this->vertex1 = vertex1;
     this->vertex2 = vertex2;
     this->weight = weight;
@@ -72,7 +44,7 @@ Edge::Edge(int vertex1, int vertex2, double weight, bool indoor, bool walk, bool
  *
  * @return The first vertex of the edge
  */
-const int Edge::get_vertex1() {
+std::string Edge::get_vertex1() const {
     return vertex1;
 }
 
@@ -81,7 +53,7 @@ const int Edge::get_vertex1() {
  *
  * @return The second vertex of the edge
  */
-const int Edge::get_vertex2() {
+std::string Edge::get_vertex2() const {
     return vertex2;
 }
 
@@ -90,7 +62,7 @@ const int Edge::get_vertex2() {
  *
  * @return The weight of the edge
  */
-double Edge::get_weight() {
+double Edge::get_weight() const {
     return weight;
 }
 
@@ -99,7 +71,7 @@ double Edge::get_weight() {
  *
  * @return The flags associated with the edge
  */
-uint8_t Edge::get_flags() {
+uint8_t Edge::get_flags() const {
     return flags;
 }
 
@@ -108,7 +80,7 @@ uint8_t Edge::get_flags() {
  *
  * @param vertex1 The new first vertex of the edge
  */
-void Edge::set_vertex1(int vertex1) {
+void Edge::set_vertex1(const std::string& vertex1) {
     this->vertex1 = vertex1;
 }
 
@@ -117,7 +89,7 @@ void Edge::set_vertex1(int vertex1) {
  *
  * @param vertex2 The new second vertex of the edge
  */
-void Edge::set_vertex2(int vertex2) {
+void Edge::set_vertex2(const std::string& vertex2) {
     this->vertex2 = vertex2;
 }
 
@@ -144,7 +116,7 @@ void Edge::set_flags(uint8_t flags) {
  *
  * @return True if the edge is indoor, false otherwise
  */
-bool Edge::is_indoor() {
+bool Edge::is_indoor() const {
     return (flags & 0b00000001) != 0;
 }
 
@@ -153,7 +125,7 @@ bool Edge::is_indoor() {
  *
  * @return True if the edge is walkable, false otherwise
  */
-bool Edge::is_walkable() {
+bool Edge::is_walkable() const {
     return (flags & 0b00000010) != 0;
 }
 
@@ -162,7 +134,7 @@ bool Edge::is_walkable() {
  *
  * @return True if the edge is bikeable, false otherwise
  */
-bool Edge::is_bikeable() {
+bool Edge::is_bikeable() const {
     return (flags & 0b00000100) != 0;
 }
 
@@ -171,7 +143,7 @@ bool Edge::is_bikeable() {
  *
  * @return True if the edge is drivable by car, false otherwise
  */
-bool Edge::is_drivable_by_car() {
+bool Edge::is_drivable_by_car() const {
     return (flags & 0b00001000) != 0;
 }
 
@@ -180,7 +152,7 @@ bool Edge::is_drivable_by_car() {
  *
  * @return True if the edge is drivable by bus, false otherwise
  */
-bool Edge::is_drivable_by_bus() {
+bool Edge::is_drivable_by_bus() const {
     return (flags & 0b00010000) != 0;
 }
 
