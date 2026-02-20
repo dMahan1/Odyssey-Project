@@ -1,35 +1,64 @@
 body {
     background-color: #ABABAB;
+    margin: 0;
+    padding: 0;
+
 }
 
-p {
-    color: red;
+#whole_page {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
-
-.logo {
-    display: block;
-    margin: auto;
+#logo {
     width: 25%;
     height: auto;
-    position: relative;
     z-index: 1;
 }
 
-/*.color-block {*/
-/*    background-color: black; */
-/*    width: 100%;           */
-/*    height: auto;          */
-/*    padding: 15px;*/
-/*    position: absolute;*/
-/*    top: 0;*/
-/*    left: 0;*/
-/*}*/
+#color_block {
+    background-color: black;
+    width: 100%;
+    height: auto;
+    top: 0;
+    left: 0;
+}
 
-.signin-background {
-    display: block;
-    width: 100px;
-    height: 200px;
-    margin: auto;
+#signin_background {
     background-color: #E8A2A7;
-    outline: #B41923 solid 3px;
+    outline: black solid 2px;
+    margin-top: 15px;
+    position: relative;
+
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#email, #password {
+    background-color: #EDDEAB;
+    width: 75%;
+    height: 10%;
+    margin-top: 75px;
+    color: black;
+    font-size: 25px;
+    font-family: Rockwell, monaco, monospace;
+}
+
+#button {
+    background-color: #D4AF37;
+    color: black;
+    width: 50%;
+    height: 10%;
+    margin-top: 50px;
+    font-size: 25px;
+    font-family: Rockwell, monaco, monospace;
+}
+
+::placeholder {
+    color: #7A7A7A;
+
 }
