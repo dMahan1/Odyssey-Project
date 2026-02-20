@@ -12,7 +12,7 @@
  *
  * @return A new Location object initialized with the provided parameters
  */
-Location::Location(int id, std::string name, double latitude, double longitude) {
+Location::Location(std::string id, std::string name, double latitude, double longitude) {
     this->id = id;
     this->name = name;
     this->latitude = latitude;
@@ -24,7 +24,7 @@ Location::Location(int id, std::string name, double latitude, double longitude) 
  *
  * @return The unique identifier of the location
  */
-int Location::get_id() const {
+std::string Location::get_id() const {
     return id;
 }
 
@@ -51,7 +51,7 @@ double Location::get_longitude() const {
  *
  * @param id The new unique identifier for the location
  */
-void Location::set_id(int id) {
+void Location::set_id(std::string id) {
     this->id = id;
 }
 
