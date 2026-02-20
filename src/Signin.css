@@ -1,33 +1,53 @@
 body {
     background-color: #ABABAB;
+    margin: 0;
+    padding: 0;
 }
 
-p {
-    color: red;
+#whole_page {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
-
-.logo {
-    display: block;
-    margin: auto;
+#logo {
     width: 25%;
     height: auto;
-    position: relative;
     z-index: 1;
 }
 
-.color_block {
+#color_block {
     background-color: black;
     width: 100%;
     height: auto;
-    position: absolute;
     top: 0;
     left: 0;
 }
 
-.signin_background {
-    height: 200px;
-    margin: auto;
+#signin_background {
     background-color: #E8A2A7;
-    outline: #B41923 solid 1px;
+    outline: black solid 2px;
+    margin-top: 15px;
     position: relative;
+
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#email, #password {
+    background-color: #EDDEAB;
+    width: 75%;
+    height: 10%;
+    margin-top: 90px;
+    color: black;
+    font-size: 25px;
+    font-family: Rockwell, monaco, monospace;
+}
+
+::placeholder {
+    color: #7A7A7A; /* Change to your desired color, e.g., blue, red, hex value, etc. */
+
 }

@@ -1,5 +1,5 @@
-const logo =  document.getElementsByClassName('logo')[0];
-const block = document.getElementsByClassName('signin_background')[0];
+const logo =  document.getElementById('logo');
+const block = document.getElementById('signin_background');
 let logo_width = logo.offsetWidth;
 let logo_height = logo.offsetHeight;
 
@@ -12,6 +12,5 @@ window.addEventListener('resize', () => {
 
     logo_height = logo.offsetHeight;
     block.style.height = 3 * logo_height + 'px';
-
 })
 
