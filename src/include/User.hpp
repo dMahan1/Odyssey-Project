@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <utilities>
+#include <utility>
 
 #include "Location.hpp"
 //#include "Event.h"
@@ -60,4 +60,4 @@ class User{
         void remove_message(std::string message);
         void add_attended_event_id(std::string id);
         void remove_attended_event_id(std::string id);
-}
+};
