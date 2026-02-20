@@ -4,6 +4,8 @@
 #include <vector>
 #include <utility>
 
+#include "User.hpp"
+
 #include "Location.hpp"
 #include "Event.hpp"
 
@@ -29,7 +31,7 @@ User::User(std::string username, std::string email) {
  *
  * @return The unique identifier of the user
  */
-std::string get_id() {
+std::string User::get_id() {
     return this->id;
 }
 
@@ -38,7 +40,7 @@ std::string get_id() {
  *
  * @return The username of the user
  */
-std::string get_username() {
+std::string User::get_username() {
     return this->username;
 }
 
@@ -47,7 +49,7 @@ std::string get_username() {
  *
  * @return The email of the user
  */
-std::string get_email() {
+std::string User::get_email() {
     return this->email;
 }
 
@@ -56,7 +58,7 @@ std::string get_email() {
  *
  * @return The a vector of friend IDs of the user
  */
-std::vector<std::string> get_friend_ids() {
+std::vector<std::string> User::get_friend_ids() {
     return this->friend_ids;
 }
 
@@ -65,7 +67,7 @@ std::vector<std::string> get_friend_ids() {
  *
  * @return The current location of the user
  */
-std::pair<double,double> get_curr_location() {
+std::pair<double,double> User::get_curr_location() {
     return this->curr_location;
 }
 
@@ -74,7 +76,7 @@ std::pair<double,double> get_curr_location() {
  *
  * @return The vector of dropped pins of the user
  */
-std::vector<Location> get_dropped_pins() {
+std::vector<Location> User::get_dropped_pins() {
     return this->dropped_pins;
 }
 
@@ -83,7 +85,7 @@ std::vector<Location> get_dropped_pins() {
  *
  * @return The amount of toucoins of the user
  */
-int get_toucoins() {
+int User::get_toucoins() {
     return this->toucoins;
 }
 
@@ -92,7 +94,7 @@ int get_toucoins() {
  *
  * @return The vector of unique identifiers of the features owned by the user
  */
-std::vector<std::string> get_owned_feature_ids() {
+std::vector<std::string> User::get_owned_feature_ids() {
     return this->owned_feature_ids;
 }
 
@@ -101,7 +103,7 @@ std::vector<std::string> get_owned_feature_ids() {
  *
  * @return The icon image path of the user
  */
-std::string get_icon_image_path() {
+std::string User::get_icon_image_path() {
     return this->icon_image_path;
 }
 
@@ -110,7 +112,7 @@ std::string get_icon_image_path() {
  *
  * @return The public location permission of the user
  */
-bool get_location_public() {
+bool User::get_location_public() {
     return this->location_public;
 }
 
@@ -119,7 +121,7 @@ bool get_location_public() {
  *
  * @return The admin status of the user
  */
-bool get_is_admin() {
+bool User::get_is_admin() {
     return this->is_admin;
 }
 
@@ -128,7 +130,7 @@ bool get_is_admin() {
  *
  * @return The vector of the new messages for the user
  */
-std::vector<std::string> get_new_messages() {
+std::vector<std::string> User::get_new_messages() {
     return this->new_messages;
 }
 
@@ -137,7 +139,7 @@ std::vector<std::string> get_new_messages() {
  *
  * @return The vector of unique identifiers of the attended events for the user
  */
-std::vector<int> get_attended_event_ids() {
+std::vector<std::string> User::get_attended_event_ids() {
     return this->attended_event_ids;
 }
 
@@ -148,7 +150,7 @@ std::vector<int> get_attended_event_ids() {
  *
  * @param id The new unique identifier for the user
  */
-void set_id(std::string id) {
+void User::set_id(std::string id) {
     this->id = id;
 }
 
@@ -157,7 +159,7 @@ void set_id(std::string id) {
  *
  * @param username The new username for the user
  */
-void set_username(std::string username) {
+void User::set_username(std::string username) {
     this->username = username;
 }
 
@@ -166,7 +168,7 @@ void set_username(std::string username) {
  *
  * @param email The new email for the user
  */
-void set_email(std::string email) {
+void User::set_email(std::string email) {
     this->email = email;
 }
 
@@ -175,7 +177,7 @@ void set_email(std::string email) {
  *
  * @param friend_id The new friend ID to add
  */
-void add_friend_id(std::string friend_id) {
+void User::add_friend_id(std::string friend_id) {
     this->friend_ids.push_back(friend_id);
 }
 
@@ -185,7 +187,7 @@ void add_friend_id(std::string friend_id) {
  * @param friend_id The friend ID to remove
  * @return the friend ID if it was successfully removed, otherwise returns an empty string
  */
-std::string remove_friend_id(std::string friend_id) {
+std::string User::remove_friend_id(std::string friend_id) {
     for (size_t i = 0; i < this->friend_ids.size(); ++i) {
         if (this->friend_ids[i] == friend_id) {
             std::string removed_friend_id = this->friend_ids[i];
@@ -201,7 +203,7 @@ std::string remove_friend_id(std::string friend_id) {
  *
  * @param coordinates The new coordinates for the user's current location
  */
-void set_curr_location(std::pair<double,double> coordinates) {
+void User::set_curr_location(std::pair<double,double> coordinates) {
     this->curr_location = coordinates;
 }
 
@@ -210,7 +212,7 @@ void set_curr_location(std::pair<double,double> coordinates) {
  *
  * @param pin The new dropped pin to add
  */
-void drop_pin(Location pin) {
+void User::drop_pin(Location pin) {
     this->dropped_pins.push_back(pin);
 }
 
@@ -220,7 +222,7 @@ void drop_pin(Location pin) {
  * @param pin_id The unique identifier of the pin to remove
  * @return The removed pin if it exists, otherwise throws an error
  */
-Location remove_pin(std::string pin_id) {
+Location User::remove_pin(std::string pin_id) {
     for (size_t i = 0; i < this->dropped_pins.size(); ++i) {
         if (this->dropped_pins[i].get_id() == pin_id) {
             Location removed_pin = this->dropped_pins[i];
@@ -236,7 +238,7 @@ Location remove_pin(std::string pin_id) {
  *
  * @param amount The amount of toucoins to add
  */
-void add_toucoins(int amount) {
+void User::add_toucoins(int amount) {
     this->toucoins += amount;
 }
 
@@ -245,7 +247,7 @@ void add_toucoins(int amount) {
  *
  * @param id The new unique identifier for the feature
  */
-void add_owned_feature_id(std::string id) {
+void User::add_owned_feature_id(std::string id) {
     this->owned_feature_ids.push_back(id);
 }
 
@@ -255,7 +257,7 @@ void add_owned_feature_id(std::string id) {
  * @param id The unique identifier of the feature to remove
  * @return The removed feature ID if it was successfully removed, otherwise returns an empty string
  */
-std::string remove_owned_feature_id(std::string id) {
+std::string User::remove_owned_feature_id(std::string id) {
     for (size_t i = 0; i < this->owned_feature_ids.size(); ++i) {
         if (this->owned_feature_ids[i] == id) {
             std::string removed_feature_id = this->owned_feature_ids[i];
@@ -271,7 +273,7 @@ std::string remove_owned_feature_id(std::string id) {
  *
  * @param path The new icon image path for the user
  */
-void set_icon_image_path(std::string path) {
+void User::set_icon_image_path(std::string path) {
     this->icon_image_path = path;
 }
 
@@ -280,7 +282,7 @@ void set_icon_image_path(std::string path) {
  *
  * @param status The new public location permission status for the user
  */
-void set_location_public(bool status) {
+void User::set_location_public(bool status) {
     this->location_public = status;
 }
 
@@ -289,7 +291,7 @@ void set_location_public(bool status) {
  *
  * @param message The new message to add
  */
-void add_new_message(std::string message) {
+void User::add_new_message(std::string message) {
     this->new_messages.push_back(message);
 }
 
@@ -298,7 +300,7 @@ void add_new_message(std::string message) {
  *
  * @param message The message to remove
  */
-void remove_message(std::string message) {
+void User::remove_message(std::string message) {
     for (size_t i = 0; i < this->new_messages.size(); ++i) {
         if (this->new_messages[i] == message) {
             this->new_messages.erase(this->new_messages.begin() + i);
@@ -312,7 +314,7 @@ void remove_message(std::string message) {
  *
  * @param id The new unique identifier for the event
  */
-void add_attended_event_id(std::string id) {
+void User::add_attended_event_id(std::string id) {
         this->attended_event_ids.push_back(id);
 }
 
@@ -321,7 +323,7 @@ void add_attended_event_id(std::string id) {
  *
  * @param id The unique identifier of the event to remove
  */
-void remove_attended_event_id(std::string id) {
+void User::remove_attended_event_id(std::string id) {
         for (size_t i = 0; i < this->attended_event_ids.size(); ++i) {
                 if (this->attended_event_ids[i] == id) {
                         this->attended_event_ids.erase(this->attended_event_ids.begin() + i);
