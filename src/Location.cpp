@@ -1,6 +1,6 @@
 #include <cmath>
 #include <string>
-#include "Location.h"
+#include "Location.hpp"
 
 /**
  * @brief Construct a new Location object
