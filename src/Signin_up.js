@@ -1,5 +1,5 @@
 const logo =  document.getElementById('logo');
-const block = document.getElementById('signin_background');
+const block = document.getElementById('sign_background');
 let logo_width = logo.offsetWidth;
 let logo_height = logo.offsetHeight;
 
