@@ -324,14 +324,10 @@ void User::add_attended_event_id(std::string id) {
  * @param id The unique identifier of the event to remove
  */
 void User::remove_attended_event_id(std::string id) {
-        for (size_t i = 0; i < this->attended_event_ids.size(); ++i) {
-                if (this->attended_event_ids[i] == id) {
-                        this->attended_event_ids.erase(this->attended_event_ids.begin() + i);
-                        return;
-                }
+    for (size_t i = 0; i < this->attended_event_ids.size(); ++i) {
+        if (this->attended_event_ids[i] == id) {
+            this->attended_event_ids.erase(this->attended_event_ids.begin() + i);
+            return;
         }
-}
-
-int main() {
-    std::cout << "Hello, World!" << std::endl;
+    }
 }

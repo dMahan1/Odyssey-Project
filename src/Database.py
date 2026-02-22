@@ -1,9 +1,6 @@
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import auth
-from firebase_admin import firestore
+
 from pathlib import Path
-import os
+import pyrebase
 
 # Get the user's home directory path
 home_dir = Path.home()
@@ -14,7 +11,25 @@ home_dir = Path.home()
 home_dir = Path.home()
 path = home_dir/"OdysseyFirebase"
 
-cred = credentials.Certificate(path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json")
-defaultApp = firebase_admin.initialize_app(cred)
+config = {
+  "apiKey": "AIzaSyC5HfU9FTWu9fLwFAJgE1BhTqlOazIAeOw",
+  "authDomain": "odyssey-cd6c7.firebaseapp.com",
+  "projectId": "odyssey-cd6c7",
+  "databaseURL": "https://odyssey-cd6c7-default-rtdb.firebaseio.com/",
+  "storageBucket": "odyssey-cd6c7.firebasestorage.app",
+  "serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
+}
 
-print(defaultApp.name)
+firebase = pyrebase.initialize_app(config)
+
+def auth_user(email, password):
+    # Get a reference to the auth service
+    auth = firebase.auth()
+
+    # Log the user in
+    user = auth.sign_in_with_email_and_password(email, password)
+
+    print (auth.get_account_info(user['idToken']))
+
+    return user
+
