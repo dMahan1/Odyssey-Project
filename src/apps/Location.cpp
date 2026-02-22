@@ -2,6 +2,21 @@
 #include <string>
 #include "Location.hpp"
 
+
+
+
+/**
+ * @brief Default constructor for the Location class
+ *
+ * @return A new Location object with default values
+ */
+Location::Location() {
+    this->id = "";
+    this->name = "";
+    this->latitude = 0.0;
+    this->longitude = 0.0;
+}
+
 /**
  * @brief Construct a new Location object
  *
