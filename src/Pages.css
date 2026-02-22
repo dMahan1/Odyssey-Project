@@ -52,3 +52,12 @@ body {
     width: auto;
     max-height: 100%;
 }
+
+#logout {
+    font-size: 20px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
