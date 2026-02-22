@@ -52,4 +52,3 @@ map_button.addEventListener('click', () => {
 logout.addEventListener('click', () => {
     window.location.href = "Signin.html";
 })
-
