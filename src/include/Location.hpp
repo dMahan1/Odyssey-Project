@@ -10,6 +10,7 @@ private:
     double longitude;
 
 public:
+    Location();
     Location(std::string id, std::string name, double latitude, double longitude);
 
     std::string get_id() const;
