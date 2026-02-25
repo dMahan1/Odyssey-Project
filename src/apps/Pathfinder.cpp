@@ -17,11 +17,14 @@ void Pathfinder::init() {
     this->location_tree = KdTree<double>();
     this->locations = {
     };
+    for (size_t i = 0; i < locations.size(); ++i) {
+        id_indices[locations[i].get_id()] = i;
+    }
     for (const Location& loc : locations) {
         location_tree.insert({loc.get_latitude(), loc.get_longitude()}, &loc);
     }
-    this->adj = {
-    };
+    this->adj = std::vector<std::vector<Edge>>(locations.size());
+
 }
 
 const Location *Pathfinder::get_location_by_id(std::string id) const {
@@ -44,6 +47,17 @@ const Location *Pathfinder::approximate_location(double latitude, double longitu
     return closest;
 }
 
+Path Pathfinder::reconstruct_path(Location src, Location dst, const std::vector<int>& prev, double total_distance) const {
+    std::vector<std::string> location_ids;
+    int current = id_indices.at(dst.get_id());
+    while (current != -1) {
+        location_ids.push_back(locations[current].get_id());
+        current = prev[current];
+    }
+    std::reverse(location_ids.begin(), location_ids.end());
+    return Path{location_ids, total_distance};
+}
+
 Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMode mode) const {
     size_t n = adj.size();
     std::vector<double> dist(n, std::numeric_limits<double>::infinity());
@@ -51,17 +65,20 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
     std::vector<double> est(n, std::numeric_limits<double>::infinity());
     std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, std::greater<std::pair<double, int>>> pq;
 
-    dist[src.get_id()] = 0.0;
-    est[src.get_id()] = src.distance_to(dst);
-    pq.push({est[src.get_id()], src.get_id()});
+    int src_index = id_indices.at(src.get_id());
+    int dst_index = id_indices.at(dst.get_id());
+
+    dist[src_index] = 0.0;
+    est[src_index] = src.distance_to(dst);
+    pq.push({est[src_index], src_index});
 
 
     while (!pq.empty()) {
         auto [curr_est, curr] = pq.top();
         pq.pop();
 
-        if (curr == dst.get_id()) {
-            return reconstruct_path(src, dst, prev, dist[dst.get_id()]);
+        if (curr == dst_index) {
+            return reconstruct_path(src, dst, prev, dist[dst_index]);
         }
 
         for (const Edge& e : adj[curr]) {
@@ -71,14 +88,14 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
                 (mode == WALKING && !e.is_walkable())) {
                 continue;
             }
-            int to = e.get_vertex2();
+            std::string to = e.get_vertex2();
 
             double cumulative_dist = dist[curr] + e.get_weight();
-            if (cumulative_dist < dist[to]) {
-                dist[to] = cumulative_dist;
-                prev[to] = curr;
-                est[to] = cumulative_dist + locations[to].distance_to(dst);
-                pq.push({est[to], to});
+            if (cumulative_dist < dist[id_indices.at(to)]) {
+                dist[id_indices.at(to)] = cumulative_dist;
+                prev[id_indices.at(to)] = curr;
+                est[id_indices.at(to)] = cumulative_dist + locations[id_indices.at(to)].distance_to(dst);
+                pq.push({est[id_indices.at(to)], id_indices.at(to)});
             }
         }
     }

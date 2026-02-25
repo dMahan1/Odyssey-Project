@@ -14,7 +14,7 @@ enum TraversalMode {
     BUS
 };
 struct Path {
-    std::vector<int> location_ids;
+    std::vector<std::string> location_ids;
     double total_distance;
 };
 
@@ -33,7 +33,8 @@ class Pathfinder {
         Pathfinder() {
             init();
         }
-        std::unordered_map<std::string, std::vector<Edge>> adj;
+        std::unordered_map<std::string, int> id_indices;
+        std::vector<std::vector<Edge>> adj;
         std::vector<Location> locations;
         KdTree<double> location_tree;
         Path reconstruct_path(Location src, Location dst, const std::vector<int>& prev, double total_distance) const;
