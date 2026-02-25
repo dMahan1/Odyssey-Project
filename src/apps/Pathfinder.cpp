@@ -1,30 +1,32 @@
 #include "Location.hpp"
 #include "Edge.hpp"
 #include "Pathfinder.hpp"
+#include "KdTree.hpp"
+#include "PathfinderBuilder.hpp"
 #include <functional>
-#include <iostream>
 #include <queue>
 #include <string_view>
 #include <vector>
 #include <limits>
 #include <unordered_map>
 #include <string>
+#include <stdexcept>
 
 void Pathfinder::init() {
-    // Placeholder for actual initialization logic
-    // In the real implementation, this will read from files or the database
-    // TODO: Implement actual data loading logic here.
-    this->location_tree = KdTree<double>();
-    this->locations = {
-    };
+    // TODO: switch from debug to release when we have the full dataset.
+    PathfinderBuilder builder(DEBUG);
+    this->locations = builder.get_locations();
     for (size_t i = 0; i < locations.size(); ++i) {
         id_indices[locations[i].get_id()] = i;
     }
+    this->location_tree = KdTree<double>();
     for (const Location& loc : locations) {
         location_tree.insert({loc.get_latitude(), loc.get_longitude()}, &loc);
     }
     this->adj = std::vector<std::vector<Edge>>(locations.size());
-
+    for (const Edge& edge : builder.get_edges()) {
+        adj[id_indices[edge.get_vertex1()]].push_back(edge);
+    }
 }
 
 const Location *Pathfinder::get_location_by_id(std::string id) const {
