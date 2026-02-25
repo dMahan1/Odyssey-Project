@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <utilities>
+#include <utility>
 
 #include "Location.hpp"
 //#include "Event.h"
@@ -47,17 +47,17 @@ class User{
         void set_username(std::string username);
         void set_email(std::string email);
         void add_friend_id(std::string friend_id);
-        int remove_friend_id(std::string friend_id);
+        std::string remove_friend_id(std::string friend_id);
         void set_curr_location(std::pair<double,double> coordinates);
         void drop_pin(Location pin);
         Location remove_pin(std::string pin_id);
         void add_toucoins(int amount);
         void add_owned_feature_id(std::string id);
-        int remove_owned_feature_id(std::string id);
+        std::string remove_owned_feature_id(std::string id);
         void set_icon_image_path(std::string path);
         void set_location_public(bool status);
         void add_new_message(std::string message);
         void remove_message(std::string message);
         void add_attended_event_id(std::string id);
         void remove_attended_event_id(std::string id);
-}
+};
