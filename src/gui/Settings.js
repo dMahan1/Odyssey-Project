@@ -6,7 +6,7 @@ friends_bar.style.height = window_height / 2 + "px";
 
 // On run
 logout.addEventListener('click', () => {
-    window.location.href = "Signin.html";
+    window.location.href = "../Signin.html";
 })
 
 window.addEventListener('click', () => {
