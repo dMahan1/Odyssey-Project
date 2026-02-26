@@ -33,5 +33,5 @@ window.addEventListener('resize', () =>{
 })
 
 signup_button.addEventListener('click', () =>{
-    window.location.href = "gui/Map.html";
+    window.location.href = "Map.html";
 })
