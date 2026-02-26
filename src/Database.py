@@ -13,7 +13,14 @@ import firebase
 #home_dir = Path.home()
 #path = home_dir/"OdysseyFirebase"
 load_dotenv()
-config = os.getenv("CONFIG")
+config = {
+  "apiKey": os.getenv("API_KEY"),
+  "authDomain": os.getenv("AUTH_DOMAIN"),
+  "projectId": os.getenv("PROJECT_ID"),
+  "databaseURL": os.getenv("DATABASE_URL"),
+  "storageBucket": os.getenv("STORAGE_BUCKET")
+  #"serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
+}
 
 firebase = empyrebase.initialize_app(config)
 auth = firebase.auth()
