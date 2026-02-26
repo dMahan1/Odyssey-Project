@@ -13,8 +13,7 @@
 #include <stdexcept>
 
 void Pathfinder::init() {
-    // TODO: switch from debug to release when we have the full dataset.
-    PathfinderBuilder builder(DEBUG);
+    PathfinderBuilder builder(this->mode);
     this->locations = builder.get_locations();
     for (size_t i = 0; i < locations.size(); ++i) {
         id_indices[locations[i].get_id()] = i;
@@ -63,6 +62,7 @@ Path Pathfinder::reconstruct_path(Location src, Location dst, const std::vector<
 Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMode mode) const {
     size_t n = adj.size();
     std::vector<double> dist(n, std::numeric_limits<double>::infinity());
+    std::vector<double> weighted_dist(n, std::numeric_limits<double>::infinity());
     std::vector<int> prev(n, -1);
     std::vector<double> est(n, std::numeric_limits<double>::infinity());
     std::priority_queue<std::pair<double, int>, std::vector<std::pair<double, int>>, std::greater<std::pair<double, int>>> pq;
@@ -71,6 +71,7 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
     int dst_index = id_indices.at(dst.get_id());
 
     dist[src_index] = 0.0;
+    weighted_dist[src_index] = 0.0;
     est[src_index] = src.distance_to(dst);
     pq.push({est[src_index], src_index});
 
@@ -92,9 +93,11 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
             }
             std::string to = e.get_vertex2();
 
-            double cumulative_dist = dist[curr] + e.get_weight();
+            double cumulative_dist = weighted_dist[curr] +
+                (e.get_weight() * (bad_weather && !e.is_indoor() ? 1.10 : 1.0));
             if (cumulative_dist < dist[id_indices.at(to)]) {
-                dist[id_indices.at(to)] = cumulative_dist;
+                weighted_dist[id_indices.at(to)] = cumulative_dist;
+                dist[id_indices.at(to)] = dist[curr] + e.get_weight();
                 prev[id_indices.at(to)] = curr;
                 est[id_indices.at(to)] = cumulative_dist + locations[id_indices.at(to)].distance_to(dst);
                 pq.push({est[id_indices.at(to)], id_indices.at(to)});

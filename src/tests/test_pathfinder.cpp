@@ -9,8 +9,8 @@ bool test_clear_weather_debug() {
         return true; // Skip this test if not in debug mode
     }
 
-    const Location* src = pf.approximate_location(40.42363, -86.91042); // Past KRAN
-    const Location* dst = pf.approximate_location(40.42522, -86.91052); // Past PMU
+    const Location* src = pf.approximate_location(40.42522, -86.91052); // Past PMU
+    const Location* dst = pf.approximate_location(40.42363, -86.91042); // Past KRAN
 
     Path path = pf.route(*src, *dst, false, WALKING);
     assert(!path.location_ids.empty());
@@ -18,7 +18,7 @@ bool test_clear_weather_debug() {
     for (const std::string& loc_id : path.location_ids) {
         std::cout << "Location ID in path: " << loc_id << std::endl;
     }
-    return true;
+    return path.location_ids.size() == 5; // P -> G -> O -> P -> Q
 }
 
 bool test_bad_weather_debug() {
@@ -27,8 +27,8 @@ bool test_bad_weather_debug() {
         return true; // Skip this test if not in debug mode
     }
 
-    const Location* src = pf.approximate_location(40.42363, -86.91042); // Past KRAN
-    const Location* dst = pf.approximate_location(40.42522, -86.91052); // Past PMU
+    const Location* src = pf.approximate_location(40.42522, -86.91052); // Past PMU
+    const Location* dst = pf.approximate_location(40.42363, -86.91042); // Past KRAN
 
     Path path = pf.route(*src, *dst, true, WALKING);
     assert(!path.location_ids.empty());
@@ -36,7 +36,7 @@ bool test_bad_weather_debug() {
     for (const std::string& loc_id : path.location_ids) {
         std::cout << "Location ID in bad weather path: " << loc_id << std::endl;
     }
-    return true;
+    return path.location_ids.size() == 2; // P -> Q Tunnel
 }
 
 int main() {

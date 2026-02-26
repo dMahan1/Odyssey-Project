@@ -37,6 +37,7 @@ class Pathfinder {
         Pathfinder() {
             init();
         }
+        // TODO: switch to release mode.
         Mode mode = DEBUG;
         std::unordered_map<std::string, int> id_indices;
         std::vector<std::vector<Edge>> adj;
