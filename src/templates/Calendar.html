@@ -19,9 +19,19 @@
 
     <div id="popup_background">
         <div id="event_popup" class="popup">
+            <div id = "popup_bar">
+                <button id="scrap_event">&#x2717 </button>
+                <button id="save_event">&#x2713</button>
+            </div>
             <label for="title"></label> <input type="text" id="title" name="event_title" placeholder="Title">
-            <button id="scrap_event">&#x2717 </button>
-            <button id="save_event">&#x2713</button>
+            <label for="attendees"></label> <input type="text" id="attendees" name="attendees" placeholder="Title">
+
+            <label for="all_day">All Day?</label><input type="checkbox" id="all_day">
+            <label for="start">Start:</label><input type="datetime-local" id="start">
+            <label for="end">End:</label><input type="datetime-local" id="end">
+            
+            <label for="location_search"></label><input type="search" id="location_search" placeholder="Location">
+
         </div>
     </div>
 
