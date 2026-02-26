@@ -2,25 +2,27 @@
 from pathlib import Path
 import empyrebase
 import firebase
-from google import auth
 
 # Get the user's home directory path
-home_dir = Path.home()
+#home_dir = Path.home()
 
 # Server Requires firebase key downloaded and stored seperately
 # Not included in code but shared with server computer manually
 # Change path for change in server, currently accesses OdysseyFirebase folder in a user's home directory.
-home_dir = Path.home()
-path = home_dir/"OdysseyFirebase"
+#home_dir = Path.home()
+#path = home_dir/"OdysseyFirebase"
 
 config = {
   "apiKey": "AIzaSyC5HfU9FTWu9fLwFAJgE1BhTqlOazIAeOw",
   "authDomain": "odyssey-cd6c7.firebaseapp.com",
   "projectId": "odyssey-cd6c7",
   "databaseURL": "https://odyssey-cd6c7-default-rtdb.firebaseio.com/",
-  "storageBucket": "odyssey-cd6c7.firebasestorage.app",
-  "serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
+  "storageBucket": "odyssey-cd6c7.firebasestorage.app"
+  #"serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
 }
+
+firebase = empyrebase.initialize_app(config)
+auth = firebase.auth()
 
 def auth_user(email, password, latitude, longitude):
 
@@ -112,7 +114,7 @@ def test():
     user = create_user("dylan.mahan@gmail.com", "Dylan AutoTest", "Test123", 40.42728, -86.91406)
     print(get_user_data(user))
 
-    user = auth_user("dylan.mahan@gmail.com", "Test123")
+    user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)
     print(get_user_data(user))
 
     delete_user(user)
