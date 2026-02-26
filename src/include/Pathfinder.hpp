@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "PathfinderBuilder.hpp"
 
 
 enum TraversalMode {
@@ -28,11 +29,15 @@ class Pathfinder {
         }
         const Location *get_location_by_id(std::string id) const;
         const Location *approximate_location(double latitude, double longitude) const;
+        Mode get_mode() const {
+            return mode;
+        }
     private:
         void init();
         Pathfinder() {
             init();
         }
+        Mode mode = DEBUG;
         std::unordered_map<std::string, int> id_indices;
         std::vector<std::vector<Edge>> adj;
         std::vector<Location> locations;

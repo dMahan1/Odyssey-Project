@@ -12,6 +12,8 @@ enum Mode {
 class PathfinderBuilder {
 public:
     PathfinderBuilder(Mode mode) : mode(mode) {
+        this->locations = std::vector<Location>();
+        this->edges = std::vector<Edge>();
         load_data();
     };
     std::vector<Location> get_locations() const;
