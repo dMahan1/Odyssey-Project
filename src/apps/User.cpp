@@ -1,4 +1,3 @@
-#include <pybind11/embed.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -8,8 +7,6 @@
 
 #include "Location.hpp"
 #include "Event.hpp"
-
-namespace py = pybind11;
 
 /**
  * @brief Construct a new User object
