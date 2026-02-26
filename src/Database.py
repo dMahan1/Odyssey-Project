@@ -1,4 +1,5 @@
-
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
 import firebase
@@ -11,15 +12,8 @@ import firebase
 # Change path for change in server, currently accesses OdysseyFirebase folder in a user's home directory.
 #home_dir = Path.home()
 #path = home_dir/"OdysseyFirebase"
-
-config = {
-  "apiKey": "AIzaSyC5HfU9FTWu9fLwFAJgE1BhTqlOazIAeOw",
-  "authDomain": "odyssey-cd6c7.firebaseapp.com",
-  "projectId": "odyssey-cd6c7",
-  "databaseURL": "https://odyssey-cd6c7-default-rtdb.firebaseio.com/",
-  "storageBucket": "odyssey-cd6c7.firebasestorage.app"
-  #"serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
-}
+load_dotenv()
+config = os.getenv("CONFIG")
 
 firebase = empyrebase.initialize_app(config)
 auth = firebase.auth()
