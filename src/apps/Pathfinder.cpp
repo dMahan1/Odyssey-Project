@@ -15,6 +15,10 @@
 void Pathfinder::init() {
     PathfinderBuilder builder(this->mode);
     this->locations = builder.get_locations();
+    auto comp = [](const Location& a, const Location& b) {
+        return a.get_id() < b.get_id();
+    };
+    std::sort(locations.begin(), locations.end(), comp);
     for (size_t i = 0; i < locations.size(); ++i) {
         id_indices[locations[i].get_id()] = i;
     }
@@ -29,9 +33,15 @@ void Pathfinder::init() {
 }
 
 const Location *Pathfinder::get_location_by_id(std::string id) const {
-    for (const Location& loc : locations) {
-        if (loc.get_id() == id) {
-            return &loc;
+    int lo = 0, hi = locations.size() - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (locations[mid].get_id() == id) {
+            return &locations[mid];
+        } else if (locations[mid].get_id() < id) {
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
         }
     }
     throw std::runtime_error("Location ID not found: " + id);

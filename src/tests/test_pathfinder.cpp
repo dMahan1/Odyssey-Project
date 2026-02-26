@@ -3,6 +3,15 @@
 #include "PathfinderBuilder.hpp"
 #include <cassert>
 
+
+bool test_get_location_by_id() {
+    Pathfinder& pf = Pathfinder::get_instance();
+    const Location* loc = pf.get_location_by_id("1");
+    assert(loc != nullptr);
+    assert(loc->get_name() == "A");
+    return true;
+}
+
 bool test_clear_weather_debug() {
     Pathfinder& pf = Pathfinder::get_instance();
     if (pf.get_mode() != DEBUG) {
@@ -42,6 +51,7 @@ bool test_bad_weather_debug() {
 int main() {
     std::cout << "Running Pathfinder tests..." << std::endl;
 
+    assert(test_get_location_by_id());
     assert(test_clear_weather_debug());
     assert(test_bad_weather_debug());
     std::cout << "All Pathfinder tests passed!" << std::endl;
