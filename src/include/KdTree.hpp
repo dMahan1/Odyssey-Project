@@ -15,8 +15,8 @@ template<typename T>
 class KdTree {
     public:
         KdTree();
-        void insert(const std::vector<double>& point, void* data);
-        void *nearest_neighbor(const std::vector<double>& point, void *data, T (*distance)(void*, void*));
+        void insert(const std::vector<double>& point, const void* data);
+        const void *nearest_neighbor(const std::vector<double>& point, const void *data, T (*distance)(const void*, const void*)) const;
     private:
         KdNode<T> *root;
 };
@@ -29,8 +29,8 @@ template<typename T>
 KdTree<T>::KdTree() : root(nullptr) {}
 
 template<typename T>
-void KdTree<T>::insert(const std::vector<double>& point, void* data) {
-    KdNode<T>* newNode = new KdNode<T>{point, data, nullptr, nullptr};
+void KdTree<T>::insert(const std::vector<double>& point, const void* data) {
+    KdNode<T>* newNode = new KdNode<T>{point, const_cast<void*>(data), nullptr, nullptr};
     if (!root) {
         root = newNode;
         return;
@@ -57,7 +57,7 @@ void KdTree<T>::insert(const std::vector<double>& point, void* data) {
 }
 
 template<typename T>
-void* KdTree<T>::nearest_neighbor(const std::vector<double>& point, void* data, T (*distance)(void *, void *)) {
+const void* KdTree<T>::nearest_neighbor(const std::vector<double>& point, const void* data, T (*distance)(const void *, const void *)) const {
     if (!root) return nullptr;
     KdNode<T>* best = nullptr;
     double best_dist = std::numeric_limits<double>::max();
