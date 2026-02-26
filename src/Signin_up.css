@@ -37,46 +37,24 @@ body {
     display: flex;
     align-items: center;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
 }
 
-#signin_email, #signin_password {
-    background-color: #EDDEAB;
-    width: 75%;
-    height: 10%;
-    margin-top: 75px;
-    color: black;
-    font-size: 25px;
-    font-family: Rockwell, monaco, monospace;
-}
-
-#signup_email, #signup_password, #signup_username, #signup_pass_conf {
+#signup_email, #signup_password, #signup_username, #signup_pass_conf, #signin_email, #signin_password {
     background-color: #EDDEAB;
     width: 75%;
     height: 10%;
     color: black;
-    font-size: 25px;
     font-family: Rockwell, monaco, monospace;
-    margin-top: 10px;
+    font-size: 30px;
 }
 
-#signin_button {
+#signin_button, #signup_button {
     background-color: #D4AF37;
     color: black;
     width: 50%;
     height: 10%;
-    margin-top: 50px;
-    font-size: 25px;
-    font-family: Rockwell, monaco, monospace;
-}
-
-#signup_button {
-    background-color: #D4AF37;
-    color: black;
-    width: 50%;
-    height: 10%;
-    margin-top: 30px;
-    font-size: 25px;
+    font-size: 25%;
     font-family: Rockwell, monaco, monospace;
 }
 
@@ -84,6 +62,7 @@ body {
     text-align: center;
     font-family: Rockwell, monaco, monospace;
     font-size: 15px;
+    margin-top: -15px;
 }
 
 ::placeholder {
