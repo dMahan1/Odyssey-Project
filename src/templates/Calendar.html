@@ -2,20 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Map Page</title>
+    <title>Calendar Page</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <link rel="stylesheet" href="Pages.css" />
+    <link rel="stylesheet" href="../static/Pages.css" />
     <style></style>
 </head>
 <body>
-<script src="Pages.js" defer></script>
+<script src="../static/Pages.js" defer></script>
+<script src="../static/Calendar.js" defer></script>
 <div id="whole_page">
+    
+    <div id = "top_bar">
+        <button id="event_button">+</button>
+    </div>
+
+    <div id="popup_background">
+        <div id="event_popup" class="popup">
+            <label for="title"></label> <input type="text" id="title" name="event_title" placeholder="Title">
+            <button id="scrap_event">&#x2717 </button>
+            <button id="save_event">&#x2713</button>
+        </div>
+    </div>
+
     <div id="nav_bar">
-        <button class="On" id="map_button">
+        <button id="map_button">
             <img class="Map" src="../../images/Map_icon.png" id="Map_icon" alt="Map icon">
         </button>
-        <button id="calendar_button">
+        <button class="On" id="calendar_button">
             <img class="Calendar" src="../../images/Calendar_icon.png" id="Calendar_icon" alt="Calendar icon">
         </button>
         <button id="settings_button">

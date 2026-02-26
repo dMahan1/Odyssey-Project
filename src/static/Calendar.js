@@ -2,7 +2,7 @@
 
 const top_bar = document.getElementById('top_bar');
 
-const exit = document.getElementById('close');
+const scrap_event = document.getElementById('scrap_event');
 const popup = document.getElementById('popup_background');
 const popup_open = document.getElementById('event_button');
 
@@ -15,7 +15,7 @@ window.addEventListener('resize', function(){
     top_bar.style.height = window_height / 16 + "px";
 })
 
-exit.addEventListener('click', () => {
+scrap_event.addEventListener('click', () => {
     popup.style.display = "none";
 })
 
