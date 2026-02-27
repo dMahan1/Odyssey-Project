@@ -5,9 +5,10 @@ const block = document.getElementById('sign_background');
 let logo_width = logo.offsetWidth;
 let logo_height = logo.offsetHeight;
 const sign_here = document.getElementById('sign_here');
-let latitude = 0;
-let longitude = 0;
-let location_success = false;
+export let latitude = 0;
+export let longitude = 0;
+export let location_success = false;
+let user_profile = null;
 
 /* On Run */
 
@@ -48,4 +49,9 @@ function fail() {
 
 function get_location_success() {
     return location_success;
+}
+
+export function set_user_data(user) {
+    user_profile = user;
+    return;
 }
