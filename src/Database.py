@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
 import firebase
+from empyrebase.types.geopoint import GeoPoint
 
 # Get the user's home directory path
 #home_dir = Path.home()
@@ -26,6 +27,8 @@ firebase = empyrebase.initialize_app(config)
 auth = firebase.auth()
 
 def auth_user(email, password, latitude, longitude):
+    print(f"Authenticating user with email: {email} and password: {password}")
+    print(f"Received location: Latitude {latitude}, Longitude {longitude}")
 
     # Log the user in
     user = auth.sign_in_with_email_and_password(email, password)
@@ -108,6 +111,26 @@ def delete_user(user):
     # Delete the user
     auth.delete_user_account(user['idToken'])
 
+def drop_pin(user, latitude, longitude):
+    db = firebase.firestore(auth_id=user['idToken'])
+    dropped_pins = db.collection("Users").get_document(user['localId']).to_dict().get("dropped_pins")
+    pin_name = f"Pin: {latitude}, {longitude}"
+    key = firebase.database().generate_key()
+    db.collection("Locations").create_document(key, data={
+        "name": pin_name,
+        "coordinates": GeoPoint(latitude, longitude),
+        "permanent": False
+    })
+    dropped_pins.append(key)
+    db.collection("Users").update_document(user['localId'], {
+        "dropped_pins": dropped_pins
+    })
+    return key
+
+def pull_pin(user, key):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Locations").delete_document(key)
+
 def test():
     firebase = empyrebase.initialize_app(config)
     auth = firebase.auth()
@@ -117,6 +140,11 @@ def test():
 
     user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)
     print(get_user_data(user))
+
+    key = drop_pin(user, 40.42728, -86.91406)
+    print(f"Dropped pin with key: {key}")
+'''
+    pull_pin(user, key)
 
     delete_user(user)
     try:
@@ -128,5 +156,5 @@ def test():
         print("Error: User data retrieval should have failed after deletion.")
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
+        '''
 
-test()

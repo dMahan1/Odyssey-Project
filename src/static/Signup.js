@@ -5,7 +5,6 @@ const signup_username = document.getElementById('signup_username');
 const signup_password = document.getElementById('signup_password');
 const signup_pass_conf = document.getElementById('signup_pass_conf');
 const signup_button = document.getElementById('signup_button');
-const socket = io()
 
 /* On run */
 //signup adjustments
@@ -14,10 +13,10 @@ signup_email.style.fontSize =
     signup_pass_conf.style.fontSize =
     signup_password.style.fontSize =
     signup_button.style.fontSize =
-    logo_height * .175 + "px";
+    height * .175 + "px";
 
-block.style.gap = logo_height * .117 + "px"
-sign_here.style.marginTop = -logo_height * .0875 +"px"
+block.style.gap = height * .117 + "px"
+sign_here.style.marginTop = -height * .0875 +"px"
 
 
 window.addEventListener('resize', () =>{
@@ -26,10 +25,10 @@ window.addEventListener('resize', () =>{
         signup_pass_conf.style.fontSize =
         signup_password.style.fontSize =
         signup_button.style.fontSize =
-        logo_height * .175 + "px";
+        height * .175 + "px";
 
-    block.style.gap = logo_height * .117 + "px"
-    sign_here.style.marginTop = -logo_height * .0875 +"px"
+    block.style.gap = height * .117 + "px"
+    sign_here.style.marginTop = -height * .0875 +"px"
 
 })
 

@@ -1,18 +1,18 @@
 /* Variables */
-import { latitude, longitude, location_success, set_user_data } from "./Signin_up";
+//import { latitude, longitude, location_success, set_user_data } from "./Signin_up";
 const signin_email = document.getElementById('signin_email');
 const signin_password = document.getElementById('signin_password');
 const signin_button = document.getElementById('signin_button');
-const socket = io()
+//const socket = io()
 /* On run */
 
 signin_email.style.fontSize =
     signin_password.style.fontSize =
     signin_button.style.fontSize =
-    logo_height * .175 + "px";
+    height * .175 + "px";
 
-block.style.gap = logo_width * .12 + "px"
-sign_here.style.marginTop = -logo_height * .23 + "px"
+block.style.gap = width * .12 + "px"
+sign_here.style.marginTop = -height * .23 + "px"
 
 
 window.addEventListener('resize', () => {
@@ -20,17 +20,17 @@ window.addEventListener('resize', () => {
     signin_email.style.fontSize =
         signin_password.style.fontSize =
         signin_button.style.fontSize =
-        logo_height * .175 + "px";
+        height * .175 + "px";
 
-    block.style.gap = logo_width * .12 + "px"
-    sign_here.style.marginTop = -logo_height * .23 + "px"
+    block.style.gap = width * .12 + "px"
+    sign_here.style.marginTop = -height * .23 + "px"
 })
 
 signin_button.addEventListener('click', () =>{
     if (location_success) {
-        socket.emit("login", signin_email, signin_password, longitude, latitude)
+        socket.emit("login", signin_email.value, signin_password.value, longitude, latitude)
         socket.on("auth", (user) => {
-            if (user === NULL) {
+            if (user === null) {
                 alert("Incorrect Email or Password");
             }
             else {

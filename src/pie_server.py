@@ -1,7 +1,8 @@
 import os
 from Database import *
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
+from jinja2 import TemplateNotFound
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 
 load_dotenv()
@@ -15,9 +16,16 @@ socketio = SocketIO(app)
 
 users = {}
 
-@app.route('/')
-def index():
-    return render_template('Signin.html')
+@app.route('/', defaults={'page': 'Signin.html'})
+@app.route('/<path:page>')
+def render_page(page):
+    # Prevent directory traversal and absolute paths
+    if '..' in page or page.startswith('/'):
+        abort(400)
+    try:
+        return render_template(page)
+    except TemplateNotFound:
+        abort(404)
 
 @socketio.on('login')
 def login(email, password, longitude, latitude):
