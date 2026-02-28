@@ -23,8 +23,13 @@ void Pathfinder::init() {
         id_indices[locations[i].get_id()] = i;
     }
     this->location_tree = KdTree<double>();
+
+    auto to_radians = [](double degree) {
+        return degree * M_PI / 180.0;
+    };
+    const double EARTH_RADIUS_M = 6'371'000.0;
     for (const Location& loc : locations) {
-        location_tree.insert({loc.get_latitude(), loc.get_longitude()}, &loc);
+        location_tree.insert({loc.get_x(), loc.get_y(), loc.get_z()}, &loc);
     }
     this->adj = std::vector<std::vector<Edge>>(locations.size());
     for (const Edge& edge : builder.get_edges()) {
@@ -51,11 +56,16 @@ const Location *Pathfinder::approximate_location(double latitude, double longitu
     auto dist = [](const void *a, const void *b) {
         const Location* locA = static_cast<const Location*>(a);
         const Location* locB = static_cast<const Location*>(b);
-        return locA->distance_to(*locB);
+        return locA->euclidean_distance_to(*locB);
     };
     Location query("Query", "QueryLoc", latitude, longitude);
-    const Location *closest = static_cast<const Location*>(location_tree.nearest_neighbor({latitude, longitude}, &query, dist));
+    const Location *closest =
+        static_cast<const Location*>(location_tree.nearest_neighbor({query.get_x(), query.get_y(), query.get_z()}, &query, dist));
     return closest;
+}
+
+const Location *Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode mode) const {
+    return approximate_location(latitude, longitude);
 }
 
 Path Pathfinder::reconstruct_path(Location src, Location dst, const std::vector<int>& prev, double total_distance) const {
