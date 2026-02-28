@@ -1,4 +1,5 @@
 #include "Event.hpp"
+#include "Location.hpp"
 
 /**
  * @brief Creates a new Event object
