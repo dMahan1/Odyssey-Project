@@ -9,10 +9,10 @@ const signin_button = document.getElementById('signin_button');
 signin_email.style.fontSize =
     signin_password.style.fontSize =
     signin_button.style.fontSize =
-    logo_height * .175 + "px";
+    height * .175 + "px";
 
-block.style.gap = logo_width * .12 + "px"
-sign_here.style.marginTop = -logo_height * .23 + "px"
+block.style.gap = width * .12 + "px"
+sign_here.style.marginTop = -height * .23 + "px"
 
 
 window.addEventListener('resize', () => {
@@ -20,10 +20,10 @@ window.addEventListener('resize', () => {
     signin_email.style.fontSize =
         signin_password.style.fontSize =
         signin_button.style.fontSize =
-        logo_height * .175 + "px";
+        height * .175 + "px";
 
-    block.style.gap = logo_width * .12 + "px"
-    sign_here.style.marginTop = -logo_height * .23 + "px"
+    block.style.gap = width * .12 + "px"
+    sign_here.style.marginTop = -height * .23 + "px"
 })
 
 signin_button.addEventListener('click', () =>{

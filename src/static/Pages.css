@@ -83,6 +83,7 @@ body {
     display: flex;
     flex-direction: column;
     margin-top: 20px;
+    border: 3px solid black;
 }
 
 #scrap_event, #save_event {
@@ -103,11 +104,39 @@ body {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
-    border-block: thick solid black;
+    border-block: thin solid black;
+}
+
+#popup_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+    overflow: auto;
 }
 
 #all_day {
     cursor: pointer;
 }
+
+#title, #attendees, #location_search, #start, #end {
+    background-color: #EDDEAB;
+    font-family: Rockwell, monaco, monospace;
+    width: 75%;
+    border: 1px solid black;
+    height: 20px;
+
+}
+
+#end_label, #start_label {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #D4AF37;
+    text-align: left;
+    width: 75%;
+    border: 1px solid black;
+}
+
+
 
 
