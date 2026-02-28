@@ -62,7 +62,36 @@ body {
     border: none;
 }
 
-/* Calender css */
+/* Calendar page specific */
+#top_bar {
+    width: 100%;
+    height: 100px;
+    background-color: #E8A2A7;
+    border-block: thick solid black;
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#event_button, #change_mode_button {
+    font-size: 35px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: #E8A2A7;
+    cursor: pointer;
+    border: none;
+}
+
+#Inbox_icon {
+    width: auto;
+    max-height: 100%
+}
+
+#inbox_button {
+    border: none;
+    cursor: pointer;
+    max-height:  100px;
+    background-color: #E8A2A7;
+}
 
 #popup_background{
     display: none;
@@ -91,13 +120,6 @@ body {
     border: none;
     cursor: pointer;
     z-index: 2;
-}
-
-#top_bar {
-    width: 100%;
-    height: 100px;
-    background-color: #E8A2A7;
-    border-block: thick solid black;
 }
 
 #popup_bar {
@@ -136,6 +158,7 @@ body {
     width: 75%;
     border: 1px solid black;
 }
+
 
 
 
