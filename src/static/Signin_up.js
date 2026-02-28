@@ -5,8 +5,20 @@ const block = document.getElementById('sign_background');
 let logo_width = logo.offsetWidth;
 let logo_height = logo.offsetHeight;
 const sign_here = document.getElementById('sign_here');
+export let latitude = 0;
+export let longitude = 0;
+export let location_success = false;
+let user_profile = null;
 
 /* On Run */
+
+window.addEventListener('DOMContentLoaded',() => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(success, fail, {enableHighAccuracy: true});
+    } else {
+        /* Wont let you signin */
+    }
+})
 
 block.style.width = logo_width + 'px';
 block.style.height = 3 * logo_height + 'px';
@@ -23,3 +35,23 @@ window.addEventListener('resize', () => {
     sign_here.style.fontSize = logo_height * .0875 +"px"
 
 })
+
+function success(position) {
+    latitude = position.coords.latitude;
+    longitude = position.coords.longitude;
+    location_success = true;
+    return {latitude: latitude, longitude: longitude};
+}
+
+function fail() {
+    location_success = false;
+}
+
+function get_location_success() {
+    return location_success;
+}
+
+export function set_user_data(user) {
+    user_profile = user;
+    return;
+}
