@@ -32,8 +32,18 @@ signin_button.addEventListener('click', () =>{
                 alert("Incorrect Email or Password");
             }
             else {
-                set_user_data(user);
-                window.location.href = "Map.html";
+                if (typeof user === 'string') {
+                    if (user === "Invalid") {
+                        alert("Please enter a valid email")
+                    }
+                    else {
+                        alert("An error occured. Please try again.")
+                    }
+                }
+                else {
+                    set_user_data(user);
+                    window.location.href = "Map.html";
+                }
             }
         });
     }
