@@ -131,6 +131,13 @@ def pull_pin(user, key):
     db = firebase.firestore(auth_id=user['idToken'])
     if key in db.collection("Locations").get_document(key).to_dict().get("usedInEvent", False):
         db.collection("Locations").delete_document(key)
+            # Remove the pin from the user's dropped_pins
+        dropped_pins = db.collection("Users").get_document(user['localId']).to_dict().get("dropped_pins")
+        if key in dropped_pins:
+            dropped_pins.remove(key)
+            db.collection("Users").update_document(user['localId'], {
+                "dropped_pins": dropped_pins
+            })
     else:
         return "Error: Pin is currently being used in an event and cannot be pulled."
 
