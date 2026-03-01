@@ -12,22 +12,24 @@
 <script src="../static/Pages.js" defer></script>
 <script src="../static/Calendar.js" defer></script>
 <div id="whole_page">
-    
+
+    <!-- Creates the top bar -->
     <div id = "top_bar">
         <button id="event_button">+</button>
         <button id="change_mode_button"> &#9776 </button>
         <button id="inbox_button">
-            <img class="Inbox" src="../../images/Inbox_icon.png" id="Inbox_icon" alt="Inbox icon">
+            <img class="Inbox" src="../static/images/Inbox_icon.png" id="Inbox_icon" alt="Inbox icon">
         </button>
     </div>
 
-    <div id="popup_background">
+    <!-- Event popup -->
+    <div id="event_popup_background">
         <div id="event_popup" class="popup">
-            <div id = "popup_bar">
+            <div id = "event_popup_bar">
                 <button id="scrap_event">&#x2717 </button>
                 <button id="save_event">&#x2713</button>
             </div>
-            <div id = "popup_content">
+            <div id = "event_popup_content">
                 <label for="title"></label> <input type="text" id="title" name="event_title" placeholder="Title">
                 <label for="attendees"></label> <input type="text" id="attendees" name="attendees" placeholder="Attendees">
 
@@ -38,15 +40,28 @@
         </div>
     </div>
 
+    <!-- Inbox popup -->
+    <div id="inbox_popup_background">
+        <div id="inbox_popup" class="popup">
+            <div id = "popup_bar">
+
+            </div>
+            <div id = "popup_content">
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation bar things -->
     <div id="nav_bar">
         <button id="map_button">
-            <img class="Map" src="../../images/Map_icon.png" id="Map_icon" alt="Map icon">
+            <img class="Map" src="../static/images/Map_icon.png" id="Map_icon" alt="Map icon">
         </button>
         <button class="On" id="calendar_button">
-            <img class="Calendar" src="../../images/Calendar_icon.png" id="Calendar_icon" alt="Calendar icon">
+            <img class="Calendar" src="../static/images/Calendar_icon.png" id="Calendar_icon" alt="Calendar icon">
         </button>
         <button id="settings_button">
-            <img class="Settings" src="../../images/Person_icon.png" id="Settings_icon" alt="Settings icon">
+            <img class="Settings" src="../static/images/Person_icon.png" id="Settings_icon" alt="Settings icon">
         </button>
     </div>
 </div>
