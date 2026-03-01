@@ -43,11 +43,44 @@
     <!-- Inbox popup -->
     <div id="inbox_popup_background">
         <div id="inbox_popup" class="popup">
-            <div id = "popup_bar">
-
+            <div id = "inbox_popup_bar">
+                <button id="close_inbox">&#x2717</button>
             </div>
-            <div id = "popup_content">
-
+            <div id = "inbox_popup_content">
+                <div class="event_invite">
+                    <div id="event_details">
+                        <label id="event_name"> Event Name </label>
+                        <label id="event_creator"> Event Creator </label>
+                    </div>
+                    <div id="event_actions">
+                        <button id="accept_event">
+                            &#x2713
+                        </button>
+                        <button id="decline_event">
+                            &#x2717
+                        </button>
+                        <button id="more_event_info">
+                            &#xFF1E
+                        </button>
+                    </div>
+                </div>
+                <div class="friend_invite">
+                    <div id="request_details">
+                        <label> Friend Request </label>
+                        <label> @username </label>
+                    </div>
+                    <div id="friend_actions">
+                        <button id="accept_friend">
+                            &#x2713
+                        </button>
+                        <button id="decline_friend">
+                            &#x2717
+                        </button>
+                        <button id="hidden_button">
+                            &#xFF1E
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

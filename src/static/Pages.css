@@ -93,7 +93,7 @@ body {
     background-color: #E8A2A7;
 }
 
-#event_popup_background{
+#event_popup_background, #inbox_popup_background {
     display: none;
     z-index: 1;
     width: 100%;
@@ -102,7 +102,7 @@ body {
     position: fixed;
 }
 
-#event_popup {
+#event_popup, #inbox_popup {
     background-color: #ABABAB;
     position: absolute;
     left: 50%;
@@ -115,14 +115,14 @@ body {
     border: 3px solid black;
 }
 
-#scrap_event, #save_event {
+#scrap_event, #save_event, #close_inbox {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;
     z-index: 2;
 }
 
-#event_popup_bar {
+#event_popup_bar, #inbox_popup_bar {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
@@ -138,8 +138,12 @@ body {
     overflow: auto;
 }
 
-#all_day {
-    cursor: pointer;
+#inbox_popup_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    overflow: auto;
 }
 
 #title, #attendees, #location_search, #start, #end {
@@ -158,6 +162,48 @@ body {
     width: 75%;
     border: 1px solid black;
 }
+
+.event_invite, .friend_invite {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #7A7A7A;
+    border: 1px solid black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    width: 90%;
+}
+
+#event_details, #request_details {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+#accept_event, #accept_friend {
+    border-radius: 50%;
+    background-color: #66ff00;
+    cursor: pointer;
+}
+
+#decline_event, #decline_friend {
+    border-radius: 50%;
+    background-color: #FF000D;
+    cursor: pointer;
+}
+
+#more_event_info {
+    background-color: #7A7A7A;
+    border: none;
+    cursor: pointer;
+}
+
+#hidden_button {
+    color: #7A7A7A;
+    background-color: #7A7A7A;
+    border: none;
+}
+
 
 
 
