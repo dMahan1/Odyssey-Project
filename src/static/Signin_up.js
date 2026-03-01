@@ -5,6 +5,8 @@ const sign_here = document.getElementById('sign_here');
 let latitude = 0;
 let longitude = 0;
 let location_success = false;
+let user_profile = null;
+const socket = io()
 
 let width = .25 * window.innerWidth;
 let height = .11 * window.innerWidth;
@@ -12,7 +14,7 @@ let height = .11 * window.innerWidth;
 /* On Run */
 
 window.addEventListener('DOMContentLoaded',() => {
-    if (navigator.geolocation) { 
+    if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(success, fail, {enableHighAccuracy: true});
     } else {
         /* Wont let you signin */
@@ -34,9 +36,6 @@ window.addEventListener('resize', () => {
 
     sign_here.style.fontSize = height * .0875 +"px"
 
-    console.log(height);
-    console.log(window.innerWidth);
-
 })
 
 function success(position) {
@@ -52,4 +51,9 @@ function fail() {
 
 function get_location_success() {
     return location_success;
+}
+
+function set_user_data(user) {
+    user_profile = user;
+    return;
 }

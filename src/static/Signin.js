@@ -1,9 +1,7 @@
 /* Variables */
-
 const signin_email = document.getElementById('signin_email');
 const signin_password = document.getElementById('signin_password');
 const signin_button = document.getElementById('signin_button');
-
 /* On run */
 
 signin_email.style.fontSize =
@@ -27,5 +25,19 @@ window.addEventListener('resize', () => {
 })
 
 signin_button.addEventListener('click', () =>{
-    window.location.href = "Map.html";
+    if (location_success) {
+        socket.emit("login", signin_email.value, signin_password.value, longitude, latitude)
+        socket.on("auth", (user) => {
+            if (user === null) {
+                alert("Incorrect Email or Password");
+            }
+            else {
+                set_user_data(user);
+                window.location.href = "Map.html";
+            }
+        });
+    }
+    else {
+        alert("Please allow location access for this application");
+    }
 })
