@@ -1,20 +1,158 @@
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import auth
-from firebase_admin import firestore
-from pathlib import Path
 import os
+from dotenv import load_dotenv
+from pathlib import Path
+import empyrebase
+from empyrebase.types.geopoint import GeoPoint
 
 # Get the user's home directory path
-home_dir = Path.home()
+#home_dir = Path.home()
 
 # Server Requires firebase key downloaded and stored seperately
 # Not included in code but shared with server computer manually
 # Change path for change in server, currently accesses OdysseyFirebase folder in a user's home directory.
-home_dir = Path.home()
-path = home_dir/"OdysseyFirebase"
+#home_dir = Path.home()
+#path = home_dir/"OdysseyFirebase"
+load_dotenv()
+config = {
+  "apiKey": os.getenv("API_KEY"),
+  "authDomain": os.getenv("AUTH_DOMAIN"),
+  "projectId": os.getenv("PROJECT_ID"),
+  "databaseURL": os.getenv("DATABASE_URL"),
+  "storageBucket": os.getenv("STORAGE_BUCKET")
+  #"serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
+}
 
-cred = credentials.Certificate(path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json")
-defaultApp = firebase_admin.initialize_app(cred)
+firebase = empyrebase.initialize_app(config)
+auth = firebase.auth()
 
-print(defaultApp.name)
+def auth_user(email, password, latitude, longitude):
+    print(f"Authenticating user with email: {email} and password: {password}")
+    print(f"Received location: Latitude {latitude}, Longitude {longitude}")
+
+    # Log the user in
+    user = auth.sign_in_with_email_and_password(email, password)
+
+    # Update the user's location
+    update_user_location(user, latitude, longitude)
+
+    return user
+
+def get_user_data(user):
+    # Get a reference to the database service
+    db = firebase.firestore(auth_id=user['idToken'])
+
+    # Get a reference to the user's data
+    user_data = db.collection("Users").get_document(user['localId']).to_dict()
+
+    return user_data
+
+def create_user(email, username, password, latitude, longitude):
+
+    # Create a new user
+    user = auth.create_user_with_email_and_password(email, password)
+
+    db = firebase.firestore(auth_id=user['idToken'])
+
+    data = {
+        "email": email,
+        "username": username,
+        "attended_event_ids": [],
+        "friend_ids": [],
+        "owned_feature_ids": [],
+        "dropped_pins": [],
+        "curr_location": {
+            "latitude": latitude,
+            "longitude": longitude
+        },
+        "location_public": True,
+        "icon_image_path": "../images/Person_icon.png",
+        "toucoins": 0,
+        "new_messages": []
+    }
+
+    db.collection("Users").create_document(user['localId'], data)
+
+    return user
+
+def update_user_location(user, latitude, longitude):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Users").update_document(user['localId'], {
+        "curr_location": {
+            "latitude": latitude,
+            "longitude": longitude
+        }
+    })
+
+def update_user_location_public(user, status):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Users").update_document(user['localId'], {
+        "location_public": status
+    })
+
+def update_user_icon_image_path(user, path):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Users").update_document(user['localId'], {
+        "icon_image_path": path
+    })
+
+def update_user_toucoins(user, amount):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Users").update_document(user['localId'], {
+        "toucoins": amount
+    })
+
+def delete_user(user):
+
+    # Delete the user's data
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Users").delete_document(user['localId'])
+
+    # Delete the user
+    auth.delete_user_account(user['idToken'])
+
+def drop_pin(user, latitude, longitude):
+    db = firebase.firestore(auth_id=user['idToken'])
+    dropped_pins = db.collection("Users").get_document(user['localId']).to_dict().get("dropped_pins")
+    pin_name = f"Pin: {latitude}, {longitude}"
+    key = firebase.database().generate_key()
+    db.collection("Locations").create_document(key, data={
+        "name": pin_name,
+        "coordinates": GeoPoint(latitude, longitude),
+        "permanent": False
+    })
+    dropped_pins.append(key)
+    db.collection("Users").update_document(user['localId'], {
+        "dropped_pins": dropped_pins
+    })
+    return key
+
+def pull_pin(user, key):
+    db = firebase.firestore(auth_id=user['idToken'])
+    db.collection("Locations").delete_document(key)
+
+def test():
+    firebase = empyrebase.initialize_app(config)
+    auth = firebase.auth()
+
+    user = create_user("dylan.mahan@gmail.com", "Dylan AutoTest", "Test123", 40.42728, -86.91406)
+    print(get_user_data(user))
+
+    user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)
+    print(get_user_data(user))
+
+    key = drop_pin(user, 40.42728, -86.91406)
+    print(f"Dropped pin with key: {key}")
+
+    pull_pin(user, key)
+
+    delete_user(user)
+    try:
+        user = auth.refresh(user['refreshToken'])
+    except Exception:
+        pass
+    try:
+        get_user_data(user)
+        print("Error: User data retrieval should have failed after deletion.")
+    except Exception as e:
+        print("User deleted successfully, data retrieval failed as expected.")
+

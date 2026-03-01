@@ -1,0 +1,165 @@
+body {
+    background-color: #ABABAB;
+    margin: 0;
+    padding: 0;
+
+}
+
+#whole_page {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+#nav_bar {
+    background-color: #E8A2A7;
+    width: 100%;
+    height: 100px;
+    margin-top: auto;
+    display: flex;
+    justify-content: center;
+    border-block: thick solid black;
+}
+
+#friends_bar {
+    background-color: #7A7A7A;
+    width: 10px;
+    height: 10px;
+}
+
+#settings_button.On, #calendar_button.On, #map_button.On {
+    font-size: 20px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: #CE666D;
+    cursor: pointer;
+}
+
+#settings_button:hover, #calendar_button:hover, #map_button:hover {
+    background-color: #B41923;
+}
+
+#calendar_button, #map_button, #settings_button {
+    font-size: 20px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: #E8A2A7;
+    cursor: pointer;
+    border: none;
+}
+
+#Calendar_icon, #Settings_icon, #Map_icon {
+    width: auto;
+    max-height: 100%;
+}
+
+#logout {
+    font-size: 20px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: black;
+    color: white;
+    cursor: pointer;
+    border: none;
+}
+
+/* Calendar page specific */
+#top_bar {
+    width: 100%;
+    height: 100px;
+    background-color: #E8A2A7;
+    border-block: thick solid black;
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#event_button, #change_mode_button {
+    font-size: 35px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: #E8A2A7;
+    cursor: pointer;
+    border: none;
+}
+
+#Inbox_icon {
+    width: auto;
+    max-height: 100%
+}
+
+#inbox_button {
+    border: none;
+    cursor: pointer;
+    max-height:  100px;
+    background-color: #E8A2A7;
+}
+
+#event_popup_background{
+    display: none;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    position: fixed;
+}
+
+#event_popup {
+    background-color: #ABABAB;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 75%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    border: 3px solid black;
+}
+
+#scrap_event, #save_event {
+    background-color: #E8A2A7;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#event_popup_bar {
+    background-color: #E8A2A7;
+    display: flex;
+    justify-content: space-between;
+    border-block: thin solid black;
+}
+
+#event_popup_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+    overflow: auto;
+}
+
+#all_day {
+    cursor: pointer;
+}
+
+#title, #attendees, #location_search, #start, #end {
+    background-color: #EDDEAB;
+    font-family: Rockwell, monaco, monospace;
+    width: 75%;
+    border: 1px solid black;
+    height: 20px;
+
+}
+
+#end_label, #start_label {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #D4AF37;
+    text-align: left;
+    width: 75%;
+    border: 1px solid black;
+}
+
+
+
+
+
