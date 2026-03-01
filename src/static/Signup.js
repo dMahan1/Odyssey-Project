@@ -1,5 +1,4 @@
 /* Variables */
-import { latitude, longitude, location_success, set_user_data } from "./Signin_up";
 const signup_email = document.getElementById('signup_email');
 const signup_username = document.getElementById('signup_username');
 const signup_password = document.getElementById('signup_password');
