@@ -19,6 +19,11 @@ users = {}
 @app.route('/', defaults={'page': 'Signin.html'})
 @app.route('/<path:page>')
 def render_page(page):
+    print(f"Rendering page: {page!r}")
+    # Handle empty page or root access
+    if not page:
+        page = 'Signin.html'
+    
     # Prevent directory traversal and absolute paths
     if '..' in page or page.startswith('/'):
         abort(400)
