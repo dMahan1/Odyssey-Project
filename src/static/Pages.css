@@ -53,7 +53,6 @@ body {
     max-height: 100%;
 }
 
-/* Calender css */
 #logout {
     font-size: 20px;
     font-family: Rockwell, monaco, monospace;
@@ -61,6 +60,37 @@ body {
     color: white;
     cursor: pointer;
     border: none;
+}
+
+/* Calendar page specific */
+#top_bar {
+    width: 100%;
+    height: 100px;
+    background-color: #E8A2A7;
+    border-block: thick solid black;
+    display: flex;
+    justify-content: space-between;
+
+}
+
+#event_button, #change_mode_button {
+    font-size: 35px;
+    font-family: Rockwell, monaco, monospace;
+    background-color: #E8A2A7;
+    cursor: pointer;
+    border: none;
+}
+
+#Inbox_icon {
+    width: auto;
+    max-height: 100%
+}
+
+#inbox_button {
+    border: none;
+    cursor: pointer;
+    max-height:  100px;
+    background-color: #E8A2A7;
 }
 
 #popup_background{
@@ -73,22 +103,63 @@ body {
 }
 
 #event_popup {
-    background-color: white;
+    background-color: #ABABAB;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     width: 50%;
+    height: 75%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    border: 3px solid black;
 }
 
-#close {
-    position: relative;
-    background-color: white;
+#scrap_event, #save_event {
+    background-color: #E8A2A7;
+    border: none;
     cursor: pointer;
     z-index: 2;
 }
 
-#top_bar {
-    width: 100%;
-    height: 100px;
+#popup_bar {
     background-color: #E8A2A7;
-    border-block: thick solid black;
+    display: flex;
+    justify-content: space-between;
+    border-block: thin solid black;
 }
+
+#popup_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+    overflow: auto;
+}
+
+#all_day {
+    cursor: pointer;
+}
+
+#title, #attendees, #location_search, #start, #end {
+    background-color: #EDDEAB;
+    font-family: Rockwell, monaco, monospace;
+    width: 75%;
+    border: 1px solid black;
+    height: 20px;
+
+}
+
+#end_label, #start_label {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #D4AF37;
+    text-align: left;
+    width: 75%;
+    border: 1px solid black;
+}
+
+
+
 
 

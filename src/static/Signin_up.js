@@ -1,15 +1,15 @@
 /* Variables */
 
-const logo =  document.getElementById('logo');
 const block = document.getElementById('sign_background');
-let width = .25 * window.innerWidth;
-let height = .11 * window.innerHeight;
 const sign_here = document.getElementById('sign_here');
 let latitude = 0;
 let longitude = 0;
 let location_success = false;
 let user_profile = null;
 const socket = io()
+
+let width = .25 * window.innerWidth;
+let height = .11 * window.innerWidth;
 
 /* On Run */
 
@@ -28,12 +28,13 @@ sign_here.style.fontSize = height * .0875 +"px"
 
 // On window resize to adjust
 window.addEventListener('resize', () => {
-    logo_width = logo.offsetWidth;
-    block.style.width = logo_width + 'px';
-    logo_height = logo.offsetHeight;
-    block.style.height = 3 * logo_height + 'px';
+    width = .25 * window.innerWidth;
+    height = .11 * window.innerWidth;
 
-    sign_here.style.fontSize = logo_height * .0875 +"px"
+    block.style.width = width + 'px';
+    block.style.height = 3 * height + 'px';
+
+    sign_here.style.fontSize = height * .0875 +"px"
 
 })
 
