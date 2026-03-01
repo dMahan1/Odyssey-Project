@@ -93,7 +93,7 @@ body {
     background-color: #E8A2A7;
 }
 
-#popup_background{
+#event_popup_background{
     display: none;
     z-index: 1;
     width: 100%;
@@ -122,14 +122,14 @@ body {
     z-index: 2;
 }
 
-#popup_bar {
+#event_popup_bar {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
     border-block: thin solid black;
 }
 
-#popup_content {
+#event_popup_content {
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -4,11 +4,11 @@ const top_bar = document.getElementById('top_bar');
 
 const scrap_event = document.getElementById('scrap_event');
 const save_event = document.getElementById('save_event');
-const popup = document.getElementById('popup_background');
+const popup = document.getElementById('event_popup_background');
 const popup_open = document.getElementById('event_button');
-const popup_top_bar = document.getElementById('popup_bar');
+const popup_top_bar = document.getElementById('event_popup_bar');
 const all_day = document.getElementById('all_day');
-const popup_content = document.getElementById('popup_content');
+const popup_content = document.getElementById('event_popup_content');
 
 const title = document.getElementById('title');
 const attendees = document.getElementById('attendees');
