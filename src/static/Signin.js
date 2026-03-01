@@ -1,9 +1,7 @@
 /* Variables */
-//import { latitude, longitude, location_success, set_user_data } from "./Signin_up";
 const signin_email = document.getElementById('signin_email');
 const signin_password = document.getElementById('signin_password');
 const signin_button = document.getElementById('signin_button');
-//const socket = io()
 /* On run */
 
 signin_email.style.fontSize =
