@@ -47,7 +47,7 @@ class Pathfinder {
             }
         }
         void insert_location(const Location& new_loc);
-        void insert_edge(Edge& new_edge);
+        void insert_edge(const Edge& new_edge);
     private:
         void init();
         Pathfinder() {
