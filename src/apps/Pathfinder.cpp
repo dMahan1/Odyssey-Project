@@ -135,5 +135,4 @@ void Pathfinder::insert_location(const Location& new_loc) {
 void Pathfinder::insert_edge(const Edge& new_edge) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     adj[id_indices.at(new_edge.get_vertex1())].push_back(new_edge);
-    adj[id_indices.at(new_edge.get_vertex2())].push_back(new_edge);
 }
