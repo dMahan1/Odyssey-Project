@@ -2,13 +2,14 @@
 
 const logo =  document.getElementById('logo');
 const block = document.getElementById('sign_background');
-let logo_width = logo.offsetWidth;
-let logo_height = logo.offsetHeight;
+let width = .25 * window.innerWidth;
+let height = .11 * window.innerHeight;
 const sign_here = document.getElementById('sign_here');
-export let latitude = 0;
-export let longitude = 0;
-export let location_success = false;
+let latitude = 0;
+let longitude = 0;
+let location_success = false;
 let user_profile = null;
+const socket = io()
 
 /* On Run */
 
@@ -20,10 +21,10 @@ window.addEventListener('DOMContentLoaded',() => {
     }
 })
 
-block.style.width = logo_width + 'px';
-block.style.height = 3 * logo_height + 'px';
+block.style.width = width + 'px';
+block.style.height = 3 * height + 'px';
 
-sign_here.style.fontSize = logo_height * .0875 +"px"
+sign_here.style.fontSize = height * .0875 +"px"
 
 // On window resize to adjust
 window.addEventListener('resize', () => {
@@ -51,7 +52,7 @@ function get_location_success() {
     return location_success;
 }
 
-export function set_user_data(user) {
+function set_user_data(user) {
     user_profile = user;
     return;
 }
