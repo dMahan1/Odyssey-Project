@@ -118,7 +118,8 @@ def drop_pin(user, latitude, longitude):
     db.collection("Locations").create_document(key, data={
         "name": pin_name,
         "coordinates": GeoPoint(latitude, longitude),
-        "permanent": False
+        "permanent": False,
+        "usedInEvent": False
     })
     dropped_pins.append(key)
     db.collection("Users").update_document(user['localId'], {
@@ -128,7 +129,49 @@ def drop_pin(user, latitude, longitude):
 
 def pull_pin(user, key):
     db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Locations").delete_document(key)
+    if key in db.collection("Locations").get_document(key).to_dict().get("usedInEvent", False):
+        db.collection("Locations").delete_document(key)
+    else:
+        return "Error: Pin is currently being used in an event and cannot be pulled."
+
+def create_event(user, name, start_time, end_time, locationid, attendee_ids):
+    db = firebase.firestore(auth_id=user['idToken'])
+    data = {
+        "creator_id": user['localId'],
+        "name": name,
+        "start_time": start_time,
+        "end_time": end_time,
+        "locationid": locationid,
+        "attendee_ids": attendee_ids
+    }
+    key = firebase.database().generate_key()
+    db.collection("Events").create_document(key, data=data)
+
+    db.collection("Locations").update_document(locationid, {
+        "usedInEvent": True
+    })
+
+    db.collection("Users").update_document(user['localId'], {
+        "attended_event_ids": empyrebase.firestore.ArrayUnion([key])
+    })
+
+    return key
+
+def delete_event(user, event_id):
+    db = firebase.firestore(auth_id=user['idToken'])
+    event = db.collection("Events").get_document(event_id).to_dict()
+    if event["creator_id"] != user['localId']:
+        raise Exception("User is not the creator of the event and cannot delete it.")
+    
+    # Remove the event from all attendees' attended_event_ids
+    attendee_ids = event.get("attendee_ids", [])
+    for attendee_id in attendee_ids:
+        db.collection("Users").update_document(attendee_id, {
+            "attended_event_ids": empyrebase.firestore.ArrayRemove([event_id])
+        })
+
+    # Delete the event document
+    db.collection("Events").delete_document(event_id)
 
 def test():
     firebase = empyrebase.initialize_app(config)
