@@ -1,5 +1,4 @@
 /* Variables */
-import { latitude, longitude, location_success, set_user_data } from "./Signin_up";
 const signup_email = document.getElementById('signup_email');
 const signup_username = document.getElementById('signup_username');
 const signup_password = document.getElementById('signup_password');
@@ -34,11 +33,15 @@ window.addEventListener('resize', () =>{
 
 signup_button.addEventListener('click', () =>{
     if (location_success) {
-        socket.emit("signup", signup_email, signup_password, signup_username, latitude, longitude)
-        socket.on("auth", (user) => {
-            set_user_data(user);
-            window.location.href = "Map.html";
-        });
+        if (signup_password.value === signup_pass_conf.value) {
+            socket.emit("signup", signup_email.value, signup_password.value, signup_username.value, latitude, longitude)
+            socket.on("auth", (user) => {
+                set_user_data(user);
+                window.location.href = "Map.html";
+            }); 
+        } else {
+            alert("Passwords do not match");
+        }
     }
     else {
         alert("Please allow location access for this application");

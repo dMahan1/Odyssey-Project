@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
-import firebase
 from empyrebase.types.geopoint import GeoPoint
 
 # Get the user's home directory path
@@ -143,7 +142,7 @@ def test():
 
     key = drop_pin(user, 40.42728, -86.91406)
     print(f"Dropped pin with key: {key}")
-'''
+
     pull_pin(user, key)
 
     delete_user(user)
@@ -156,5 +155,4 @@ def test():
         print("Error: User data retrieval should have failed after deletion.")
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
-        '''
 
