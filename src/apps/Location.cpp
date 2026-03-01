@@ -32,7 +32,6 @@ Location::Location(std::string id, std::string name, double latitude, double lon
     this->name = name;
     this->latitude = latitude;
     this->longitude = longitude;
-    this->compute_cartesian_coordinates();
 }
 
 /**
@@ -97,7 +96,6 @@ double Location::get_latitude() const {
  */
 void Location::set_longitude(double longitude) {
     this->longitude = longitude;
-    this->compute_cartesian_coordinates();
 }
 
 /**
@@ -107,7 +105,6 @@ void Location::set_longitude(double longitude) {
  */
 void Location::set_latitude(double latitude) {
     this->latitude = latitude;
-    this->compute_cartesian_coordinates();
 }
 
 /**
@@ -142,8 +139,8 @@ double Location::distance_to(const Location& other) const {
  * @return The Euclidean distance in meters between the two locations
  */
 double Location::euclidean_distance_to(const Location& other) const {
-    double dx = this->x - other.x;
-    double dy = this->y - other.y;
-    double dz = this->z - other.z;
+    double dx = this->get_x() - other.get_x();
+    double dy = this->get_y() - other.get_y();
+    double dz = this->get_z() - other.get_z();
     return sqrt((dx * dx) + (dy * dy) + (dz * dz));
 }
