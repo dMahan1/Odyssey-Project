@@ -30,12 +30,20 @@ def auth_user(email, password, latitude, longitude):
     print(f"Received location: Latitude {latitude}, Longitude {longitude}")
 
     # Log the user in
-    user = auth.sign_in_with_email_and_password(email, password)
+    try:
+        user = auth.sign_in_with_email_and_password(email, password)
+    except Exception as e:
+        err = str(e)
+        if "INVALID_EMAIL" in err:
+            return "Invalid"
+        else:
+            return "Error"
+        
+    else: 
+        # Update the user's location
+        update_user_location(user, latitude, longitude)
 
-    # Update the user's location
-    update_user_location(user, latitude, longitude)
-
-    return user
+        return user
 
 def get_user_data(user):
     # Get a reference to the database service
@@ -49,30 +57,42 @@ def get_user_data(user):
 def create_user(email, username, password, latitude, longitude):
 
     # Create a new user
-    user = auth.create_user_with_email_and_password(email, password)
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+    except Exception as e:
+        err = str(e)
+        if "WEAK_PASSWORD" in err:
+            return "Weak"
+        elif "EMAIL_EXISTS" in err:
+            return "Exist"
+        elif "INVALID_EMAIL" in err:
+            return "Invalid"
+        else:
+            return "Error"
+        
+    else: 
+        db = firebase.firestore(auth_id=user['idToken'])
 
-    db = firebase.firestore(auth_id=user['idToken'])
+        data = {
+            "email": email,
+            "username": username,
+            "attended_event_ids": [],
+            "friend_ids": [],
+            "owned_feature_ids": [],
+            "dropped_pins": [],
+            "curr_location": {
+                "latitude": latitude,
+                "longitude": longitude
+            },
+            "location_public": True,
+            "icon_image_path": "../images/Person_icon.png",
+            "toucoins": 0,
+            "new_messages": []
+        }
 
-    data = {
-        "email": email,
-        "username": username,
-        "attended_event_ids": [],
-        "friend_ids": [],
-        "owned_feature_ids": [],
-        "dropped_pins": [],
-        "curr_location": {
-            "latitude": latitude,
-            "longitude": longitude
-        },
-        "location_public": True,
-        "icon_image_path": "../images/Person_icon.png",
-        "toucoins": 0,
-        "new_messages": []
-    }
+        db.collection("Users").create_document(user['localId'], data)
 
-    db.collection("Users").create_document(user['localId'], data)
-
-    return user
+        return user
 
 def update_user_location(user, latitude, longitude):
     db = firebase.firestore(auth_id=user['idToken'])
