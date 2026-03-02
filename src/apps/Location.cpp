@@ -130,3 +130,17 @@ double Location::distance_to(const Location& other) const {
     const double EARTH_RADIUS_M = 6'371'000;
     return EARTH_RADIUS_M * angular_dist;
 }
+
+/**
+ * @brief Calculate the Euclidean distance in meters between this
+ * location and another location by treating the Earth as a sphere
+ *
+ * @param other The other location to calculate the distance to
+ * @return The Euclidean distance in meters between the two locations
+ */
+double Location::euclidean_distance_to(const Location& other) const {
+    double dx = this->get_x() - other.get_x();
+    double dy = this->get_y() - other.get_y();
+    double dz = this->get_z() - other.get_z();
+    return sqrt((dx * dx) + (dy * dy) + (dz * dz));
+}
