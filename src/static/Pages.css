@@ -174,7 +174,7 @@ body {
     width: 90%;
 }
 
-#event_details, #request_details {
+.event_details, .request_details {
     display: flex;
     flex-direction: column;
     align-items: start;
