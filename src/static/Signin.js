@@ -25,15 +25,28 @@ window.addEventListener('resize', () => {
 })
 
 signin_button.addEventListener('click', () =>{
+    seenAlert = false;
     if (location_success) {
         socket.emit("login", signin_email.value, signin_password.value, longitude, latitude)
         socket.on("auth", (user) => {
+            if (seenAlert) return;
+            seenAlert = true;
             if (user === null) {
                 alert("Incorrect Email or Password");
             }
             else {
-                set_user_data(user);
-                window.location.href = "Map.html";
+                if (typeof user === 'string') {
+                    if (user === "Invalid") {
+                        alert("Please enter a valid email")
+                    }
+                    else {
+                        alert("An error occured. Please try again.")
+                    }
+                }
+                else {
+                    set_user_data(user);
+                    window.location.href = "Map.html";
+                }
             }
         });
     }
