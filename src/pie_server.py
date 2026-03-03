@@ -20,6 +20,11 @@ users = {}
 @app.route('/<path:page>')
 def render_page(page):
     print(f"Rendering page: {page!r}")
+
+    # Don't intercept static file requests
+    if page.startswith('static/'):
+        abort(404)
+
     # Handle empty page or root access
     if not page:
         page = 'Signin.html'
@@ -67,4 +72,4 @@ def update_toucoins(user, amount):
 
 
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app, port=8080)

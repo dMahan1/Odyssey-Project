@@ -32,10 +32,13 @@ window.addEventListener('resize', () =>{
 })
 
 signup_button.addEventListener('click', () =>{
+    seenAlert = false;
     if (location_success) {
         if (signup_password.value === signup_pass_conf.value) {
             socket.emit("signup", signup_email.value, signup_password.value, signup_username.value, latitude, longitude)
             socket.on("auth", (user) => {
+                if (seenAlert) return;
+                seenAlert = true;
                 if(user != null) {
                     if (typeof user === 'string') {
                         if (user === "Weak") {
