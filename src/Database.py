@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
-from empyrebase.types.geopoint import GeoPoint
 
 # Get the user's home directory path
 #home_dir = Path.home()
@@ -143,10 +142,15 @@ def drop_pin(user, latitude, longitude):
     key = firebase.database().generate_key()
     db.child("Locations").child(key).set({
         "name": pin_name,
-        "coordinates": GeoPoint(latitude, longitude),
+        "coordinates": {
+            "latitude": latitude,
+            "longitude": longitude
+        },
         "permanent": False,
         "usedInEvent": False
     }, token=user['idToken'])
+    if dropped_pins is None:
+        dropped_pins = []
     dropped_pins.append(key)
     db.child("Users").child(user['localId']).update({
         "dropped_pins": dropped_pins
@@ -155,7 +159,7 @@ def drop_pin(user, latitude, longitude):
 
 def pull_pin(user, key):
     db = firebase.database()
-    if key in db.child("Locations").child(key).get(token=user['idToken']).val().get("usedInEvent", False):
+    if db.child("Locations").child(key).child("usedInEvent").get(token=user['idToken']).val() is False:
         db.child("Locations").child(key).remove(token=user['idToken'])
             # Remove the pin from the user's dropped_pins
         dropped_pins = db.child("Users").child(user['localId']).get(token=user['idToken']).val().get("dropped_pins")
@@ -184,8 +188,13 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
         "usedInEvent": True
     }, token=user['idToken'])
 
+    events = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
+    if events is None:
+        events = []
+    events.append(key)
+
     db.child("Users").child(user['localId']).update({
-        "attended_event_ids": empyrebase.firestore.ArrayUnion([key])
+        "attended_event_ids": events
     }, token=user['idToken'])
 
     return key
@@ -199,8 +208,11 @@ def delete_event(user, event_id):
     # Remove the event from all attendees' attended_event_ids
     attendee_ids = event.get("attendee_ids", [])
     for attendee_id in attendee_ids:
+        events = db.child("Users").child(attendee_id).child("attended_event_ids").get(token=user['idToken']).val()
+        if events and event_id in events:
+            events.remove(event_id)
         db.child("Users").child(attendee_id).update({
-            "attended_event_ids": empyrebase.firestore.ArrayRemove([event_id])
+            "attended_event_ids": events
         }, token=user['idToken'])
 
     # Delete the event document
@@ -219,7 +231,19 @@ def test():
     key = drop_pin(user, 40.42728, -86.91406)
     print(f"Dropped pin with key: {key}")
 
+    event = create_event(user, "Test Event", "2024-01-01T12:00:00Z", "2024-01-01T14:00:00Z", key, [user['localId']])
+    print(f"Created Event: {get_user_data(user)}")
+
+    try:
+        pull_pin(user, key)
+        print("Error: Pin pull should have failed since it's being used in an event.")
+    except Exception as e:
+        print(f"Error occurred while pulling pin: {e}")
+    
+    delete_event(user, event)
+
     pull_pin(user, key)
+    print(f"Pin pulled successfully. Current user data: {get_user_data(user)}")
 
     delete_user(user)
     try:
@@ -232,3 +256,4 @@ def test():
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
 
+test()
