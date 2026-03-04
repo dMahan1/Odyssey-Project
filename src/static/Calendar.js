@@ -25,6 +25,22 @@ const close_inbox = document.getElementById('close_inbox');
 const inbox_popup_top_bar = document.getElementById('inbox_popup_bar');
 const inbox_popup_content = document.getElementById('inbox_popup_content');
 
+// Calendar specific variables
+const day_textfield = document.getElementById('day');
+const previous_day = document.getElementById('prev_day');
+const next_day = document.getElementById('next_day');
+
+let current_date = new Date();
+let current_day = current_date.getDate();
+let current_dow = current_date.getDay();
+let current_month = current_date.getMonth();
+let current_year = current_date.getFullYear();
+
+const months = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 /* Functions */
 
 function change_inbox_size() {
@@ -77,10 +93,16 @@ function create_friend_request(friend_username) {
     inbox_popup_content.appendChild(new_friend_request);
 }
 
+function make_calendar(day, dow, month, year) {
+    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+}
+
 /* On run */
 top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
+make_calendar(current_day, current_dow, current_month, current_year);
+
 
 /* Event Listeners */
 window.addEventListener('resize', function(){
@@ -112,4 +134,44 @@ inbox_button.addEventListener('click', () => {
 
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
+})
+
+previous_day.addEventListener('click', () => {
+    current_day--;
+    current_dow--;
+    if (current_day < 1) {
+        current_month--;
+        current_day =  new Date(current_year, current_month + 1, current_day).getDate();
+    }
+
+    if (current_dow < 0) {
+      current_dow = 6;
+    }
+
+    if (current_month < 0) {
+        current_year--;
+        current_month = 11;
+        current_day =  new Date(current_year, current_month + 1, current_day).getDate();
+    }
+    make_calendar(current_day, current_dow, current_month, current_year);
+})
+
+next_day.addEventListener('click', () => {
+    current_day++;
+    current_dow++;
+    if (current_day > new Date(current_year, current_month + 1, current_day).getDate()) {
+        current_day = 1;
+        current_month++;
+    }
+
+    if (current_dow > 6) {
+        current_dow = 0;
+    }
+
+    if (current_month > 11) {
+        current_year++;
+        current_month = 0;
+    }
+
+    make_calendar(current_day, current_dow, current_month, current_year);
 })
