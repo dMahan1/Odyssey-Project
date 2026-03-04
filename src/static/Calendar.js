@@ -141,7 +141,7 @@ previous_day.addEventListener('click', () => {
     current_dow--;
     if (current_day < 1) {
         current_month--;
-        current_day =  new Date(current_year, current_month + 1, current_day).getDate();
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
     }
 
     if (current_dow < 0) {
@@ -151,7 +151,7 @@ previous_day.addEventListener('click', () => {
     if (current_month < 0) {
         current_year--;
         current_month = 11;
-        current_day =  new Date(current_year, current_month + 1, current_day).getDate();
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
     }
     make_calendar(current_day, current_dow, current_month, current_year);
 })
@@ -159,7 +159,7 @@ previous_day.addEventListener('click', () => {
 next_day.addEventListener('click', () => {
     current_day++;
     current_dow++;
-    if (current_day > new Date(current_year, current_month + 1, current_day).getDate()) {
+    if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
         current_day = 1;
         current_month++;
     }
