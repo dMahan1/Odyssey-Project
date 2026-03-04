@@ -23,7 +23,6 @@ void Pathfinder::init() {
     }
     this->location_tree = KdTree<double>();
 
-    const double EARTH_RADIUS_M = 6'371'000.0;
     for (auto& loc : locations) {
         location_tree.insert({loc->get_x(), loc->get_y(), loc->get_z()}, loc.get());
     }

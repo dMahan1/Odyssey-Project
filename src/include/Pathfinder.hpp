@@ -28,7 +28,7 @@ class Pathfinder {
         Path route(Location src, Location dst, bool bad_weather, TraversalMode mode) const;
         static Pathfinder& get_instance() {
             std::unique_lock<std::shared_mutex> lock(mtx); // static init should be thread-safe,
-                                                   // but it's better to exercise caution.
+                                                           // but it's better to exercise caution.
             static Pathfinder instance = Pathfinder();
             return instance;
         }

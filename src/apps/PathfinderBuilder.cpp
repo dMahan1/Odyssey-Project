@@ -79,6 +79,10 @@ void PathfinderBuilder::load_data_debug() {
     edges.emplace_back(Q.get_id(), F.get_id(), tunnel_dist, true, true, false, false, false);
 }
 
+void PathfinderBuilder::load_data_demo() {
+   // TODO
+}
+
 void PathfinderBuilder::load_data_release() {
     // TODO: Implement data loading for release mode
 }

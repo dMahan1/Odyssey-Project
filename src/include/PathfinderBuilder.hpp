@@ -6,6 +6,7 @@
 
 enum Mode {
     DEBUG,
+    DEMO,
     RELEASE
 };
 
@@ -23,12 +24,21 @@ private:
     std::vector<Location> locations;
     std::vector<Edge> edges;
     void load_data() {
-        if (mode == DEBUG) {
-            load_data_debug();
-        } else {
-            load_data_release();
+        switch (mode) {
+            case DEBUG:
+                load_data_debug();
+                break;
+            case DEMO:
+                load_data_demo();
+                break;
+            case RELEASE:
+                load_data_release();
+                break;
+            default:
+                break;
         }
     };
     void load_data_debug();
+    void load_data_demo();
     void load_data_release();
 };
