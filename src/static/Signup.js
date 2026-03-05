@@ -32,12 +32,39 @@ window.addEventListener('resize', () =>{
 })
 
 signup_button.addEventListener('click', () =>{
+    seenAlert = false;
     if (location_success) {
         if (signup_password.value === signup_pass_conf.value) {
             socket.emit("signup", signup_email.value, signup_password.value, signup_username.value, latitude, longitude)
             socket.on("auth", (user) => {
-                set_user_data(user);
-                window.location.href = "Map.html";
+                if (seenAlert) return;
+                seenAlert = true;
+                if(user != null) {
+                    if (typeof user === 'string') {
+                        if (user === "Weak") {
+                            alert("Password must be greater than 6 characters.");
+                        }
+                        else if (user === "Exist") {
+                            alert("Email already registered. Did you mean to sign in instead?")
+                        }
+                        else if (user === "Username") {
+                            alert("Username is already taken.")
+                        }
+                        else if (user === "Invalid") {
+                            alert("Please enter a valid email")
+                        }
+                        else {
+                            alert("An error occured. Please try again.")
+                        }
+                    }
+                    else {
+                        set_user_data(user);
+                        window.location.href = "Map.html";
+                    }
+                }
+                else {
+                    alert("Please choose a stronger password")
+                }
             }); 
         } else {
             alert("Passwords do not match");
