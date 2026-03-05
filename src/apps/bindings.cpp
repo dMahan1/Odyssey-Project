@@ -110,5 +110,4 @@ PYBIND11_MODULE(bindings, m) {
         .def("print_tree", &Pathfinder::print_tree)
         .def("insert_location", &Pathfinder::insert_location)
         .def("insert_edge", &Pathfinder::insert_edge);
-
 }

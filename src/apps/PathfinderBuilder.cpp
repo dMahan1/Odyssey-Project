@@ -1,4 +1,9 @@
 #include "PathfinderBuilder.hpp"
+#include <fstream>
+
+#include "json.hpp"
+using json = nlohmann::json;
+
 
 std::vector<Location> PathfinderBuilder::get_locations() const {
     return locations;
@@ -79,8 +84,36 @@ void PathfinderBuilder::load_data_debug() {
     edges.emplace_back(Q.get_id(), F.get_id(), tunnel_dist, true, true, false, false, false);
 }
 
+
 void PathfinderBuilder::load_data_demo() {
-   // TODO
+    std::ifstream f("src/tests/DemoGraph.json");
+    json data = json::parse(f);
+
+    // Load locations
+    for (auto& loc : data["locations"]) {
+        locations.emplace_back(
+            loc["id"],
+            loc["name"],
+            loc["lat"],
+            loc["lon"]
+        );
+    }
+
+    // Load edges
+    for (auto& edge : data["edges"]) {
+        edges.emplace_back(
+            edge["from"].get<std::string>(),
+            edge["to"].get<std::string>(),
+            edge["weight"].get<double>(),
+            edge["flags"].get<uint32_t>()
+        );
+        edges.emplace_back(
+            edge["to"].get<std::string>(),
+            edge["from"].get<std::string>(),
+            edge["weight"].get<double>(),
+            edge["flags"].get<uint32_t>()
+        );
+    }
 }
 
 void PathfinderBuilder::load_data_release() {

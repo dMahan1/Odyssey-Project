@@ -1,0 +1,372 @@
+{
+  "locations": [
+    {
+      "id": "0",
+      "name": "Walk On's Sports Bistreaux",
+      "lat": 40.42461291823229,
+      "lon": -86.91100440199038
+    },
+    {
+      "id": "1",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424493630213895,
+      "lon": -86.91099897334108
+    },
+    {
+      "id": "2",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42449771142525,
+      "lon": -86.91087829482703
+    },
+    {
+      "id": "3",
+      "name": "North Grant Street",
+      "lat": 40.42461402584478,
+      "lon": -86.91087829482703
+    },
+    {
+      "id": "4",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42443724475281,
+      "lon": -86.91098839230276
+    },
+    {
+      "id": "5",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42443417505071,
+      "lon": -86.91110774851477
+    },
+    {
+      "id": "6",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42453648292077,
+      "lon": -86.91110356138661
+    },
+    {
+      "id": "7",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42443384104527,
+      "lon": -86.91122834013072
+    },
+    {
+      "id": "8",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42453320660753,
+      "lon": -86.91122978925706
+    },
+    {
+      "id": "9",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42453654947996,
+      "lon": -86.91180344755679
+    },
+    {
+      "id": "10",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424430437965476,
+      "lon": -86.9117980840673
+    },
+    {
+      "id": "11",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424430437965476,
+      "lon": -86.91163986112663
+    },
+    {
+      "id": "12",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42421821443441,
+      "lon": -86.91123223592359
+    },
+    {
+      "id": "13",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424128427354304,
+      "lon": -86.91123223592359
+    },
+    {
+      "id": "14",
+      "name": "Krannert School of Management",
+      "lat": 40.42412434612056,
+      "lon": -86.91110351217525
+    },
+    {
+      "id": "15",
+      "name": "Krannert School of Management",
+      "lat": 40.42417740214013,
+      "lon": -86.9111008304305
+    },
+    {
+      "id": "16",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42421263376518,
+      "lon": -86.91098034289017
+    },
+    {
+      "id": "17",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42443223870862,
+      "lon": -86.91090508999021
+    },
+    {
+      "id": "18",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42431592397472,
+      "lon": -86.91076027577331
+    },
+    {
+      "id": "19",
+      "name": "Krannert School of Management",
+      "lat": 40.424120025020926,
+      "lon": -86.9109748153539
+    },
+    {
+      "id": "20",
+      "name": "Parrish Library of Management & Economics",
+      "lat": 40.424120067719514,
+      "lon": -86.91051894938626
+    },
+    {
+      "id": "21",
+      "name": "North Grant Street",
+      "lat": 40.42443426173447,
+      "lon": -86.91051088743869
+    },
+    {
+      "id": "22",
+      "name": "North Grant Street",
+      "lat": 40.42443315914236,
+      "lon": -86.91076843862857
+    },
+    {
+      "id": "23",
+      "name": "North Grant Street",
+      "lat": 40.424568876394034,
+      "lon": -86.91076561047883
+    },
+    {
+      "id": "24",
+      "name": "Krannert School of Management",
+      "lat": 40.42388731138646,
+      "lon": -86.91050548123742
+    },
+    {
+      "id": "25",
+      "name": "Krannert School of Management",
+      "lat": 40.423738345659785,
+      "lon": -86.91045184634228
+    }
+  ],
+  "edges": [
+    {
+      "from": "0",
+      "to": "1",
+      "weight": 13.27217998105303,
+      "flags": 2
+    },
+    {
+      "from": "1",
+      "to": "2",
+      "weight": 10.22531564388058,
+      "flags": 2
+    },
+    {
+      "from": "2",
+      "to": "3",
+      "weight": 12.933573347216278,
+      "flags": 2
+    },
+    {
+      "from": "1",
+      "to": "4",
+      "weight": 6.333429375129455,
+      "flags": 2
+    },
+    {
+      "from": "4",
+      "to": "5",
+      "weight": 10.109082960052403,
+      "flags": 2
+    },
+    {
+      "from": "5",
+      "to": "6",
+      "weight": 11.381636125031891,
+      "flags": 2
+    },
+    {
+      "from": "5",
+      "to": "7",
+      "weight": 10.207961541545673,
+      "flags": 2
+    },
+    {
+      "from": "7",
+      "to": "8",
+      "weight": 11.049627309806763,
+      "flags": 2
+    },
+    {
+      "from": "8",
+      "to": "9",
+      "weight": 48.560638620924095,
+      "flags": 2
+    },
+    {
+      "from": "9",
+      "to": "10",
+      "weight": 11.807793675632674,
+      "flags": 2
+    },
+    {
+      "from": "10",
+      "to": "11",
+      "weight": 13.393328186766288,
+      "flags": 2
+    },
+    {
+      "from": "11",
+      "to": "7",
+      "weight": 34.83667270822847,
+      "flags": 2
+    },
+    {
+      "from": "11",
+      "to": "12",
+      "weight": 41.802658011559224,
+      "flags": 2
+    },
+    {
+      "from": "12",
+      "to": "7",
+      "weight": 23.978852917500078,
+      "flags": 2
+    },
+    {
+      "from": "12",
+      "to": "13",
+      "weight": 9.98386778611291,
+      "flags": 2
+    },
+    {
+      "from": "13",
+      "to": "14",
+      "weight": 10.905762406746085,
+      "flags": 2
+    },
+    {
+      "from": "14",
+      "to": "15",
+      "weight": 5.903926029436801,
+      "flags": 2
+    },
+    {
+      "from": "15",
+      "to": "12",
+      "weight": 12.01343339938129,
+      "flags": 2
+    },
+    {
+      "from": "15",
+      "to": "16",
+      "weight": 10.925633781068358,
+      "flags": 2
+    },
+    {
+      "from": "16",
+      "to": "4",
+      "weight": 24.984894975656054,
+      "flags": 2
+    },
+    {
+      "from": "4",
+      "to": "17",
+      "weight": 7.073349027986652,
+      "flags": 0
+    },
+    {
+      "from": "17",
+      "to": "18",
+      "weight": 17.819775633997136,
+      "flags": 2
+    },
+    {
+      "from": "18",
+      "to": "16",
+      "weight": 21.884470706678524,
+      "flags": 2
+    },
+    {
+      "from": "14",
+      "to": "19",
+      "weight": 10.904628390513551,
+      "flags": 2
+    },
+    {
+      "from": "19",
+      "to": "16",
+      "weight": 10.308247153129669,
+      "flags": 2
+    },
+    {
+      "from": "19",
+      "to": "20",
+      "weight": 38.5885302614766,
+      "flags": 2
+    },
+    {
+      "from": "18",
+      "to": "20",
+      "weight": 29.85955402917331,
+      "flags": 2
+    },
+    {
+      "from": "18",
+      "to": "21",
+      "weight": 24.875586035495655,
+      "flags": 2
+    },
+    {
+      "from": "21",
+      "to": "20",
+      "weight": 34.9434449169116,
+      "flags": 2
+    },
+    {
+      "from": "17",
+      "to": "22",
+      "weight": 11.567779640305048,
+      "flags": 2
+    },
+    {
+      "from": "22",
+      "to": "21",
+      "weight": 21.80165514085352,
+      "flags": 2
+    },
+    {
+      "from": "22",
+      "to": "23",
+      "weight": 15.092968580548012,
+      "flags": 2
+    },
+    {
+      "from": "24",
+      "to": "25",
+      "weight": 17.17517991795256,
+      "flags": 2
+    },
+    {
+      "from": "24",
+      "to": "20",
+      "weight": 25.90642099480363,
+      "flags": 2
+    },
+    {
+      "from": "3",
+      "to": "25",
+      "weight": 103.84719461345134,
+      "flags": 3
+    }
+  ]
+}
