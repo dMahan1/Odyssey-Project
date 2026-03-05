@@ -31,12 +31,23 @@
             </div>
             <div id = "event_popup_content">
                 <label for="title"></label> <input type="text" id="title" name="event_title" placeholder="Title">
-                <label for="attendees"></label> <input type="text" id="attendees" name="attendees" placeholder="Attendees">
-
+                <div id="attendees">
+                    <label id="attendee_text">Attendees</label>
+                    <button id="more_attendees">
+                        &#xFF1E
+                    </button>
+                </div>
                 <div id="start_label">Start:</div><input type="datetime-local" id="start">
                 <div id="end_label">End:</div><input type="datetime-local" id="end">
                 <label for="location_search"></label><input type="search" id="location_search" placeholder="&#x2315 Location">
             </div>
+        </div>
+    </div>
+
+    <!-- Attendees popup -->
+    <div id="attendees_popup_background">
+        <div id="attendees_popup" class="popup">
+
         </div>
     </div>
 
