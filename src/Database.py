@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
-from empyrebase.types.geopoint import GeoPoint
 
 # Get the user's home directory path
 #home_dir = Path.home()
@@ -47,10 +46,10 @@ def auth_user(email, password, latitude, longitude):
 
 def get_user_data(user):
     # Get a reference to the database service
-    db = firebase.firestore(auth_id=user['idToken'])
+    db = firebase.database()
 
     # Get a reference to the user's data
-    user_data = db.collection("Users").get_document(user['localId']).to_dict()
+    user_data = db.child("Users").child(user['localId']).get(token=user['idToken']).val()
 
     return user_data
 
@@ -71,7 +70,13 @@ def create_user(email, username, password, latitude, longitude):
             return "Error"
         
     else: 
-        db = firebase.firestore(auth_id=user['idToken'])
+        db = firebase.database()
+
+        duplicate_username = db.child("Users").order_by_child("username").equal_to(username).get(token=user['idToken']).val()
+        print("duplicate_username", duplicate_username)
+        if duplicate_username:
+            auth.delete_user_account(user['idToken'])
+            return "Username"
 
         data = {
             "email": email,
@@ -90,65 +95,128 @@ def create_user(email, username, password, latitude, longitude):
             "new_messages": []
         }
 
-        db.collection("Users").create_document(user['localId'], data)
+        db.child("Users").child(user['localId']).set(data, token=user['idToken'])
 
         return user
 
 def update_user_location(user, latitude, longitude):
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Users").update_document(user['localId'], {
+    db = firebase.database()
+    db.child("Users").child(user['localId']).update({
         "curr_location": {
             "latitude": latitude,
             "longitude": longitude
         }
-    })
+    }, token=user['idToken'])
 
 def update_user_location_public(user, status):
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Users").update_document(user['localId'], {
+    db = firebase.database()
+    db.child("Users").child(user['localId']).update({
         "location_public": status
-    })
+    }, token=user['idToken'])
 
 def update_user_icon_image_path(user, path):
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Users").update_document(user['localId'], {
+    db = firebase.database()
+    db.child("Users").child(user['localId']).update({
         "icon_image_path": path
-    })
+    }, token=user['idToken'])
 
 def update_user_toucoins(user, amount):
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Users").update_document(user['localId'], {
+    db = firebase.database()
+    db.child("Users").child(user['localId']).update({
         "toucoins": amount
-    })
+    }, token=user['idToken'])
 
 def delete_user(user):
 
     # Delete the user's data
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Users").delete_document(user['localId'])
+    db = firebase.database()
+    db.child("Users").child(user['localId']).remove(token=user['idToken'])
 
     # Delete the user
     auth.delete_user_account(user['idToken'])
 
 def drop_pin(user, latitude, longitude):
-    db = firebase.firestore(auth_id=user['idToken'])
-    dropped_pins = db.collection("Users").get_document(user['localId']).to_dict().get("dropped_pins")
+    db = firebase.database()
+    dropped_pins = db.child("Users").child(user['localId']).get(token=user['idToken']).val().get("dropped_pins")
     pin_name = f"Pin: {latitude}, {longitude}"
     key = firebase.database().generate_key()
-    db.collection("Locations").create_document(key, data={
+    db.child("Locations").child(key).set({
         "name": pin_name,
-        "coordinates": GeoPoint(latitude, longitude),
-        "permanent": False
-    })
+        "coordinates": {
+            "latitude": latitude,
+            "longitude": longitude
+        },
+        "permanent": False,
+        "usedInEvent": False
+    }, token=user['idToken'])
+    if dropped_pins is None:
+        dropped_pins = []
     dropped_pins.append(key)
-    db.collection("Users").update_document(user['localId'], {
+    db.child("Users").child(user['localId']).update({
         "dropped_pins": dropped_pins
-    })
+    }, token=user['idToken'])
     return key
 
 def pull_pin(user, key):
-    db = firebase.firestore(auth_id=user['idToken'])
-    db.collection("Locations").delete_document(key)
+    db = firebase.database()
+    if db.child("Locations").child(key).child("usedInEvent").get(token=user['idToken']).val() is False:
+        db.child("Locations").child(key).remove(token=user['idToken'])
+            # Remove the pin from the user's dropped_pins
+        dropped_pins = db.child("Users").child(user['localId']).get(token=user['idToken']).val().get("dropped_pins")
+        if key in dropped_pins:
+            dropped_pins.remove(key)
+            db.child("Users").child(user['localId']).update({
+                "dropped_pins": dropped_pins
+            }, token=user['idToken'])
+    else:
+        return "Error: Pin is currently being used in an event and cannot be pulled."
+
+def create_event(user, name, start_time, end_time, locationid, attendee_ids):
+    db = firebase.database()
+    data = {
+        "creator_id": user['localId'],
+        "name": name,
+        "start_time": start_time,
+        "end_time": end_time,
+        "locationid": locationid,
+        "attendee_ids": attendee_ids
+    }
+    key = firebase.database().generate_key()
+    db.child("Events").child(key).set(data, token=user['idToken'])
+
+    db.child("Locations").child(locationid).update({
+        "usedInEvent": True
+    }, token=user['idToken'])
+
+    events = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
+    if events is None:
+        events = []
+    events.append(key)
+
+    db.child("Users").child(user['localId']).update({
+        "attended_event_ids": events
+    }, token=user['idToken'])
+
+    return key
+
+def delete_event(user, event_id):
+    db = firebase.database()
+    event = db.child("Events").child(event_id).get(token=user['idToken']).val()
+    if event["creator_id"] != user['localId']:
+        raise Exception("User is not the creator of the event and cannot delete it.")
+    
+    # Remove the event from all attendees' attended_event_ids
+    attendee_ids = event.get("attendee_ids", [])
+    for attendee_id in attendee_ids:
+        events = db.child("Users").child(attendee_id).child("attended_event_ids").get(token=user['idToken']).val()
+        if events and event_id in events:
+            events.remove(event_id)
+        db.child("Users").child(attendee_id).update({
+            "attended_event_ids": events
+        }, token=user['idToken'])
+
+    # Delete the event document
+    db.child("Events").child(event_id).remove(token=user['idToken'])
 
 def test():
     firebase = empyrebase.initialize_app(config)
@@ -163,7 +231,19 @@ def test():
     key = drop_pin(user, 40.42728, -86.91406)
     print(f"Dropped pin with key: {key}")
 
+    event = create_event(user, "Test Event", "2024-01-01T12:00:00Z", "2024-01-01T14:00:00Z", key, [user['localId']])
+    print(f"Created Event: {get_user_data(user)}")
+
+    try:
+        pull_pin(user, key)
+        print("Error: Pin pull should have failed since it's being used in an event.")
+    except Exception as e:
+        print(f"Error occurred while pulling pin: {e}")
+    
+    delete_event(user, event)
+
     pull_pin(user, key)
+    print(f"Pin pulled successfully. Current user data: {get_user_data(user)}")
 
     delete_user(user)
     try:
@@ -176,3 +256,4 @@ def test():
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
 
+test()

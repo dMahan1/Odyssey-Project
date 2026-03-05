@@ -47,6 +47,9 @@ signup_button.addEventListener('click', () =>{
                         else if (user === "Exist") {
                             alert("Email already registered. Did you mean to sign in instead?")
                         }
+                        else if (user === "Username") {
+                            alert("Username is already taken.")
+                        }
                         else if (user === "Invalid") {
                             alert("Please enter a valid email")
                         }
