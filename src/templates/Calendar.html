@@ -43,10 +43,112 @@
     <!-- Inbox popup -->
     <div id="inbox_popup_background">
         <div id="inbox_popup" class="popup">
-            <div id = "popup_bar">
-
+            <div id = "inbox_popup_bar">
+                <button id="close_inbox">&#x2717</button>
             </div>
-            <div id = "popup_content">
+            <div id = "inbox_popup_content">
+                <template id="event_invite_template">
+                    <div class="event_invite">
+                        <div class="event_details">
+                            <label class="event_name"> Event Name </label>
+                            <label class="event_creator"> Event Creator </label>
+                        </div>
+                        <div id="event_actions">
+                            <button id="accept_event">
+                                &#x2713
+                            </button>
+                            <button id="decline_event">
+                                &#x2717
+                            </button>
+                            <button id="more_event_info">
+                                &#xFF1E
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <template id="friend_invite_template">
+                    <div class="friend_invite">
+                        <div class="request_details">
+                            <label> Friend Request </label>
+                            <label class="request_username"> @username </label>
+                        </div>
+                        <div id="friend_actions">
+                            <button id="accept_friend">
+                                &#x2713
+                            </button>
+                            <button id="decline_friend">
+                                &#x2717
+                            </button>
+                            <button id="hidden_button">
+                                &#xFF1E
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Calendar -->
+    <div class = "day_calendar">
+        <div class = "day_calendar_header">
+            <button id="prev_day"><</button>
+            <div id="day"></div>
+            <button id="next_day">></button>
+        </div>
+        <div class = "day_calendar_body">
+            <div class = "side_bar">
+                <div class="time">12am</div>
+                <div class="time">1am</div>
+                <div class="time">2am</div>
+                <div class="time">3am</div>
+                <div class="time">4am</div>
+                <div class="time">5am</div>
+                <div class="time">6am</div>
+                <div class="time">7am</div>
+                <div class="time">8am</div>
+                <div class="time">9am</div>
+                <div class="time">10am</div>
+                <div class="time">11am</div>
+                <div class="time">12pm</div>
+                <div class="time">1pm</div>
+                <div class="time">2pm</div>
+                <div class="time">3pm</div>
+                <div class="time">4pm</div>
+                <div class="time">5pm</div>
+                <div class="time">6pm</div>
+                <div class="time">7pm</div>
+                <div class="time">8pm</div>
+                <div class="time">9pm</div>
+                <div class="time">10pm</div>
+                <div class="time">11pm</div>
+                <div class="time">12pm</div>
+            </div>
+            <div class = "main_content">
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
+                <div class = "time_block"></div>
 
             </div>
         </div>
