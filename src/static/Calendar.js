@@ -1,5 +1,9 @@
 /*Variables */
-
+//const event_title = document.getElementById('title')
+//const attendees_list = document.getElementById('attendees')
+//const start_time = document.getElementById('start')
+//const end_time = document.getElementById('end')
+//const location = document.getElementById('location_search')
 const top_bar = document.getElementById('top_bar');
 
 // Event specific variables
@@ -120,7 +124,11 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
-    /* do stuff to save the event with server*/
+    /* did stuff to save the event with server*/
+    /*socket.emit("create_event", user, event_title.value, start_time.value, end_time.value, location.value, attendees_list.value)*/
+    /*socket.on("event_created", (key) => {*/
+        /*add event pop up stuff*/
+    /*});*/
     event_popup.style.display = "none";
 })
 
@@ -129,6 +137,10 @@ event_popup_open.addEventListener('click', () => {
 })
 
 inbox_button.addEventListener('click', () => {
+    socket.emit("get_user", user)
+    socket.on("return_user", (data) => {
+        /*add message stuff*/
+    })
     inbox_popup.style.display = "block";
 })
 
