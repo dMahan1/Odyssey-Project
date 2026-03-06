@@ -95,5 +95,76 @@ def event_delete(user, event_id):
     delete_event(user, event_id)
     emit("event deleted")
 
+@socketio.on("send_invite")
+#check if none
+def send_invite(sender, reciever, event_id):
+    ret = send_event_invite(sender, reciever, event_id)
+    emit("invite_sent", ret)
+
+@socketio.on("join_event")
+#check if none
+def event_join(user, event_id):
+    ret = join_event(user, event_id)
+    emit("event_joined", ret)
+
+@socketio.on("delete_event")
+#check if none
+def event_delete(user, event_id):
+    ret = delete_event(user, event_id)
+    emit("event_deleted", ret)
+
+@socketio.on("send_message")
+def message_send(sender, reciever, message, type):
+    send_message(sender, reciever, message, type)
+    emit("message_sent")
+
+@socketio.on("get_message")
+def message_get(uid):
+    ret = get_messages(uid)
+    emit("messages", ret)
+
+@socketio.on("remove_message")
+def message_remove(uid, mid):
+    remove_message(uid, mid)
+    emit("message_removed")
+
+@socketio.on("add_friend")
+#check none
+def friend_add(user, fid):
+    ret = add_friend(user, fid)
+    emit("friend_added", ret)
+
+@socketio.on("remove_friend")
+def friend_remove(user, fid):
+    remove_friend(user, fid)
+    emit("removed_friend")
+
+@socketio.on("send_friend_request")
+#check none
+def send_f_request(sender, reciever):
+    ret = send_friend_request(sender, reciever)
+    emit("request_sent", ret)
+
+@socketio.on("get_friends")
+def friend_get(uid):
+    ret = get_friends(uid)
+    emit("friends_got", ret)
+
+@socketio.on("get_e_data")
+def get_e_data(eid):
+    ret = get_event_data(eid)
+    emit("event_got", ret)
+
+@socketio.on("got_l_data")
+def get_l_data(lid):
+    ret = get_location_data(lid)
+    emit("location_got", ret)
+
+@socketio.on("get_u_by_id")
+def get_u_by_id(uid):
+    ret = get_user_data_by_id(uid)
+    emit("user_via_id", ret)
+
+
 if __name__ == '__main__':
     socketio.run(app, port=8080)

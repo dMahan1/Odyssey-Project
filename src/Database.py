@@ -205,15 +205,16 @@ def send_event_invite(sender_id, recipient_id, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=sender_id).val()
     if event is None:
-        raise Exception("Event does not exist.")
+        return None
     message = f"You're invited to {event['name']}!"
     send_message([event_id, event], recipient_id, message, 1)
+    return True
 
 def join_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user['idToken']).val()
     if event is None:
-        raise Exception("Event does not exist.")
+        return None
     attendee_ids = event.get("attendee_ids", [])
     if user['localId'] not in attendee_ids:
         attendee_ids.append(user['localId'])
@@ -227,12 +228,13 @@ def join_event(user, event_id):
         db.child("Users").child(user['localId']).update({
             "attended_event_ids": events
         }, token=user['idToken'])
+    return True
 
 def delete_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user['idToken']).val()
     if event["creator_id"] != user['localId']:
-        raise Exception("User is not the creator of the event and cannot delete it.")
+        return None
     
     # Remove the event from all attendees' attended_event_ids
     attendee_ids = event.get("attendee_ids", [])
@@ -246,6 +248,7 @@ def delete_event(user, event_id):
 
     # Delete the event document
     db.child("Events").child(event_id).remove(token=user['idToken'])
+    return True
 
 def send_message(sender_id, recipient_id, message, message_type):
     db = firebase.database()
@@ -273,7 +276,7 @@ def remove_message(user_id, message_id):
 
 def add_friend(user, friend_id):
     if friend_id == user['localId']:
-        raise Exception("User cannot add themselves as a friend.")
+        return None
     db = firebase.database()
     friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
     if friends is None:
@@ -283,6 +286,7 @@ def add_friend(user, friend_id):
         db.child("Users").child(user['localId']).update({
             "friend_ids": friends
         }, token=user['idToken'])
+    return True
 
 def remove_friend(user, friend_id):
     db = firebase.database()
@@ -295,10 +299,11 @@ def remove_friend(user, friend_id):
 
 def send_friend_request(sender_id, recipient_id):
     if sender_id == recipient_id:
-        raise Exception("User cannot send a friend request to themselves.")
+        return None
     sender_username = firebase.database().child("Users").child(sender_id).child("username").get().val()
     message = f"{sender_username} has sent you a friend request!"
     send_message(sender_id, recipient_id, message, 0)
+    return True
 
 def get_friends(user_id):
     db = firebase.database()
@@ -368,4 +373,4 @@ def test():
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
 
-test()
+#test()
