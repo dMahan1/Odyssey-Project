@@ -8,6 +8,8 @@
 #include <memory>
 #include "Pathfinder.hpp"
 
+#include <iostream>
+
 std::shared_mutex Pathfinder::mtx;
 
 void Pathfinder::init() {
@@ -34,7 +36,13 @@ void Pathfinder::init() {
 
 const std::shared_ptr<Location> Pathfinder::get_location_by_id(std::string id) const {
     std::shared_lock lock(mtx);
+    std::cout << "id_indices: " << std::endl;
+    for (const auto& pair : id_indices) {
+        std::cout << "  " << pair.first << ": " << pair.second << std::endl;
+    }
+    std::cout << "Looking up location by ID: " << id << std::endl;
     const Location *loc = locations[id_indices.at(id)].get();
+    
     if (loc->get_id() != id) {
         throw std::runtime_error("Location ID not found: " + id);
     }
@@ -75,6 +83,15 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
 }
 
 Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_weather, TraversalMode mode) const {
+
+    if (mode == PRINT_ALL) {
+        Path path = Path{.location_ids = {}, .total_distance = 0.0};
+        for (const auto& loc : locations) {
+            path.location_ids.push_back(loc->get_id());
+        }
+        return path;
+    }
+
     double weather_multiplier;
     switch (mode) {
         case DEMO:
