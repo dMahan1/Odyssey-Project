@@ -1,781 +1,1021 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Graph Builder – Auto Naming & Import/Export</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graph Builder – Auto Naming & Import/Export</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
 
-<style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-}
-
-header {
-    background: #2c7be5;
-    color: white;
-    padding: 14px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
-}
-
-.container {
-    display: flex;
-    height: calc(100vh - 52px);
-}
-
-.sidebar {
-    width: 340px;
-    background: white;
-    padding: 20px;
-    border-right: 1px solid #ccc;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-#map {
-    flex: 1;
-}
-
-button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.primary { background: #2c7be5; color: white; }
-.danger { background: #dc3545; color: white; }
-.secondary { background: #6c757d; color: white; }
-.success { background: #28a745; color: white; }
-.info { background: #17a2b8; color: white; }
-
-#info {
-    margin-top: 12px;
-    white-space: pre-line;
-    font-family: monospace;
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    word-wrap: break-word; 
-}
-
-#edge-properties {
-    display: none;
-    margin-top: 12px;
-    background: #e9ecef;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    font-size: 14px;
-}
-
-#edge-properties label {
-    display: block;
-    margin-top: 6px;
-    cursor: pointer;
-}
-
-.node-marker {
-    width: 18px;
-    height: 18px;
-    background: blue;
-    border-radius: 50%;
-    border: 2px solid blue;
-    transition: background 0.2s, border-color 0.2s;
-}
-
-.node-selected {
-    background: yellow;
-    border: 3px solid black;
-    width: 24px;
-    height: 24px;
-}
-</style>
-</head>
-
-<body>
-
-<header>Graph Builder – Auto Naming</header>
-
-<div class="container">
-    <div class="sidebar">
-        <button class="primary" onclick="connectSelected()">Connect Selected Nodes</button>
-        
-        <button id="split-btn" class="success" style="display: none;" onclick="splitSelectedEdge()">Split Selected Edge</button>
-        
-        <button id="api-btn" class="info" style="display: none;" onclick="sendToBackend()">Calculate Path</button>
-        
-        <button class="danger" onclick="removeSelected()">Remove Selected Items</button>
-        
-        <button class="secondary" onclick="resetSelection()">Deselect All</button>
-        
-        <button class="secondary" onclick="exportGraph()">Export JSON</button>
-        
-        <button class="secondary" onclick="document.getElementById('import-file').click()">Import JSON</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importGraph(event)">
-        
-        <button onclick="clearAll()">Clear All</button>
-
-        <div>
-            <label>
-                <input type="checkbox" id="bad-weather" onchange="toggleBadWeather()">
-                Bad Weather
-            </label>
-        </div>
-
-        <div id="edge-properties">
-            <strong>Edge Properties (Flags)</strong>
-            <label><input type="checkbox" value="1" onchange="updateSelectedEdgesFlags(this)"> Indoor</label>
-            <label><input type="checkbox" value="2" onchange="updateSelectedEdgesFlags(this)"> Walkable</label>
-            <label><input type="checkbox" value="4" onchange="updateSelectedEdgesFlags(this)"> Bikeable</label>
-            <label><input type="checkbox" value="8" onchange="updateSelectedEdgesFlags(this)"> Driveable (Car)</label>
-            <label><input type="checkbox" value="16" onchange="updateSelectedEdgesFlags(this)"> Driveable (Bus)</label>
-        </div>
-
-        <div id="info">
-            Click map to add nodes.
-            Select 1 node and add another to auto-connect.
-            Select 2 nodes and drag one onto the other to merge them.
-            Shift-drag to group select items.
-        </div>
-    </div>
-
-    <div id="map"></div>
-</div>
-
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-// NEW: Initialize Socket connection to your Flask backend
-const socket = io('http://127.0.0.1:8000');
-
-socket.on('connect', () => {
-    console.log('Connected to Flask SocketIO server!');
-});
-
-const map = L.map('map', {
-    maxZoom: 22,
-    minZoom: 3,
-    boxZoom: false 
-}).setView([40.4237, -86.9212], 16);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 22
-}).addTo(map);
-
-let nodes = [];
-let edges = [];
-let selectedNodes = [];
-let selectedEdges = [];
-let nodeCounter = 1;
-let isInteracting = false;
-let badWeather = false; // NEW: Track weather condition for routing
-
-let isSelecting = false;
-let startPoint = null;
-const selectionRect = L.rectangle([[0,0],[0,0]], {
-    color: "#2c7be5",
-    weight: 1,
-    fillOpacity: 0.2,
-    interactive: false 
-});
-
-const EARTH_RADIUS = 6371000;
-
-function generateFirebaseID() {
-    const PUSH_CHARS = '-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
-    let id = '';
-    for (let i = 0; i < 20; i++) {
-        id += PUSH_CHARS.charAt(Math.floor(Math.random() * PUSH_CHARS.length));
-    }
-    return id;
-}
-
-function toRadians(x) {
-    return x * Math.PI / 180;
-}
-
-function haversine(a, b, c, d) {
-    const dLat = toRadians(c - a);
-    const dLon = toRadians(d - b);
-    const q = Math.sin(dLat / 2) ** 2 +
-              Math.cos(toRadians(a)) * Math.cos(toRadians(c)) * Math.sin(dLon / 2) ** 2;
-    return EARTH_RADIUS * 2 * Math.atan2(Math.sqrt(q), Math.sqrt(1 - q));
-}
-
-function defaultIcon() {
-    return L.divIcon({
-        className: "",
-        html: `<div class="node-marker"></div>`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-    });
-}
-
-function selectedIcon() {
-    return L.divIcon({
-        className: "",
-        html: `<div class="node-marker node-selected"></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-    });
-}
-
-async function getPlaceName(lat, lon) {
-    try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18`);
-        const data = await response.json();
-        return data.name || data.display_name?.split(",")[0] || null;
-    } catch {
-        return null;
-    }
-}
-
-function bindNodeEvents(node) {
-    node.marker.on("click", () => {
-        isInteracting = true; 
-        toggleSelect(node);
-        setTimeout(() => isInteracting = false, 50); 
-    });
-
-    node.marker.on("dragstart", () => isInteracting = true);
-    
-    node.marker.on("drag", () => {
-        const p = node.marker.getLatLng();
-        node.lat = p.lat;
-        node.lon = p.lng;
-        updateEdges(node);
-        updateInfo();
-    });
-
-    node.marker.on("dragend", async () => {
-        if (selectedNodes.length === 2 && selectedNodes.includes(node)) {
-            const targetNode = selectedNodes.find(n => n !== node);
-            
-            const p1 = map.latLngToContainerPoint(node.marker.getLatLng());
-            const p2 = map.latLngToContainerPoint(targetNode.marker.getLatLng());
-            const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-
-            if (dist < 30) {
-                mergeNodes(node, targetNode);
-                setTimeout(() => isInteracting = false, 50);
-                return;
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: #f4f6f8;
             }
-        }
 
-        const p = node.marker.getLatLng();
-        const newName = await getPlaceName(p.lat, p.lng);
-        if (newName) node.name = newName;
-        updateInfo();
-        setTimeout(() => isInteracting = false, 50);
-    });
-}
+            header {
+                background: #2c7be5;
+                color: white;
+                padding: 14px;
+                text-align: center;
+                font-size: 20px;
+                font-weight: bold;
+            }
 
-function mergeNodes(draggedNode, targetNode) {
-    edges = edges.filter(e => {
-        if ((e.from === draggedNode && e.to === targetNode) || 
-            (e.to === draggedNode && e.from === targetNode)) {
-            map.removeLayer(e.line);
-            selectedEdges = selectedEdges.filter(se => se !== e);
-            return false;
-        }
-        return true;
-    });
+            .container {
+                display: flex;
+                height: calc(100vh - 52px);
+            }
 
-    edges.forEach(e => {
-        if (e.from === draggedNode) e.from = targetNode;
-        if (e.to === draggedNode) e.to = targetNode;
-    });
+            .sidebar {
+                width: 340px;
+                background: white;
+                padding: 20px;
+                border-right: 1px solid #ccc;
+                overflow: auto;
+                display: flex;
+                flex-direction: column;
+            }
 
-    updateEdges(targetNode);
+            #map {
+                flex: 1;
+            }
 
-    map.removeLayer(draggedNode.marker);
-    nodes = nodes.filter(n => n !== draggedNode);
+            button {
+                width: 100%;
+                padding: 10px;
+                margin-top: 8px;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+            }
 
-    resetSelection();
-}
+            .primary {
+                background: #2c7be5;
+                color: white;
+            }
+            .danger {
+                background: #dc3545;
+                color: white;
+            }
+            .secondary {
+                background: #6c757d;
+                color: white;
+            }
+            .success {
+                background: #28a745;
+                color: white;
+            }
+            .info {
+                background: #17a2b8;
+                color: white;
+            }
 
-async function addNode(lat, lon, importId = null) {
-    const marker = L.marker([lat, lon], {
-        draggable: true,
-        icon: defaultIcon()
-    }).addTo(map);
+            #info {
+                margin-top: 12px;
+                white-space: pre-line;
+                font-family: monospace;
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+                word-wrap: break-word;
+            }
 
-    let name = await getPlaceName(lat, lon);
-    if (!name) name = "Node " + nodeCounter;
+            #edge-properties {
+                display: none;
+                margin-top: 12px;
+                background: #e9ecef;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #ced4da;
+                font-size: 14px;
+            }
 
-    const node = { 
-        id: importId || generateFirebaseID(), 
-        lat, 
-        lon, 
-        name, 
-        marker 
-    };
-    
-    nodeCounter++;
-    nodes.push(node);
-    
-    bindNodeEvents(node);
+            #edge-properties label {
+                display: block;
+                margin-top: 6px;
+                cursor: pointer;
+            }
 
-    return node;
-}
+            .node-marker {
+                width: 18px;
+                height: 18px;
+                background: blue;
+                border-radius: 50%;
+                border: 2px solid blue;
+                transition:
+                    background 0.2s,
+                    border-color 0.2s;
+            }
 
-function updateEdges(node) {
-    edges.forEach(e => {
-        if (e.from === node || e.to === node) {
-            e.line.setLatLngs([
-                [e.from.lat, e.from.lon],
-                [e.to.lat, e.to.lon]
-            ]);
-            e.weight = haversine(e.from.lat, e.from.lon, e.to.lat, e.to.lon);
-        }
-    });
-}
+            .node-selected {
+                background: yellow;
+                border: 3px solid black;
+                width: 24px;
+                height: 24px;
+            }
+        </style>
+    </head>
 
-function toggleSelect(node) {
-    const i = selectedNodes.indexOf(node);
-    if (i === -1) {
-        selectedNodes.push(node);
-        node.marker.setIcon(selectedIcon());
-    } else {
-        selectedNodes.splice(i, 1);
-        node.marker.setIcon(defaultIcon());
-    }
-    updateInfo();
-}
+    <body>
+        <header>Graph Builder – Auto Naming</header>
 
-function toggleEdgeSelect(edge) {
-    const i = selectedEdges.indexOf(edge);
-    if (i === -1) {
-        selectedEdges.push(edge);
-        edge.line.setStyle({ color: "yellow", weight: 6 }); 
-    } else {
-        selectedEdges.splice(i, 1);
-        edge.line.setStyle({ color: "red", weight: 4 }); 
-    }
-    updateCheckboxes();
-    updateInfo();
-}
+        <div class="container">
+            <div class="sidebar">
+                <div
+                    style="
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        margin-bottom: 10px;
+                    "
+                >
+                    <strong>Find Nearest Node</strong>
+                    <input
+                        type="number"
+                        id="approx-lat"
+                        placeholder="Latitude"
+                        step="any"
+                        style="width: 90%; margin-top: 5px; padding: 5px"
+                    />
+                    <input
+                        type="number"
+                        id="approx-lon"
+                        placeholder="Longitude"
+                        step="any"
+                        style="width: 90%; margin-top: 5px; padding: 5px"
+                    />
+                    <button class="info" onclick="findApproximate()">
+                        Select Nearest Node
+                    </button>
+                </div>
+                <button class="primary" onclick="connectSelected()">
+                    Connect Selected Nodes
+                </button>
 
-function resetSelection() {
-    selectedNodes.forEach(n => n.marker.setIcon(defaultIcon()));
-    selectedNodes = [];
+                <button
+                    id="split-btn"
+                    class="success"
+                    style="display: none"
+                    onclick="splitSelectedEdge()"
+                >
+                    Split Selected Edge
+                </button>
 
-    selectedEdges.forEach(e => e.line.setStyle({ color: "red", weight: 4 }));
-    selectedEdges = [];
+                <button
+                    id="api-btn"
+                    class="info"
+                    style="display: none"
+                    onclick="sendToBackend()"
+                >
+                    Calculate Path
+                </button>
 
-    updateCheckboxes();
-    updateInfo();
-}
+                <button class="danger" onclick="removeSelected()">
+                    Remove Selected Items
+                </button>
 
-function connectNodes(a, b, existingFlags = 0) { 
-    const line = L.polyline(
-        [[a.lat, a.lon], [b.lat, b.lon]],
-        { color: "red", weight: 4 }
-    ).addTo(map);
+                <button class="secondary" onclick="resetSelection()">
+                    Deselect All
+                </button>
 
-    const edge = {
-        from: a,
-        to: b,
-        weight: haversine(a.lat, a.lon, b.lat, b.lon),
-        flags: existingFlags,
-        line
-    };
+                <button class="secondary" onclick="exportGraph()">
+                    Export JSON
+                </button>
 
-    edges.push(edge);
+                <button
+                    class="secondary"
+                    onclick="document.getElementById('import-file').click()"
+                >
+                    Import JSON
+                </button>
+                <input
+                    type="file"
+                    id="import-file"
+                    accept=".json"
+                    style="display: none"
+                    onchange="importGraph(event)"
+                />
 
-    line.on('click', () => {
-        isInteracting = true;
-        toggleEdgeSelect(edge);
-        setTimeout(() => isInteracting = false, 50);
-    });
-}
+                <button onclick="clearAll()">Clear All</button>
 
-function connectSelected() {
-    if (selectedNodes.length !== 2) {
-        alert("Select exactly 2 nodes");
-        return;
-    }
-    connectNodes(selectedNodes[0], selectedNodes[1]);
-    resetSelection();
-}
+                <div>
+                    <label>
+                        <input
+                            type="checkbox"
+                            id="bad-weather"
+                            onchange="toggleBadWeather()"
+                        />
+                        Bad Weather
+                    </label>
+                </div>
 
-async function splitSelectedEdge() {
-    if (selectedEdges.length !== 1) return;
+                <div id="edge-properties">
+                    <strong>Edge Properties (Flags)</strong>
+                    <label
+                        ><input
+                            type="checkbox"
+                            value="1"
+                            onchange="updateSelectedEdgesFlags(this)"
+                        />
+                        Indoor</label
+                    >
+                    <label
+                        ><input
+                            type="checkbox"
+                            value="2"
+                            onchange="updateSelectedEdgesFlags(this)"
+                        />
+                        Walkable</label
+                    >
+                    <label
+                        ><input
+                            type="checkbox"
+                            value="4"
+                            onchange="updateSelectedEdgesFlags(this)"
+                        />
+                        Bikeable</label
+                    >
+                    <label
+                        ><input
+                            type="checkbox"
+                            value="8"
+                            onchange="updateSelectedEdgesFlags(this)"
+                        />
+                        Driveable (Car)</label
+                    >
+                    <label
+                        ><input
+                            type="checkbox"
+                            value="16"
+                            onchange="updateSelectedEdgesFlags(this)"
+                        />
+                        Driveable (Bus)</label
+                    >
+                </div>
 
-    const edge = selectedEdges[0];
-    const a = edge.from;
-    const b = edge.to;
-    const flags = edge.flags;
+                <div id="info">
+                    Click map to add nodes. Select 1 node and add another to
+                    auto-connect. Select 2 nodes and drag one onto the other to
+                    merge them. Shift-drag to group select items.
+                </div>
+            </div>
 
-    const midLat = (a.lat + b.lat) / 2;
-    const midLon = (a.lon + b.lon) / 2;
+            <div id="map"></div>
+        </div>
 
-    map.removeLayer(edge.line);
-    edges = edges.filter(e => e !== edge);
-    selectedEdges = []; 
+        <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    const newNode = await addNode(midLat, midLon);
+        <script>
+            // NEW: Initialize Socket connection to your Flask backend
+            const socket = io("http://127.0.0.1:8000");
 
-    connectNodes(a, newNode, flags);
-    connectNodes(newNode, b, flags);
+            socket.on("connect", () => {
+                console.log("Connected to Flask SocketIO server!");
+            });
 
-    resetSelection();
-}
+            const map = L.map("map", {
+                maxZoom: 22,
+                minZoom: 3,
+                boxZoom: false,
+            }).setView([40.4237, -86.9212], 16);
 
-function updateWeatherCondition() {
-    badWeather = document.getElementById("bad-weather").checked;
-    console.log("Bad Weather toggled:", badWeather);
-}
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "© OpenStreetMap contributors",
+                maxZoom: 22,
+            }).addTo(map);
 
-function sendToBackend() {
-    if (selectedNodes.length !== 2) return;
+            let nodes = [];
+            let edges = [];
+            let selectedNodes = [];
+            let selectedEdges = [];
+            let nodeCounter = 1;
+            let isInteracting = false;
+            let badWeather = false; // NEW: Track weather condition for routing
 
-    const sourceNode = selectedNodes[0];
-    const targetNode = selectedNodes[1];
+            let isSelecting = false;
+            let startPoint = null;
+            const selectionRect = L.rectangle(
+                [
+                    [0, 0],
+                    [0, 0],
+                ],
+                {
+                    color: "#2c7be5",
+                    weight: 1,
+                    fillOpacity: 0.2,
+                    interactive: false,
+                },
+            );
 
-    updateWeatherCondition(); // Ensure we have the latest weather condition before sending
+            const EARTH_RADIUS = 6371000;
 
-    const payload = {
-        src: sourceNode.id,       // Ensure your Flask backend is looking for data['src']
-        dst: targetNode.id,       // Ensure your Flask backend is looking for data['dst']
-        weather: badWeather,      // NEW: Send weather condition to backend
-        nodes: nodes.map((n) => ({
-            id: n.id,
-            name: n.name,
-            lat: n.lat,
-            lon: n.lon
-        })),
-        edges: edges.map(e => ({
-            from: e.from.id, 
-            to: e.to.id,     
-            weight: e.weight,
-            flags: e.flags 
-        }))
-    };
-
-    console.log("Emitting data to Flask via WebSocket:", payload);
-
-    socket.emit("route", payload, (result) => {
-        console.log("Response from Flask:", result);
-
-        if (!result) {
-            alert("No response received from the backend.");
-            return;
-        }
-
-        if (result.error) {
-            alert(`Backend Error: ${result.error}`);
-            return;
-        }
-
-        if (result.nodes && result.nodes.length > 0) {
-            const distStr = result.distance != null ? result.distance.toFixed(2) : "Unknown";
-            alert(`Path found! Total distance: ${distStr}m`);
-
-            // 1. Deselect the 2 starting nodes
-            resetSelection(); 
-
-            const routeNodes = result.nodes;
-
-            // 2. Loop through the returned path
-            for (let i = 0; i < routeNodes.length; i++) {
-                
-                // FIX: Safely grab the ID whether Flask returned ["id1"] OR [{"id": "id1"}]
-                const currentId = typeof routeNodes[i] === 'object' ? routeNodes[i].id : routeNodes[i];
-
-                // Select the node
-                const node = nodes.find(n => n.id === currentId);
-                if (node && !selectedNodes.includes(node)) {
-                    selectedNodes.push(node);
-                    node.marker.setIcon(selectedIcon());
-                }
-
-                // If there is a next node, find and select the edge connecting them
-                if (i < routeNodes.length - 1) {
-                    const nextId = typeof routeNodes[i + 1] === 'object' ? routeNodes[i + 1].id : routeNodes[i + 1];
-                    
-                    const edge = edges.find(e => 
-                        (e.from.id === currentId && e.to.id === nextId) || 
-                        (e.to.id === currentId && e.from.id === nextId)
+            function generateFirebaseID() {
+                const PUSH_CHARS =
+                    "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
+                let id = "";
+                for (let i = 0; i < 20; i++) {
+                    id += PUSH_CHARS.charAt(
+                        Math.floor(Math.random() * PUSH_CHARS.length),
                     );
+                }
+                return id;
+            }
 
-                    if (edge && !selectedEdges.includes(edge)) {
-                        selectedEdges.push(edge);
-                        edge.line.setStyle({ color: "yellow", weight: 6 });
-                    }
+            function toRadians(x) {
+                return (x * Math.PI) / 180;
+            }
+
+            function haversine(a, b, c, d) {
+                const dLat = toRadians(c - a);
+                const dLon = toRadians(d - b);
+                const q =
+                    Math.sin(dLat / 2) ** 2 +
+                    Math.cos(toRadians(a)) *
+                        Math.cos(toRadians(c)) *
+                        Math.sin(dLon / 2) ** 2;
+                return (
+                    EARTH_RADIUS *
+                    2 *
+                    Math.atan2(Math.sqrt(q), Math.sqrt(1 - q))
+                );
+            }
+
+            function defaultIcon() {
+                return L.divIcon({
+                    className: "",
+                    html: `<div class="node-marker"></div>`,
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9],
+                });
+            }
+
+            function selectedIcon() {
+                return L.divIcon({
+                    className: "",
+                    html: `<div class="node-marker node-selected"></div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12],
+                });
+            }
+
+            async function getPlaceName(lat, lon) {
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18`,
+                    );
+                    const data = await response.json();
+                    return (
+                        data.name || data.display_name?.split(",")[0] || null
+                    );
+                } catch {
+                    return null;
                 }
             }
-            
-            // Sync the UI panel to show all the selected path properties
-            updateCheckboxes();
-            updateInfo();
-        } else {
-            alert("The backend could not find a valid path between these points.");
-        }
-    });
-}
+            function findApproximate() {
+                const lat = document.getElementById("approx-lat").value;
+                const lon = document.getElementById("approx-lon").value;
 
-function removeSelected() {
-    selectedNodes.forEach(node => {
-        edges = edges.filter(e => {
-            if (e.from === node || e.to === node) {
-                map.removeLayer(e.line);
-                selectedEdges = selectedEdges.filter(se => se !== e);
-                return false;
+                if (!lat || !lon) {
+                    alert("Please enter both Latitude and Longitude.");
+                    return;
+                }
+
+                socket.emit(
+                    "approximate",
+                    { lat: lat, lon: lon },
+                    (response) => {
+                        if (response.error) {
+                            alert("Error: " + response.error);
+                            return;
+                        }
+
+                        const nodeId = response.id;
+                        // Find the node in our local 'nodes' array
+                        const node = nodes.find((n) => n.id === nodeId);
+
+                        if (node) {
+                            // Deselect everything first (optional, but cleaner)
+                            resetSelection();
+
+                            // Select the found node
+                            toggleSelect(node);
+
+                            // Pan the map to the node
+                            map.panTo([node.lat, node.lon]);
+
+                            console.log("Selected nearest node:", node.name);
+                        } else {
+                            alert(
+                                "Node found by server (" +
+                                    nodeId +
+                                    ") is not present in the current frontend graph.",
+                            );
+                        }
+                    },
+                );
             }
-            return true;
-        });
-        map.removeLayer(node.marker);
-        nodes = nodes.filter(n => n !== node);
-    });
 
-    selectedEdges.forEach(edge => {
-        map.removeLayer(edge.line);
-        edges = edges.filter(e => e !== edge);
-    });
+            function bindNodeEvents(node) {
+                node.marker.on("click", () => {
+                    isInteracting = true;
+                    toggleSelect(node);
+                    setTimeout(() => (isInteracting = false), 50);
+                });
 
-    resetSelection();
-}
+                node.marker.on("dragstart", () => (isInteracting = true));
 
-function clearAll() {
-    nodes.forEach(n => map.removeLayer(n.marker));
-    edges.forEach(e => map.removeLayer(e.line));
+                node.marker.on("drag", () => {
+                    const p = node.marker.getLatLng();
+                    node.lat = p.lat;
+                    node.lon = p.lng;
+                    updateEdges(node);
+                    updateInfo();
+                });
 
-    nodes = [];
-    edges = [];
-    nodeCounter = 1;
+                node.marker.on("dragend", async () => {
+                    if (
+                        selectedNodes.length === 2 &&
+                        selectedNodes.includes(node)
+                    ) {
+                        const targetNode = selectedNodes.find(
+                            (n) => n !== node,
+                        );
 
-    resetSelection();
-}
+                        const p1 = map.latLngToContainerPoint(
+                            node.marker.getLatLng(),
+                        );
+                        const p2 = map.latLngToContainerPoint(
+                            targetNode.marker.getLatLng(),
+                        );
+                        const dist = Math.sqrt(
+                            Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2),
+                        );
 
-function updateCheckboxes() {
-    const propsPanel = document.getElementById("edge-properties");
-    
-    if (selectedEdges.length === 0) {
-        propsPanel.style.display = "none";
-        return;
-    }
+                        if (dist < 30) {
+                            mergeNodes(node, targetNode);
+                            setTimeout(() => (isInteracting = false), 50);
+                            return;
+                        }
+                    }
 
-    propsPanel.style.display = "block";
+                    const p = node.marker.getLatLng();
+                    const newName = await getPlaceName(p.lat, p.lng);
+                    if (newName) node.name = newName;
+                    updateInfo();
+                    setTimeout(() => (isInteracting = false), 50);
+                });
+            }
 
-    let commonFlags = selectedEdges[0].flags;
-    for (let i = 1; i < selectedEdges.length; i++) {
-        commonFlags &= selectedEdges[i].flags;
-    }
+            function mergeNodes(draggedNode, targetNode) {
+                edges = edges.filter((e) => {
+                    if (
+                        (e.from === draggedNode && e.to === targetNode) ||
+                        (e.to === draggedNode && e.from === targetNode)
+                    ) {
+                        map.removeLayer(e.line);
+                        selectedEdges = selectedEdges.filter((se) => se !== e);
+                        return false;
+                    }
+                    return true;
+                });
 
-    const checkboxes = propsPanel.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => {
-        const bit = parseInt(cb.value);
-        cb.checked = (commonFlags & bit) === bit;
-    });
-}
+                edges.forEach((e) => {
+                    if (e.from === draggedNode) e.from = targetNode;
+                    if (e.to === draggedNode) e.to = targetNode;
+                });
 
-function updateSelectedEdgesFlags(checkbox) {
-    const bit = parseInt(checkbox.value);
-    const isChecked = checkbox.checked;
+                updateEdges(targetNode);
 
-    selectedEdges.forEach(edge => {
-        if (isChecked) {
-            edge.flags |= bit; 
-        } else {
-            edge.flags &= ~bit; 
-        }
-    });
+                map.removeLayer(draggedNode.marker);
+                nodes = nodes.filter((n) => n !== draggedNode);
 
-    updateInfo();
-}
+                resetSelection();
+            }
 
-map.on('mousedown', e => {
-    if (e.originalEvent.shiftKey) {
-        isInteracting = true; 
-        isSelecting = true;
-        startPoint = e.latlng;
-        selectionRect.setBounds([startPoint, startPoint]);
-        selectionRect.addTo(map);
-        map.dragging.disable(); 
-    }
-});
+            async function addNode(lat, lon, importId = null) {
+                const marker = L.marker([lat, lon], {
+                    draggable: true,
+                    icon: defaultIcon(),
+                }).addTo(map);
 
-map.on('mousemove', e => {
-    if (isSelecting) {
-        selectionRect.setBounds([startPoint, e.latlng]);
-    }
-});
+                let name = await getPlaceName(lat, lon);
+                if (!name) name = "Node " + nodeCounter;
 
-map.on('mouseup', e => {
-    if (isSelecting) {
-        isSelecting = false;
-        selectionRect.removeFrom(map);
-        map.dragging.enable();
-        
-        const bounds = L.latLngBounds(startPoint, e.latlng);
+                const node = {
+                    id: importId || generateFirebaseID(),
+                    lat,
+                    lon,
+                    name,
+                    marker,
+                };
 
-        nodes.forEach(node => {
-            if (bounds.contains([node.lat, node.lon])) {
-                if (!selectedNodes.includes(node)) {
+                nodeCounter++;
+                nodes.push(node);
+
+                bindNodeEvents(node);
+
+                return node;
+            }
+
+            function updateEdges(node) {
+                edges.forEach((e) => {
+                    if (e.from === node || e.to === node) {
+                        e.line.setLatLngs([
+                            [e.from.lat, e.from.lon],
+                            [e.to.lat, e.to.lon],
+                        ]);
+                        e.weight = haversine(
+                            e.from.lat,
+                            e.from.lon,
+                            e.to.lat,
+                            e.to.lon,
+                        );
+                    }
+                });
+            }
+
+            function toggleSelect(node) {
+                const i = selectedNodes.indexOf(node);
+                if (i === -1) {
                     selectedNodes.push(node);
                     node.marker.setIcon(selectedIcon());
+                } else {
+                    selectedNodes.splice(i, 1);
+                    node.marker.setIcon(defaultIcon());
                 }
+                updateInfo();
             }
-        });
 
-        edges.forEach(edge => {
-            if (bounds.contains([edge.from.lat, edge.from.lon]) && 
-                bounds.contains([edge.to.lat, edge.to.lon])) {
-                if (!selectedEdges.includes(edge)) {
+            function toggleEdgeSelect(edge) {
+                const i = selectedEdges.indexOf(edge);
+                if (i === -1) {
                     selectedEdges.push(edge);
                     edge.line.setStyle({ color: "yellow", weight: 6 });
+                } else {
+                    selectedEdges.splice(i, 1);
+                    edge.line.setStyle({ color: "red", weight: 4 });
                 }
+                updateCheckboxes();
+                updateInfo();
             }
-        });
 
-        updateCheckboxes();
-        updateInfo();
-        
-        setTimeout(() => isInteracting = false, 50);
-    }
-});
+            function resetSelection() {
+                selectedNodes.forEach((n) => n.marker.setIcon(defaultIcon()));
+                selectedNodes = [];
 
-map.on("click", async e => {
-    if (isInteracting) return;
+                selectedEdges.forEach((e) =>
+                    e.line.setStyle({ color: "red", weight: 4 }),
+                );
+                selectedEdges = [];
 
-    if (selectedNodes.length === 1) {
-        const existing = selectedNodes[0];
-        const newNode = await addNode(e.latlng.lat, e.latlng.lng);
-        connectNodes(existing, newNode);
-        resetSelection();
-    } else {
-        await addNode(e.latlng.lat, e.latlng.lng);
-    }
-});
+                updateCheckboxes();
+                updateInfo();
+            }
 
-function updateInfo() {
-    const info = document.getElementById("info");
-    const splitBtn = document.getElementById("split-btn");
-    const apiBtn = document.getElementById("api-btn"); 
+            function connectNodes(a, b, existingFlags = 0) {
+                const line = L.polyline(
+                    [
+                        [a.lat, a.lon],
+                        [b.lat, b.lon],
+                    ],
+                    { color: "red", weight: 4 },
+                ).addTo(map);
 
-    splitBtn.style.display = (selectedEdges.length === 1) ? "block" : "none";
-    
-    apiBtn.style.display = (selectedNodes.length === 2) ? "block" : "none";
+                const edge = {
+                    from: a,
+                    to: b,
+                    weight: haversine(a.lat, a.lon, b.lat, b.lon),
+                    flags: existingFlags,
+                    line,
+                };
 
-    if (selectedNodes.length === 0 && selectedEdges.length === 0) {
-        info.textContent = `Click map to add nodes.
+                edges.push(edge);
+
+                line.on("click", () => {
+                    isInteracting = true;
+                    toggleEdgeSelect(edge);
+                    setTimeout(() => (isInteracting = false), 50);
+                });
+            }
+
+            function connectSelected() {
+                if (selectedNodes.length !== 2) {
+                    alert("Select exactly 2 nodes");
+                    return;
+                }
+                connectNodes(selectedNodes[0], selectedNodes[1]);
+                resetSelection();
+            }
+
+            async function splitSelectedEdge() {
+                if (selectedEdges.length !== 1) return;
+
+                const edge = selectedEdges[0];
+                const a = edge.from;
+                const b = edge.to;
+                const flags = edge.flags;
+
+                const midLat = (a.lat + b.lat) / 2;
+                const midLon = (a.lon + b.lon) / 2;
+
+                map.removeLayer(edge.line);
+                edges = edges.filter((e) => e !== edge);
+                selectedEdges = [];
+
+                const newNode = await addNode(midLat, midLon);
+
+                connectNodes(a, newNode, flags);
+                connectNodes(newNode, b, flags);
+
+                resetSelection();
+            }
+
+            function updateWeatherCondition() {
+                badWeather = document.getElementById("bad-weather").checked;
+                console.log("Bad Weather toggled:", badWeather);
+            }
+
+            function sendToBackend() {
+                if (selectedNodes.length !== 2) return;
+
+                const sourceNode = selectedNodes[0];
+                const targetNode = selectedNodes[1];
+
+                updateWeatherCondition(); // Ensure we have the latest weather condition before sending
+
+                const payload = {
+                    src: sourceNode.id, // Ensure your Flask backend is looking for data['src']
+                    dst: targetNode.id, // Ensure your Flask backend is looking for data['dst']
+                    weather: badWeather, // NEW: Send weather condition to backend
+                    nodes: nodes.map((n) => ({
+                        id: n.id,
+                        name: n.name,
+                        lat: n.lat,
+                        lon: n.lon,
+                    })),
+                    edges: edges.map((e) => ({
+                        from: e.from.id,
+                        to: e.to.id,
+                        weight: e.weight,
+                        flags: e.flags,
+                    })),
+                };
+
+                console.log("Emitting data to Flask via WebSocket:", payload);
+
+                socket.emit("route", payload, (result) => {
+                    console.log("Response from Flask:", result);
+
+                    if (!result) {
+                        alert("No response received from the backend.");
+                        return;
+                    }
+
+                    if (result.error) {
+                        alert(`Backend Error: ${result.error}`);
+                        return;
+                    }
+
+                    if (result.nodes && result.nodes.length > 0) {
+                        const distStr =
+                            result.distance != null
+                                ? result.distance.toFixed(2)
+                                : "Unknown";
+                        alert(`Path found! Total distance: ${distStr}m`);
+
+                        // 1. Deselect the 2 starting nodes
+                        resetSelection();
+
+                        const routeNodes = result.nodes;
+
+                        // 2. Loop through the returned path
+                        for (let i = 0; i < routeNodes.length; i++) {
+                            // FIX: Safely grab the ID whether Flask returned ["id1"] OR [{"id": "id1"}]
+                            const currentId =
+                                typeof routeNodes[i] === "object"
+                                    ? routeNodes[i].id
+                                    : routeNodes[i];
+
+                            // Select the node
+                            const node = nodes.find((n) => n.id === currentId);
+                            if (node && !selectedNodes.includes(node)) {
+                                selectedNodes.push(node);
+                                node.marker.setIcon(selectedIcon());
+                            }
+
+                            // If there is a next node, find and select the edge connecting them
+                            if (i < routeNodes.length - 1) {
+                                const nextId =
+                                    typeof routeNodes[i + 1] === "object"
+                                        ? routeNodes[i + 1].id
+                                        : routeNodes[i + 1];
+
+                                const edge = edges.find(
+                                    (e) =>
+                                        (e.from.id === currentId &&
+                                            e.to.id === nextId) ||
+                                        (e.to.id === currentId &&
+                                            e.from.id === nextId),
+                                );
+
+                                if (edge && !selectedEdges.includes(edge)) {
+                                    selectedEdges.push(edge);
+                                    edge.line.setStyle({
+                                        color: "yellow",
+                                        weight: 6,
+                                    });
+                                }
+                            }
+                        }
+
+                        // Sync the UI panel to show all the selected path properties
+                        updateCheckboxes();
+                        updateInfo();
+                    } else {
+                        alert(
+                            "The backend could not find a valid path between these points.",
+                        );
+                    }
+                });
+            }
+
+            function removeSelected() {
+                selectedNodes.forEach((node) => {
+                    edges = edges.filter((e) => {
+                        if (e.from === node || e.to === node) {
+                            map.removeLayer(e.line);
+                            selectedEdges = selectedEdges.filter(
+                                (se) => se !== e,
+                            );
+                            return false;
+                        }
+                        return true;
+                    });
+                    map.removeLayer(node.marker);
+                    nodes = nodes.filter((n) => n !== node);
+                });
+
+                selectedEdges.forEach((edge) => {
+                    map.removeLayer(edge.line);
+                    edges = edges.filter((e) => e !== edge);
+                });
+
+                resetSelection();
+            }
+
+            function clearAll() {
+                nodes.forEach((n) => map.removeLayer(n.marker));
+                edges.forEach((e) => map.removeLayer(e.line));
+
+                nodes = [];
+                edges = [];
+                nodeCounter = 1;
+
+                resetSelection();
+            }
+
+            function updateCheckboxes() {
+                const propsPanel = document.getElementById("edge-properties");
+
+                if (selectedEdges.length === 0) {
+                    propsPanel.style.display = "none";
+                    return;
+                }
+
+                propsPanel.style.display = "block";
+
+                let commonFlags = selectedEdges[0].flags;
+                for (let i = 1; i < selectedEdges.length; i++) {
+                    commonFlags &= selectedEdges[i].flags;
+                }
+
+                const checkboxes = propsPanel.querySelectorAll(
+                    'input[type="checkbox"]',
+                );
+                checkboxes.forEach((cb) => {
+                    const bit = parseInt(cb.value);
+                    cb.checked = (commonFlags & bit) === bit;
+                });
+            }
+
+            function updateSelectedEdgesFlags(checkbox) {
+                const bit = parseInt(checkbox.value);
+                const isChecked = checkbox.checked;
+
+                selectedEdges.forEach((edge) => {
+                    if (isChecked) {
+                        edge.flags |= bit;
+                    } else {
+                        edge.flags &= ~bit;
+                    }
+                });
+
+                updateInfo();
+            }
+
+            map.on("mousedown", (e) => {
+                if (e.originalEvent.shiftKey) {
+                    isInteracting = true;
+                    isSelecting = true;
+                    startPoint = e.latlng;
+                    selectionRect.setBounds([startPoint, startPoint]);
+                    selectionRect.addTo(map);
+                    map.dragging.disable();
+                }
+            });
+
+            map.on("mousemove", (e) => {
+                if (isSelecting) {
+                    selectionRect.setBounds([startPoint, e.latlng]);
+                }
+            });
+
+            map.on("mouseup", (e) => {
+                if (isSelecting) {
+                    isSelecting = false;
+                    selectionRect.removeFrom(map);
+                    map.dragging.enable();
+
+                    const bounds = L.latLngBounds(startPoint, e.latlng);
+
+                    nodes.forEach((node) => {
+                        if (bounds.contains([node.lat, node.lon])) {
+                            if (!selectedNodes.includes(node)) {
+                                selectedNodes.push(node);
+                                node.marker.setIcon(selectedIcon());
+                            }
+                        }
+                    });
+
+                    edges.forEach((edge) => {
+                        if (
+                            bounds.contains([edge.from.lat, edge.from.lon]) &&
+                            bounds.contains([edge.to.lat, edge.to.lon])
+                        ) {
+                            if (!selectedEdges.includes(edge)) {
+                                selectedEdges.push(edge);
+                                edge.line.setStyle({
+                                    color: "yellow",
+                                    weight: 6,
+                                });
+                            }
+                        }
+                    });
+
+                    updateCheckboxes();
+                    updateInfo();
+
+                    setTimeout(() => (isInteracting = false), 50);
+                }
+            });
+
+            map.on("click", async (e) => {
+                if (isInteracting) return;
+
+                if (selectedNodes.length === 1) {
+                    const existing = selectedNodes[0];
+                    const newNode = await addNode(e.latlng.lat, e.latlng.lng);
+                    connectNodes(existing, newNode);
+                    resetSelection();
+                } else {
+                    await addNode(e.latlng.lat, e.latlng.lng);
+                }
+            });
+
+            function updateInfo() {
+                const info = document.getElementById("info");
+                const splitBtn = document.getElementById("split-btn");
+                const apiBtn = document.getElementById("api-btn");
+
+                splitBtn.style.display =
+                    selectedEdges.length === 1 ? "block" : "none";
+
+                apiBtn.style.display =
+                    selectedNodes.length === 2 ? "block" : "none";
+
+                if (selectedNodes.length === 0 && selectedEdges.length === 0) {
+                    info.textContent = `Click map to add nodes.
 Select 1 node and add another to auto-connect.
 Select 2 nodes and drag one onto the other to merge them.
 Shift-drag to group select items.`;
-        return;
-    }
-
-    let text = "";
-
-    if (selectedNodes.length > 0) {
-        text += "Selected Nodes:\n\n";
-        selectedNodes.forEach(n => {
-            text += `[${n.id}]\n${n.name}\nLat: ${n.lat.toFixed(6)}\nLon: ${n.lon.toFixed(6)}\n\n`;
-        });
-    }
-
-    if (selectedEdges.length > 0) {
-        text += "Selected Edges:\n\n";
-        selectedEdges.forEach(e => {
-            text += `${e.from.name} ↔ ${e.to.name}\nDist: ${e.weight.toFixed(0)}m\nFlags: ${e.flags}\n\n`;
-        });
-    }
-
-    info.textContent = text.trim();
-}
-
-function exportGraph() {
-    const data = {
-        nodes: nodes.map((n) => ({
-            id: n.id,
-            name: n.name,
-            lat: n.lat,
-            lon: n.lon
-        })),
-        edges: edges.map(e => ({
-            from: e.from.id, 
-            to: e.to.id,     
-            weight: e.weight,
-            flags: e.flags 
-        }))
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "graph.json";
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function importGraph(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            
-            clearAll(); 
-
-            const nodeLookupMap = {};
-
-            data.nodes.forEach(n => {
-                const marker = L.marker([n.lat, n.lon], {
-                    draggable: true,
-                    icon: defaultIcon()
-                }).addTo(map);
-
-                const node = { id: n.id, lat: n.lat, lon: n.lon, name: n.name, marker };
-                nodes.push(node);
-                bindNodeEvents(node);
-                
-                nodeLookupMap[node.id] = node;
-            });
-
-            nodeCounter = nodes.length + 1;
-
-            data.edges.forEach(e => {
-                const a = nodeLookupMap[e.from];
-                const b = nodeLookupMap[e.to];
-                if (a && b) {
-                    connectNodes(a, b, e.flags);
+                    return;
                 }
-            });
 
-            if (nodes.length > 0) {
-                const bounds = L.latLngBounds(nodes.map(n => [n.lat, n.lon]));
-                map.fitBounds(bounds, { padding: [50, 50] });
+                let text = "";
+
+                if (selectedNodes.length > 0) {
+                    text += "Selected Nodes:\n\n";
+                    selectedNodes.forEach((n) => {
+                        text += `[${n.id}]\n${n.name}\nLat: ${n.lat.toFixed(6)}\nLon: ${n.lon.toFixed(6)}\n\n`;
+                    });
+                }
+
+                if (selectedEdges.length > 0) {
+                    text += "Selected Edges:\n\n";
+                    selectedEdges.forEach((e) => {
+                        text += `${e.from.name} ↔ ${e.to.name}\nDist: ${e.weight.toFixed(0)}m\nFlags: ${e.flags}\n\n`;
+                    });
+                }
+
+                info.textContent = text.trim();
             }
 
-            updateInfo();
+            function exportGraph() {
+                const data = {
+                    nodes: nodes.map((n) => ({
+                        id: n.id,
+                        name: n.name,
+                        lat: n.lat,
+                        lon: n.lon,
+                    })),
+                    edges: edges.map((e) => ({
+                        from: e.from.id,
+                        to: e.to.id,
+                        weight: e.weight,
+                        flags: e.flags,
+                    })),
+                };
 
-        } catch (error) {
-            alert("Error parsing JSON file. Make sure it's a valid graph export.");
-            console.error("Import Error:", error);
-        }
-    };
-    
-    reader.readAsText(file);
-    event.target.value = '';
-}
-</script>
+                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                    type: "application/json",
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "graph.json";
+                a.click();
+                URL.revokeObjectURL(url);
+            }
 
-</body>
+            function importGraph(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+
+                        clearAll();
+
+                        const nodeLookupMap = {};
+
+                        data.nodes.forEach((n) => {
+                            const marker = L.marker([n.lat, n.lon], {
+                                draggable: true,
+                                icon: defaultIcon(),
+                            }).addTo(map);
+
+                            const node = {
+                                id: n.id,
+                                lat: n.lat,
+                                lon: n.lon,
+                                name: n.name,
+                                marker,
+                            };
+                            nodes.push(node);
+                            bindNodeEvents(node);
+
+                            nodeLookupMap[node.id] = node;
+                        });
+
+                        nodeCounter = nodes.length + 1;
+
+                        data.edges.forEach((e) => {
+                            const a = nodeLookupMap[e.from];
+                            const b = nodeLookupMap[e.to];
+                            if (a && b) {
+                                connectNodes(a, b, e.flags);
+                            }
+                        });
+
+                        if (nodes.length > 0) {
+                            const bounds = L.latLngBounds(
+                                nodes.map((n) => [n.lat, n.lon]),
+                            );
+                            map.fitBounds(bounds, { padding: [50, 50] });
+                        }
+
+                        updateInfo();
+                    } catch (error) {
+                        alert(
+                            "Error parsing JSON file. Make sure it's a valid graph export.",
+                        );
+                        console.error("Import Error:", error);
+                    }
+                };
+
+                reader.readAsText(file);
+                event.target.value = "";
+            }
+        </script>
+    </body>
 </html>

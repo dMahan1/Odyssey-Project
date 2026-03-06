@@ -1,10 +1,9 @@
 # DemoServer.py
 
-from jinja2 import TemplateNotFound
-
 import bindings
 from flask import Flask, abort, render_template
 from flask_socketio import SocketIO, emit
+from jinja2 import TemplateNotFound
 
 # -------------------------
 
@@ -16,10 +15,12 @@ app = Flask(__name__)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/')
+
+@app.route("/")
 def index():
     # Flask looks in the 'templates' folder for this file
-    return render_template('Map_Demo.html')
+    return render_template("Map_Demo.html")
+
 
 # -------------------------
 
@@ -28,6 +29,29 @@ def index():
 # -------------------------
 
 pf = bindings.Pathfinder.get_instance()
+
+# -------------------------
+# Approximate Location Event
+# -------------------------
+
+
+@socketio.on("approximate")
+def handle_approximate(data):
+    lat = float(data["lat"])
+    lon = float(data["lon"])
+    print(f"Approximation request: {lat}, {lon}")
+
+    try:
+        # Assuming pf.approximate_location returns a Location object
+        # or an object with a get_id() method
+        loc = pf.approximate_location(lat, lon)
+        if loc:
+            return {"id": loc.get_id()}
+        else:
+            return {"error": "No nearby location found."}
+    except Exception as e:
+        return {"error": str(e)}
+
 
 # -------------------------
 
@@ -49,8 +73,14 @@ def handle_route(data):
         emit("route_result", {"error": f"Location not found: {str(e)}"})
         return
 
-    path = pf.route(src, dst, data["weather"], bindings.TraversalMode.WALKING)
-    print(f"Path found: {path.location_ids} with total distance {path.total_distance}")
+    path = pf.route(src, dst, data["weather"], bindings.TraversalMode.PRINT_ALL)
+    if len(path.location_ids) == 0:
+        print("No path found.")
+        return
+    else:
+        print(
+            f"Path found: {path.location_ids} with total distance {path.total_distance}"
+        )
     nodes = []
 
     for nid in path.location_ids:

@@ -1,5 +1,6 @@
 #include "PathfinderBuilder.hpp"
 #include <fstream>
+#include <filesystem>
 
 #include "json.hpp"
 using json = nlohmann::json;
@@ -86,7 +87,8 @@ void PathfinderBuilder::load_data_debug() {
 
 
 void PathfinderBuilder::load_data_demo() {
-    std::ifstream f("src/tests/DemoGraph.json");
+    std::filesystem::path base = std::filesystem::path(__FILE__).parent_path().parent_path();
+    std::ifstream f(base / "tests" / "DemoGraph.json");
     json data = json::parse(f);
 
     // auto stringify_json = [](const json& j) {

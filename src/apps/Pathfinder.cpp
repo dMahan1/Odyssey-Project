@@ -36,13 +36,13 @@ void Pathfinder::init() {
 
 const std::shared_ptr<Location> Pathfinder::get_location_by_id(std::string id) const {
     std::shared_lock lock(mtx);
-    std::cout << "id_indices: " << std::endl;
-    for (const auto& pair : id_indices) {
-        std::cout << "  " << pair.first << ": " << pair.second << std::endl;
-    }
+    //std::cout << "id_indices: " << std::endl;
+    //for (const auto& pair : id_indices) {
+    //    std::cout << "  " << pair.first << ": " << pair.second << std::endl;
+    //}
     std::cout << "Looking up location by ID: " << id << std::endl;
     const Location *loc = locations[id_indices.at(id)].get();
-    
+    std::cout << "Found location: " << loc->get_id() << std::endl;
     if (loc->get_id() != id) {
         throw std::runtime_error("Location ID not found: " + id);
     }
