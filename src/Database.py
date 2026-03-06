@@ -10,14 +10,14 @@ import empyrebase
 # Not included in code but shared with server computer manually
 # Change path for change in server, currently accesses OdysseyFirebase folder in a user's home directory.
 #home_dir = Path.home()
-#path = home_dir/"OdysseyFirebase"
+#path = home_dir/"OdysseyCodes"
 load_dotenv()
 config = {
   "apiKey": os.getenv("API_KEY"),
   "authDomain": os.getenv("AUTH_DOMAIN"),
   "projectId": os.getenv("PROJECT_ID"),
   "databaseURL": os.getenv("DATABASE_URL"),
-  "storageBucket": os.getenv("STORAGE_BUCKET")
+  "storageBucket": os.getenv("STORAGE_BUCKET"),
   #"serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
 }
 
@@ -51,6 +51,7 @@ def get_user_data(user):
     # Get a reference to the user's data
     user_data = db.child("Users").child(user['localId']).get(token=user['idToken']).val()
 
+    print(user_data)
     return user_data
 
 def create_user(email, username, password, latitude, longitude):
@@ -101,6 +102,22 @@ def create_user(email, username, password, latitude, longitude):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
+def update_username(user, new_username):
+    db = firebase.database()
+    duplicate_username = db.child("Users").order_by_child("username").equal_to(new_username).get(token=user['idToken']).val()
+    print("duplicate_username", duplicate_username)
+    if duplicate_username:
+        return "Username"
+
+    try:
+        db.child("Users").child(user['localId']).update({
+            "username": new_username
+        }, token=user['idToken'])
+    except Exception as e:
+        print(f"Error updating username: {e}")
+        return "Error"
+    return "Success"
+
 def update_user_location(user, latitude, longitude):
     db = firebase.database()
     db.child("Users").child(user['localId']).update({
@@ -137,6 +154,38 @@ def delete_user(user):
     # Delete the user
     auth.delete_user_account(user['idToken'])
 
+def get_all_users(user):
+    db = firebase.database()
+    # Fetch all users from the database
+    all_users = db.child("Users").get(token=user['idToken']).val()
+    
+    users_list = []
+    
+    if all_users:
+        # Safely get the current user's data
+        my_data = all_users.get(user['localId'], {})
+        my_friends = []
+        
+        # Verify my_data is a dictionary before calling .get()
+        if isinstance(my_data, dict):
+            my_friends = my_data.get("friend_ids") or []
+
+        for uid, data in all_users.items():
+            # Exclude self and exclude existing friends
+            if uid != user['localId'] and uid not in my_friends:
+                
+                # Verify the database entry is a dictionary before extracting data
+                if isinstance(data, dict):
+                    users_list.append({
+                        "id": uid,
+                        "username": data.get("username", "Unknown User")
+                    })
+                else:
+                    # Optional: Log the anomaly so you can clean up your database later
+                    print(f"Skipping invalid user data for UID {uid}. Expected dict, got string.")
+                    
+    return users_list
+
 def drop_pin(user, latitude, longitude):
     db = firebase.database()
     dropped_pins = db.child("Users").child(user['localId']).get(token=user['idToken']).val().get("dropped_pins")
@@ -172,6 +221,28 @@ def pull_pin(user, key):
             }, token=user['idToken'])
     else:
         return "Error: Pin is currently being used in an event and cannot be pulled."
+    
+def get_permanent_locations(user):
+    db = firebase.database()
+    # Fetch all locations from the database
+    all_locations = db.child("Locations").get(token=user['idToken']).val()
+    
+    perm_locations = []
+    
+    if all_locations:
+        for loc_id, loc_data in all_locations.items():
+            # Check if the location is marked as permanent
+            try:
+                if loc_data.get("permanent") == True:
+                    perm_locations.append({
+                        "id": loc_id,
+                        "name": loc_data.get("name")
+                    })
+            except Exception as e:
+                print(f"Error processing location {loc_id}: {e}")
+                continue
+                
+    return perm_locations
 
 def create_event(user, name, start_time, end_time, locationid, attendee_ids):
     db = firebase.database()
@@ -199,40 +270,50 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
         "attended_event_ids": events
     }, token=user['idToken'])
 
+    for attendee_id in attendee_ids:
+        if attendee_id != user['localId']:
+            send_event_invite(user, attendee_id, key)
     return key
 
-def send_event_invite(sender_id, recipient_id, event_id):
+def send_event_invite(user, recipient_id, event_id):
     db = firebase.database()
-    event = db.child("Events").child(event_id).get(token=sender_id).val()
+    event = db.child("Events").child(event_id).get(token=user['idToken']).val()
     if event is None:
-        raise Exception("Event does not exist.")
-    message = f"You're invited to {event['name']}!"
-    send_message([event_id, event], recipient_id, message, 1)
+        return None
+        
+    message = f"You're invited to {event['name']} by {user.get('username', 'a friend')}!"
+    # Pass just the user object and the explicit event_id
+    send_message(user, recipient_id, message, 1, event_id=event_id)
+    return True
 
 def join_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user['idToken']).val()
     if event is None:
-        raise Exception("Event does not exist.")
+        return None
+
     attendee_ids = event.get("attendee_ids", [])
     if user['localId'] not in attendee_ids:
         attendee_ids.append(user['localId'])
         db.child("Events").child(event_id).update({
             "attendee_ids": attendee_ids
         }, token=user['idToken'])
-        events = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
-        if events is None:
-            events = []
+
+    events = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
+    if events is None:
+        events = []
+    if event_id not in events:
         events.append(event_id)
         db.child("Users").child(user['localId']).update({
             "attended_event_ids": events
         }, token=user['idToken'])
+    return True
 
 def delete_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user['idToken']).val()
     if event["creator_id"] != user['localId']:
-        raise Exception("User is not the creator of the event and cannot delete it.")
+        return None
     
     # Remove the event from all attendees' attended_event_ids
     attendee_ids = event.get("attendee_ids", [])
@@ -246,89 +327,150 @@ def delete_event(user, event_id):
 
     # Delete the event document
     db.child("Events").child(event_id).remove(token=user['idToken'])
+    return True
 
-def send_message(sender_id, recipient_id, message, message_type):
+def send_message(user, recipient_id, message, message_type, event_id=None):
     db = firebase.database()
-    if message_type == 0:
-        sender_username = db.child("Users").child(sender_id).child("username").get().val()
-    else:
-        sender_username = db.child("Events").child(sender_id[0]).child("name").get().val()
+    sender_id = user['localId']
+    
+    # Get sender username correctly
+    sender_username = db.child("Users").child(sender_id).child("username").get(token=user['idToken']).val()
+    
     message_data = {
-        "sender": sender_id,
+        "sender_id": sender_id,
         "sender_username": sender_username,
         "message": message,
         "type": message_type,
-        "timestamp": empyrebase.ServerValue.TIMESTAMP
+        "event_id": event_id # Added so frontend knows which event to join
     }
-    db.child("Users").child(recipient_id).child("messages").push(message_data)
+    db.child("Users").child(recipient_id).child("messages").push(message_data, token=user['idToken'])
 
-def get_messages(user_id):
+def remove_message(user, message_id):
     db = firebase.database()
-    messages = db.child("Users").child(user_id).child("messages").get().val()
-    return messages
-
-def remove_message(user_id, message_id):
-    db = firebase.database()
-    db.child("Users").child(user_id).child("messages").child(message_id).remove()
+    db.child("Users").child(user['localId']).child("messages").child(message_id).remove(token=user['idToken'])
 
 def add_friend(user, friend_id):
     if friend_id == user['localId']:
-        raise Exception("User cannot add themselves as a friend.")
+        return None
+        
     db = firebase.database()
-    friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
-    if friends is None:
-        friends = []
-    if friend_id not in friends:
-        friends.append(friend_id)
+    
+    # 1. Add friend to current user's list
+    my_friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    if my_friends is None:
+        my_friends = []
+    if friend_id not in my_friends:
+        my_friends.append(friend_id)
         db.child("Users").child(user['localId']).update({
-            "friend_ids": friends
+            "friend_ids": my_friends
         }, token=user['idToken'])
+
+    # 2. Add current user to the friend's list (Mutual)
+    their_friends = db.child("Users").child(friend_id).child("friend_ids").get(token=user['idToken']).val()
+    if their_friends is None:
+        their_friends = []
+    if user['localId'] not in their_friends:
+        their_friends.append(user['localId'])
+        db.child("Users").child(friend_id).update({
+            "friend_ids": their_friends
+        }, token=user['idToken'])
+        
+    return True
 
 def remove_friend(user, friend_id):
     db = firebase.database()
-    friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
-    if friends and friend_id in friends:
-        friends.remove(friend_id)
+    
+    # 1. Remove friend from current user's list
+    my_friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    if my_friends and friend_id in my_friends:
+        my_friends.remove(friend_id)
         db.child("Users").child(user['localId']).update({
-            "friend_ids": friends
+            "friend_ids": my_friends
         }, token=user['idToken'])
 
-def send_friend_request(sender_id, recipient_id):
-    if sender_id == recipient_id:
-        raise Exception("User cannot send a friend request to themselves.")
-    sender_username = firebase.database().child("Users").child(sender_id).child("username").get().val()
-    message = f"{sender_username} has sent you a friend request!"
-    send_message(sender_id, recipient_id, message, 0)
+    # 2. Remove current user from the friend's list (Mutual)
+    their_friends = db.child("Users").child(friend_id).child("friend_ids").get(token=user['idToken']).val()
+    if their_friends and user['localId'] in their_friends:
+        their_friends.remove(user['localId'])
+        db.child("Users").child(friend_id).update({
+            "friend_ids": their_friends
+        }, token=user['idToken'])
 
-def get_friends(user_id):
+def send_friend_request(user, recipient_id):
+    sender_id = user['localId']
+    if sender_id == recipient_id:
+        return None
+    sender_username = firebase.database().child("Users").child(sender_id).child("username").get(token=user['idToken']).val()
+    message = f"{sender_username} has sent you a friend request!"
+    send_message(user, recipient_id, message, 0)
+    return True
+
+def get_friends(user):
     db = firebase.database()
-    friend_ids = db.child("Users").child(user_id).child("friend_ids").get().val()
+    try:
+        friend_ids = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    except Exception as e:
+        print(f"Exceptioned: {e}")
+        friend_ids = []
     friends = []
     if friend_ids:
         for friend_id in friend_ids:
-            friend_data = db.child("Users").child(friend_id).get().val()
+            
+            friend_data = db.child("Users").child(friend_id).get(token=user['idToken']).val()
             if friend_data:
+                print(f"Friend: {friend_data}")
                 friends.append({
                     "id": friend_id,
-                    "username": friend_data.get("username"),
-                    "icon_image_path": friend_data.get("icon_image_path")
+                    "username": friend_data.get('username'),
+                    "icon_image_path": friend_data.get('icon_image_path')
                 })
+                print(f"friends = {friends}")
     return friends
 
-def get_event_data(event_id):
+def get_event_data(user, event_id):
     db = firebase.database()
-    event_data = db.child("Events").child(event_id).get().val()
+    event_data = db.child("Events").child(event_id).get(token=user['idToken']).val()
     return event_data
 
-def get_location_data(location_id):
+def get_location_data(user, location_id):
     db = firebase.database()
-    location_data = db.child("Locations").child(location_id).get().val()
+    location_data = db.child("Locations").child(location_id).get(token=user['idToken']).val()
     return location_data
 
-def get_user_data_by_id(user_id):
+def get_user_data_by_id(user):
     db = firebase.database()
-    user_data = db.child("Users").child(user_id).get().val()
+    user_data = db.child("Users").child(user['localId']).get(token=user['idToken']).val()
+    if user_data.get("messages"):
+        for message_id, message in user_data["messages"].items():
+            if message["type"] == 0:
+                event = db.child("Events").child(message["sender"][0]).get(token=user['idToken']).val()
+                if event is None:
+                    remove_message(user['localId'], message_id)
+                    continue
+            else:
+                sender_data = db.child("Users").child(message["sender"]).get(token=user['idToken']).val()
+                if sender_data is None:
+                    remove_message(user['localId'], message_id)
+                    continue
     return user_data
+
+def get_user_events(user):
+    db = firebase.database()
+    event_ids = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
+    events = []
+    if event_ids:
+        for event_id in event_ids:
+            event_data = db.child("Events").child(event_id).get(token=user['idToken']).val()
+            if event_data:
+                events.append({
+                    "id": event_id,
+                    "name": event_data.get('name'),
+                    "start_time": event_data.get('start_time'),
+                    "end_time": event_data.get('end_time'),
+                    "locationid": event_data.get('locationid'),
+                    "attendee_ids": event_data.get('attendee_ids')
+                })
+    return events
 
 def test():
     firebase = empyrebase.initialize_app(config)
@@ -368,4 +510,4 @@ def test():
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
 
-test()
+#test()

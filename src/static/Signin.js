@@ -24,6 +24,16 @@ window.addEventListener('resize', () => {
     sign_here.style.marginTop = -height * .23 + "px"
 })
 
+forgot_button.addEventListener('click', () => {
+    socket.emit("reset_password", signin_email.value)
+    socket.on("password_reset_sent", (out) => {
+        if (out) {
+            alert("Reset email sent!")
+        } else {
+            alert("Reset email failed.")
+        }
+    })
+})
 signin_button.addEventListener('click', () =>{
     seenAlert = false;
     if (location_success) {
@@ -44,7 +54,7 @@ signin_button.addEventListener('click', () =>{
                     }
                 }
                 else {
-                    set_user_data(user);
+                    console.log("user = "+user_profile)
                     window.location.href = "Map.html";
                 }
             }
