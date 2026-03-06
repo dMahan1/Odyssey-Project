@@ -2,7 +2,7 @@
 const logout = document.getElementById('logout');
 const friends_bar = document.getElementById('friends_bar');
 
-friends_bar.style.height = window_height / 2 + "px";
+// friends_bar.style.height = window_height / 2 + "px";
 
 // On run
 logout.addEventListener('click', () => {
@@ -12,5 +12,5 @@ logout.addEventListener('click', () => {
 window.addEventListener('click', () => {
     window_height = window.innerHeight;
     window_width = window.innerWidth;
-    friends_bar.style.height = window_height / 2 + "px";
+    // friends_bar.style.height = window_height / 2 + "px";
 })
