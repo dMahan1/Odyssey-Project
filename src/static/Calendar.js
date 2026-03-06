@@ -22,6 +22,14 @@ const location_search = document.getElementById('location_search');
 const start_label = document.getElementById('start_label');
 const end_label = document.getElementById('end_label');
 
+const attendees_popup = document.getElementById('attendees_popup_background')
+const attendees_content = document.getElementById('attendees_popup_content');
+const more_attendees_button = document.getElementById('more_attendees');
+const attendees_popup_top_bar = document.getElementById('attendees_popup_bar');
+const save_attendees = document.getElementById('save_attendees');
+
+const main_content = document.querySelector('.main_content');
+
 // Inbox specific variables
 const inbox_button = document.getElementById('inbox_button');
 const inbox_popup = document.getElementById('inbox_popup_background');
@@ -79,6 +87,10 @@ function change_event_size() {
         window_height * .03 + "px";
 }
 
+function change_attendees_size () {
+    attendees_popup_top_bar.style.height = window_height / 32 + "px";
+}
+
 function create_event_invite(event_name, event_creator){
     const event_template = document.getElementById("event_invite_template");
     let new_invite = event_template.content.cloneNode(true)
@@ -98,14 +110,63 @@ function create_friend_request(friend_username) {
     inbox_popup_content.appendChild(new_friend_request);
 }
 
+function add_attendee_list(attendee_name, attendee_id) {
+    const attendee_template = document.getElementById("attendee_template");
+    let new_attendee = attendee_template.content.cloneNode(true);
+
+    new_attendee.querySelector('label').append(attendee_name);
+    new_attendee.querySelector('.attendees_select').id = attendee_id;
+    attendees_content.appendChild(new_attendee);
+}
+
 function make_calendar(day, dow, month, year) {
     day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+}
+
+function add_location(location_name, location_id) {
+    const newLoc = new Option(location_name, location_id);
+    location_search.appendChild(newLoc);
+}
+
+function add_event(event_name, event_creator, event_location, start_time, end_time) {
+    const event_template = document.getElementById("event_template");
+    let new_event = event_template.content.cloneNode(true);
+
+    let event_div = new_event.querySelector('.event');
+    const hour_size = 60;
+    event_div.style.top = ((start_time + 1) * hour_size ) + "px";
+    event_div.style.height = ((end_time - start_time) * hour_size ) + "px";
+
+    new_event.querySelector('.event_name').innerText = event_name;
+    new_event.querySelector('.event_creator').innerText = event_creator;
+    new_event.querySelector('.event_location').innerText = event_location;
+
+    if (start_time > 12) {
+        start_time = start_time % 12;
+        new_event.querySelector('.event_start').innerText = start_time + "pm";
+
+    } else {
+        new_event.querySelector('.event_start').innerText = start_time + "am";
+    }
+    if (end_time > 12) {
+        end_time = end_time % 12;
+        new_event.querySelector('.event_end').innerText = end_time + "pm";
+    } else {
+        new_event.querySelector('.event_end').innerText = end_time + "am";
+    }
+
+    main_content.appendChild(new_event);
 }
 
 /* On run */
 top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
+change_attendees_size();
+add_event("Event", "Lycia", "WALC", 1, 19);
+
+add_attendee_list("Lycia")
+
 make_calendar(current_day, current_dow, current_month, current_year);
 
 
@@ -117,7 +178,7 @@ window.addEventListener('resize', function(){
 
     change_event_size();
     change_inbox_size();
-
+    change_attendees_size();
 })
 
 scrap_event.addEventListener('click', () => {
@@ -188,4 +249,13 @@ next_day.addEventListener('click', () => {
     }
 
     make_calendar(current_day, current_dow, current_month, current_year);
+})
+
+more_attendees_button.addEventListener('click', () => {
+    attendees_popup.style.display = "block";
+})
+
+save_attendees.addEventListener('click', () => {
+    /* Do stuff to save the attendees chosen*/
+    attendees_popup.style.display = "none";
 })
