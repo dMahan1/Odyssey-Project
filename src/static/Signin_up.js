@@ -6,7 +6,7 @@ let latitude = 0;
 let longitude = 0;
 let location_success = false;
 let user_profile = null;
-const socket = io()
+const socket = io();
 
 let width = .25 * window.innerWidth;
 let height = .11 * window.innerWidth;
