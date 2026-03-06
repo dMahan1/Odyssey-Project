@@ -55,6 +55,11 @@ def delete(user):
     delete_user(user)
     emit("deleted")
 
+@socketio.on('get_user')
+def get_user(user):
+    data = get_user_data(user)
+    emit("return_user", data)
+
 @socketio.on('update_loc')
 def update_loc(user, latitude, longitude):
     update_user_location(user, latitude, longitude)
@@ -70,6 +75,25 @@ def update_toucoins(user, amount):
     update_user_toucoins(user, amount)
     emit("toucoins_update")
 
+@socketio.on("drop_pin")
+def drop_pins(user, latitude, longitude):
+    key = drop_pin(user, latitude, longitude)
+    emit("pin_dropped", key)
+
+@socketio.on("pulled_pin")
+def pulled_pins(user, key):
+    ret = pull_pin(user, key)
+    emit("pin_pulled", ret)
+
+@socketio.on("create_event")
+def event_create(user, name, start_time, end_time, locationid, attendee_ids):
+    key = create_event(user, name, start_time, end_time, locationid, attendee_ids)
+    emit("event_created", key)
+
+@socketio.on("delete_event")
+def event_delete(user, event_id):
+    delete_event(user, event_id)
+    emit("event deleted")
 
 if __name__ == '__main__':
     socketio.run(app, port=8080)

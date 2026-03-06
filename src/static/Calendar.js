@@ -1,5 +1,9 @@
 /*Variables */
-
+const event_title = document.getElementById('title')
+const attendees_list = document.getElementById('attendees')
+const start_time = document.getElementById('start')
+const end_time = document.getElementById('end')
+const loc = document.getElementById('location_search')
 const top_bar = document.getElementById('top_bar');
 
 // Event specific variables
@@ -43,6 +47,7 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
+let messages = [];
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -206,7 +211,11 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
-    /* do stuff to save the event with server*/
+    /* did stuff to save the event with server*/
+    socket.emit("create_event", user, event_title.value, start_time.value, end_time.value, loc.value, attendees_list.value)
+    socket.on("event_created", (key) => {
+        /*add event pop up stuff*/
+    });
     event_popup.style.display = "none";
 })
 
@@ -216,6 +225,11 @@ event_popup_open.addEventListener('click', () => {
 
 inbox_button.addEventListener('click', () => {
     inbox_popup.style.display = "block";
+    socket.emit("get_user", user)
+    socket.on("return_user", (data) => {
+        messages = data.new_messages
+
+    })
 })
 
 close_inbox.addEventListener('click', () => {
