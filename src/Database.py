@@ -98,6 +98,8 @@ def create_user(email, username, password, latitude, longitude):
         db.child("Users").child(user['localId']).set(data, token=user['idToken'])
 
         return user
+def send_password_reset_email(email):
+    auth.send_password_reset_email(email)
 
 def update_user_location(user, latitude, longitude):
     db = firebase.database()
@@ -199,6 +201,33 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
 
     return key
 
+def send_event_invite(sender_id, recipient_id, event_id):
+    db = firebase.database()
+    event = db.child("Events").child(event_id).get(token=sender_id).val()
+    if event is None:
+        raise Exception("Event does not exist.")
+    message = f"You're invited to {event['name']}!"
+    send_message([event_id, event], recipient_id, message, 1)
+
+def join_event(user, event_id):
+    db = firebase.database()
+    event = db.child("Events").child(event_id).get(token=user['idToken']).val()
+    if event is None:
+        raise Exception("Event does not exist.")
+    attendee_ids = event.get("attendee_ids", [])
+    if user['localId'] not in attendee_ids:
+        attendee_ids.append(user['localId'])
+        db.child("Events").child(event_id).update({
+            "attendee_ids": attendee_ids
+        }, token=user['idToken'])
+        events = db.child("Users").child(user['localId']).child("attended_event_ids").get(token=user['idToken']).val()
+        if events is None:
+            events = []
+        events.append(event_id)
+        db.child("Users").child(user['localId']).update({
+            "attended_event_ids": events
+        }, token=user['idToken'])
+
 def delete_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user['idToken']).val()
@@ -217,6 +246,89 @@ def delete_event(user, event_id):
 
     # Delete the event document
     db.child("Events").child(event_id).remove(token=user['idToken'])
+
+def send_message(sender_id, recipient_id, message, message_type):
+    db = firebase.database()
+    if message_type == 0:
+        sender_username = db.child("Users").child(sender_id).child("username").get().val()
+    else:
+        sender_username = db.child("Events").child(sender_id[0]).child("name").get().val()
+    message_data = {
+        "sender": sender_id,
+        "sender_username": sender_username,
+        "message": message,
+        "type": message_type,
+        "timestamp": empyrebase.ServerValue.TIMESTAMP
+    }
+    db.child("Users").child(recipient_id).child("messages").push(message_data)
+
+def get_messages(user_id):
+    db = firebase.database()
+    messages = db.child("Users").child(user_id).child("messages").get().val()
+    return messages
+
+def remove_message(user_id, message_id):
+    db = firebase.database()
+    db.child("Users").child(user_id).child("messages").child(message_id).remove()
+
+def add_friend(user, friend_id):
+    if friend_id == user['localId']:
+        raise Exception("User cannot add themselves as a friend.")
+    db = firebase.database()
+    friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    if friends is None:
+        friends = []
+    if friend_id not in friends:
+        friends.append(friend_id)
+        db.child("Users").child(user['localId']).update({
+            "friend_ids": friends
+        }, token=user['idToken'])
+
+def remove_friend(user, friend_id):
+    db = firebase.database()
+    friends = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    if friends and friend_id in friends:
+        friends.remove(friend_id)
+        db.child("Users").child(user['localId']).update({
+            "friend_ids": friends
+        }, token=user['idToken'])
+
+def send_friend_request(sender_id, recipient_id):
+    if sender_id == recipient_id:
+        raise Exception("User cannot send a friend request to themselves.")
+    sender_username = firebase.database().child("Users").child(sender_id).child("username").get().val()
+    message = f"{sender_username} has sent you a friend request!"
+    send_message(sender_id, recipient_id, message, 0)
+
+def get_friends(user_id):
+    db = firebase.database()
+    friend_ids = db.child("Users").child(user_id).child("friend_ids").get().val()
+    friends = []
+    if friend_ids:
+        for friend_id in friend_ids:
+            friend_data = db.child("Users").child(friend_id).get().val()
+            if friend_data:
+                friends.append({
+                    "id": friend_id,
+                    "username": friend_data.get("username"),
+                    "icon_image_path": friend_data.get("icon_image_path")
+                })
+    return friends
+
+def get_event_data(event_id):
+    db = firebase.database()
+    event_data = db.child("Events").child(event_id).get().val()
+    return event_data
+
+def get_location_data(location_id):
+    db = firebase.database()
+    location_data = db.child("Locations").child(location_id).get().val()
+    return location_data
+
+def get_user_data_by_id(user_id):
+    db = firebase.database()
+    user_data = db.child("Users").child(user_id).get().val()
+    return user_data
 
 def test():
     firebase = empyrebase.initialize_app(config)
