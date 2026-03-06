@@ -59,14 +59,15 @@
                 <button id="save_attendees">&#x2713</button>
             </div>
             <div id = "attendees_popup_content">
-                <template id="attendee_template">
-                    <div class="attendee">
-                        <label>
-                            <input type="checkbox" class="attendees_select" id="uid">
-                        </label>
-                    </div>
-                </template>
+                
             </div>
+            <template id="attendee_template">
+                <div class="attendee">
+                    <label>
+                        <input type="checkbox" class="attendees_select">
+                    </label>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -77,45 +78,45 @@
                 <button id="close_inbox">&#x2717</button>
             </div>
             <div id = "inbox_popup_content">
-                <template id="event_invite_template">
-                    <div class="event_invite">
-                        <div class="event_details">
-                            <label class="event_name"> Event Name </label>
-                            <label class="event_creator"> Event Creator </label>
-                        </div>
-                        <div id="event_actions">
-                            <button id="accept_event">
-                                &#x2713
-                            </button>
-                            <button id="decline_event">
-                                &#x2717
-                            </button>
-                            <button id="more_event_info">
-                                &#xFF1E
-                            </button>
-                        </div>
+                            </div>
+            <template id="event_invite_template">
+                <div class="event_invite">
+                    <div class="event_details">
+                        <label class="event_name"> Event Name </label>
+                        <label class="event_creator"> Event Creator </label>
                     </div>
-                </template>
-                <template id="friend_invite_template">
-                    <div class="friend_invite">
-                        <div class="request_details">
-                            <label> Friend Request </label>
-                            <label class="request_username"> @username </label>
-                        </div>
-                        <div id="friend_actions">
-                            <button id="accept_friend">
-                                &#x2713
-                            </button>
-                            <button id="decline_friend">
-                                &#x2717
-                            </button>
-                            <button id="hidden_button">
-                                &#xFF1E
-                            </button>
-                        </div>
+                    <div id="event_actions">
+                        <button id="accept_event">
+                            &#x2713
+                        </button>
+                        <button id="decline_event">
+                            &#x2717
+                        </button>
+                        <button id="more_event_info">
+                            &#xFF1E
+                        </button>
                     </div>
-                </template>
-            </div>
+                </div>
+            </template>
+            <template id="friend_invite_template">
+                <div class="friend_invite">
+                    <div class="request_details">
+                        <label> Friend Request </label>
+                        <label class="request_username"> @username </label>
+                    </div>
+                    <div id="friend_actions">
+                        <button id="accept_friend">
+                            &#x2713
+                        </button>
+                        <button id="decline_friend">
+                            &#x2717
+                        </button>
+                        <button id="hidden_button">
+                            &#xFF1E
+                        </button>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -179,16 +180,18 @@
                 <div class = "time_block"></div>
                 <div class = "time_block"></div>
                 <div class = "time_block"></div>
-                <template id="event_template">
-                    <div class="event" id="e">
-                        <label class="event_name"> Event Name </label>
-                        <label class="event_creator"> Event Creator </label>
-                        <label class="event_location"> Event Location </label>
-                        <label class="event_start"> Event Start </label>
-                        <label class="event_end"> Event End </label>
-                    </div>
-                </template>
+                
             </div>
+            <template id="event_template">
+                <div class="event" id="e">
+                    <button class="delete_event_btn" title="Delete Event">&times;</button>
+                    <label class="event_name"> Event Name </label>
+                    <label class="event_creator"> Event Creator </label>
+                    <label class="event_location"> Event Location </label>
+                    <label class="event_start"> Event Start </label>
+                    <label class="event_end"> Event End </label>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -205,6 +208,7 @@
         </button>
     </div>
 </div>
+
 
 </body>
 </html>

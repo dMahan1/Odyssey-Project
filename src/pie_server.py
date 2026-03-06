@@ -96,10 +96,30 @@ def pulled_pins(user, key):
     ret = pull_pin(user, key)
     emit("pin_pulled", ret)
 
+@socketio.on("get_permanent_locations")
+def handle_get_perm_locs(user):
+    locations = get_permanent_locations(user)
+    emit("permanent_locations_got", locations)
+
 @socketio.on("create_event")
 def event_create(user, name, start_time, end_time, locationid, attendee_ids):
     key = create_event(user, name, start_time, end_time, locationid, attendee_ids)
     emit("event_created", key)
+
+@socketio.on("get_events")
+def get_events(user):
+    events = get_user_events(user)
+    emit("events_got", events)
+
+@socketio.on("accept_event_invite")
+def handle_accept_invite(user, event_id, message_id):
+    # 1. Join the event in the database
+    ret = join_event(user, event_id)
+    
+    # 2. Delete the invitation from the user's inbox
+    remove_message(user, message_id) 
+    
+    emit("event_accepted", ret)
 
 @socketio.on("delete_event")
 def event_delete(user, event_id):
@@ -129,14 +149,9 @@ def message_send(sender, reciever, message, type):
     send_message(sender, reciever, message, type)
     emit("message_sent")
 
-@socketio.on("get_message")
-def message_get(uid):
-    ret = get_messages(uid)
-    emit("messages", ret)
-
 @socketio.on("remove_message")
-def message_remove(uid, mid):
-    remove_message(uid, mid)
+def message_remove(user, mid):
+    remove_message(user, mid)
     emit("message_removed")
 
 @socketio.on("add_friend")
@@ -162,6 +177,11 @@ def friend_get(user):
     
     emit("friends_got", ret)
 
+@socketio.on("get_all_users")
+def handle_get_all_users(user):
+    users = get_all_users(user)
+    emit("all_users_got", users)
+
 @socketio.on("get_e_data")
 def get_e_data(eid):
     ret = get_event_data(eid)
@@ -177,6 +197,21 @@ def get_u_by_id(uid):
     ret = get_user_data_by_id(uid)
     emit("user_via_id", ret)
 
+@socketio.on("reset_password")
+def handle_password_reset(email):
+    try:
+        send_password_reset_email(email)
+        emit("password_reset_sent", True)
+    except Exception as e:
+        print(f"Error sending password reset: {e}")
+        emit("password_reset_sent", False)
+
+@socketio.on("update_username")
+def handle_update_username(user, new_username):
+    # Calls your existing function in Database.py
+    result = update_username(user, new_username)
+    # result will be "Success", "Username" (if duplicate), or "Error"
+    emit("username_updated", result)
 
 if __name__ == '__main__':
     socketio.run(app, port=8080)
