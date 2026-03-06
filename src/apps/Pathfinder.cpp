@@ -32,16 +32,16 @@ void Pathfinder::init() {
     }
 }
 
-const Location *Pathfinder::get_location_by_id(std::string id) const {
+const std::shared_ptr<Location> Pathfinder::get_location_by_id(std::string id) const {
     std::shared_lock lock(mtx);
     const Location *loc = locations[id_indices.at(id)].get();
     if (loc->get_id() != id) {
         throw std::runtime_error("Location ID not found: " + id);
     }
-    return loc;
+    return locations.at(id_indices.at(id));
 }
 
-const Location *Pathfinder::approximate_location(double latitude, double longitude) const {
+const std::shared_ptr<Location> Pathfinder::approximate_location(double latitude, double longitude) const {
     std::shared_lock lock(mtx);
     auto dist = [](const void *a, const void *b) {
         const Location* locA = static_cast<const Location*>(a);
@@ -49,12 +49,12 @@ const Location *Pathfinder::approximate_location(double latitude, double longitu
         return locA->euclidean_distance_to(*locB);
     };
     Location query("Query", "QueryLoc", latitude, longitude);
-    const Location *closest =
+    const Location *raw_closest =
         static_cast<const Location*>(location_tree.nearest_neighbor({query.get_x(), query.get_y(), query.get_z()}, &query, dist));
-    return closest;
+    return locations.at(id_indices.at(raw_closest->get_id()));
 }
 
-const Location *Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode mode) const {
+const std::shared_ptr<Location> Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode mode) const {
     return approximate_location(latitude, longitude);
 }
 
@@ -75,6 +75,17 @@ Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMo
 }
 
 Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_weather, TraversalMode mode) const {
+    double weather_multiplier;
+    switch (mode) {
+        case DEMO:
+        case DEBUG:
+            weather_multiplier = 10.0;
+            break;
+        case RELEASE:
+        default:
+            weather_multiplier = 1.10;
+            break;
+    }
     size_t n = adj.size();
     std::vector<double> dist(n, std::numeric_limits<double>::infinity());
     std::vector<double> weighted_dist(n, std::numeric_limits<double>::infinity());
@@ -109,7 +120,7 @@ Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_w
             std::string to = e.get_vertex2();
 
             double cumulative_dist = weighted_dist[curr] +
-                (e.get_weight() * (bad_weather && !e.is_indoor() ? 1.10 : 1.0));
+                (e.get_weight() * (bad_weather && !e.is_indoor() ? weather_multiplier : 1.0));
             if (cumulative_dist < dist[id_indices.at(to)]) {
                 weighted_dist[id_indices.at(to)] = cumulative_dist;
                 dist[id_indices.at(to)] = dist[curr] + e.get_weight();

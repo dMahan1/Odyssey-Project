@@ -32,9 +32,9 @@ class Pathfinder {
             static Pathfinder instance = Pathfinder();
             return instance;
         }
-        const Location *get_location_by_id(std::string id) const;
-        const Location *approximate_location(double latitude, double longitude) const;
-        const Location *approximate_location_via(double latitude, double longitude, TraversalMode mode) const;
+        const std::shared_ptr<Location> get_location_by_id(std::string id) const;
+        const std::shared_ptr<Location> approximate_location(double latitude, double longitude) const;
+        const std::shared_ptr<Location> approximate_location_via(double latitude, double longitude, TraversalMode mode) const;
         Mode get_mode() const {
             return mode;
         }

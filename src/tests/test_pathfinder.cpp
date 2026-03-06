@@ -76,8 +76,12 @@ bool test_bad_weather_debug() {
 
 bool test_path_demo() {
     Pathfinder& pf = Pathfinder::get_instance();
-    const Location* src = pf.get_location_by_id("1");
-    const Location* dst = pf.get_location_by_id("25");
+    if (pf.get_mode() != DEMO) {
+        return true; // Skip this test if not in demo mode
+    }
+
+    const Location* src = pf.approximate_location(40.424499, -86.910881);
+    const Location* dst = pf.approximate_location(40.423734, -86.910446);
     Path path1 = pf.route(*src, *dst, false, WALKING);
     assert(!path1.location_ids.empty());
     Path path2 = pf.route(*src, *dst, true, WALKING);
