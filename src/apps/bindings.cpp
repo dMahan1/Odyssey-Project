@@ -101,11 +101,11 @@ PYBIND11_MODULE(bindings, m) {
 
     // Binding for Pathfinder itself
     py::class_<Pathfinder>(m, "Pathfinder")
-        .def(py::init([](){ return &Pathfinder::get_instance(); }), py::return_value_policy::reference)
+        .def_static("get_instance", &Pathfinder::get_instance, py::return_value_policy::reference)
         .def("route", &Pathfinder::route)
-        .def("get_location_by_id", &Pathfinder::get_location_by_id, py::return_value_policy::reference)
-        .def("approximate_location", &Pathfinder::approximate_location, py::return_value_policy::reference)
-        .def("approximate_location_via", &Pathfinder::approximate_location_via, py::return_value_policy::reference)
+        .def("get_location_by_id", &Pathfinder::get_location_by_id, py::return_value_policy::reference_internal)
+        .def("approximate_location", &Pathfinder::approximate_location, py::return_value_policy::reference_internal)
+        .def("approximate_location_via", &Pathfinder::approximate_location_via, py::return_value_policy::reference_internal)
         .def("get_mode", &Pathfinder::get_mode)
         .def("print_tree", &Pathfinder::print_tree)
         .def("insert_location", &Pathfinder::insert_location)

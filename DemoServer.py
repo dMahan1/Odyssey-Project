@@ -20,7 +20,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # -------------------------
 
-pf = bindings.Pathfinder()
+pf = bindings.Pathfinder.get_instance()
 
 # -------------------------
 
