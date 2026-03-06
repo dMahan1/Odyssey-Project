@@ -57,6 +57,7 @@ button {
 .secondary { background: #6c757d; color: white; }
 .success { background: #28a745; color: white; }
 .info { background: #17a2b8; color: white; }
+.warning { background: #ffc107; color: #212529; } /* NEW: Active state color */
 
 #info {
     margin-top: 12px;
@@ -114,6 +115,8 @@ button {
         <button id="split-btn" class="success" style="display: none;" onclick="splitSelectedEdge()">Split Selected Edge</button>
         
         <button id="api-btn" class="info" style="display: none;" onclick="sendToBackend()">Calculate Path</button>
+
+        <button id="find-nearest-btn" class="info" onclick="toggleFindNearestMode()">Find Nearest Node</button>
         
         <button class="danger" onclick="removeSelected()">Remove Selected Items</button>
         
@@ -128,7 +131,7 @@ button {
 
         <div>
             <label>
-                <input type="checkbox" id="bad-weather" onchange="toggleBadWeather()">
+                <input type="checkbox" id="bad-weather" onchange="updateWeatherCondition()">
                 Bad Weather
             </label>
         </div>
@@ -145,7 +148,7 @@ button {
         <div id="info">
             Click map to add nodes.
             Select 1 node and add another to auto-connect.
-            Select 2 nodes and drag one onto the other to merge them.
+            Select 2 nodes and drag one onto the other to merge.
             Shift-drag to group select items.
         </div>
     </div>
@@ -157,7 +160,6 @@ button {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// NEW: Initialize Socket connection to your Flask backend
 const socket = io('http://127.0.0.1:8000');
 
 socket.on('connect', () => {
@@ -181,7 +183,10 @@ let selectedNodes = [];
 let selectedEdges = [];
 let nodeCounter = 1;
 let isInteracting = false;
-let badWeather = false; // NEW: Track weather condition for routing
+let badWeather = false; 
+
+// NEW: Tracker for the "Find Nearest Node" mode
+let isFindingNearestMode = false;
 
 let isSelecting = false;
 let startPoint = null;
@@ -246,6 +251,10 @@ async function getPlaceName(lat, lon) {
 function bindNodeEvents(node) {
     node.marker.on("click", () => {
         isInteracting = true; 
+        
+        // If we are in find mode, don't select the node normally.
+        if (isFindingNearestMode) return;
+        
         toggleSelect(node);
         setTimeout(() => isInteracting = false, 50); 
     });
@@ -446,12 +455,12 @@ function sendToBackend() {
     const sourceNode = selectedNodes[0];
     const targetNode = selectedNodes[1];
 
-    updateWeatherCondition(); // Ensure we have the latest weather condition before sending
+    updateWeatherCondition(); 
 
     const payload = {
-        src: sourceNode.id,       // Ensure your Flask backend is looking for data['src']
-        dst: targetNode.id,       // Ensure your Flask backend is looking for data['dst']
-        weather: badWeather,      // NEW: Send weather condition to backend
+        src: sourceNode.id,       
+        dst: targetNode.id,       
+        weather: badWeather,      
         nodes: nodes.map((n) => ({
             id: n.id,
             name: n.name,
@@ -485,25 +494,19 @@ function sendToBackend() {
             const distStr = result.distance != null ? result.distance.toFixed(2) : "Unknown";
             alert(`Path found! Total distance: ${distStr}m`);
 
-            // 1. Deselect the 2 starting nodes
             resetSelection(); 
 
             const routeNodes = result.nodes;
 
-            // 2. Loop through the returned path
             for (let i = 0; i < routeNodes.length; i++) {
-                
-                // FIX: Safely grab the ID whether Flask returned ["id1"] OR [{"id": "id1"}]
                 const currentId = typeof routeNodes[i] === 'object' ? routeNodes[i].id : routeNodes[i];
 
-                // Select the node
                 const node = nodes.find(n => n.id === currentId);
                 if (node && !selectedNodes.includes(node)) {
                     selectedNodes.push(node);
                     node.marker.setIcon(selectedIcon());
                 }
 
-                // If there is a next node, find and select the edge connecting them
                 if (i < routeNodes.length - 1) {
                     const nextId = typeof routeNodes[i + 1] === 'object' ? routeNodes[i + 1].id : routeNodes[i + 1];
                     
@@ -519,11 +522,58 @@ function sendToBackend() {
                 }
             }
             
-            // Sync the UI panel to show all the selected path properties
             updateCheckboxes();
             updateInfo();
         } else {
             alert("The backend could not find a valid path between these points.");
+        }
+    });
+}
+
+// NEW: Function to toggle "Find Nearest Node" mode
+function toggleFindNearestMode() {
+    isFindingNearestMode = !isFindingNearestMode;
+    const btn = document.getElementById('find-nearest-btn');
+    
+    if (isFindingNearestMode) {
+        btn.classList.replace('info', 'warning');
+        btn.textContent = "Cancel (Click map to find)";
+        map.getContainer().style.cursor = 'crosshair';
+    } else {
+        btn.classList.replace('warning', 'info');
+        btn.textContent = "Find Nearest Node";
+        map.getContainer().style.cursor = '';
+    }
+}
+
+// NEW: The actual backend call logic separated into its own function
+function fetchNearestNodeFromBackend(lat, lon) {
+    const payload = { lat: lat, lon: lon };
+    
+    console.log("Requesting approximate location for:", payload);
+
+    socket.emit("approximate_location", payload, (result) => {
+        console.log("Approximate location result:", result);
+
+        if (result && result.node_id) {
+            const node = nodes.find(n => n.id === result.node_id);
+            if (node) {
+                resetSelection();
+                selectedNodes.push(node);
+                node.marker.setIcon(selectedIcon());
+                updateInfo();
+                
+                L.popup()
+                    .setLatLng([lat, lon])
+                    .setContent(`<b>Nearest Node:</b> ${node.name}<br><b>Distance:</b> ${result.distance ? result.distance.toFixed(2) + 'm' : 'N/A'}`)
+                    .openOn(map);
+            } else {
+                alert(`Backend approximated to node [${result.node_id}], but it isn't currently loaded on your map.`);
+            }
+        } else if (result && result.error) {
+            alert("Backend Error: " + result.error);
+        } else {
+            console.warn("Backend didn't return a valid approximation.");
         }
     });
 }
@@ -599,6 +649,9 @@ function updateSelectedEdgesFlags(checkbox) {
 }
 
 map.on('mousedown', e => {
+    // Prevent shift-drag if we are trying to find the nearest node
+    if (isFindingNearestMode) return; 
+
     if (e.originalEvent.shiftKey) {
         isInteracting = true; 
         isSelecting = true;
@@ -649,7 +702,14 @@ map.on('mouseup', e => {
     }
 });
 
+// UPDATED: Map click now intercepts coordinates if 'Find Nearest Mode' is active
 map.on("click", async e => {
+    if (isFindingNearestMode) {
+        fetchNearestNodeFromBackend(e.latlng.lat, e.latlng.lng);
+        toggleFindNearestMode(); // Turn the tool back off after clicking
+        return;
+    }
+
     if (isInteracting) return;
 
     if (selectedNodes.length === 1) {
@@ -668,13 +728,12 @@ function updateInfo() {
     const apiBtn = document.getElementById("api-btn"); 
 
     splitBtn.style.display = (selectedEdges.length === 1) ? "block" : "none";
-    
     apiBtn.style.display = (selectedNodes.length === 2) ? "block" : "none";
 
     if (selectedNodes.length === 0 && selectedEdges.length === 0) {
         info.textContent = `Click map to add nodes.
 Select 1 node and add another to auto-connect.
-Select 2 nodes and drag one onto the other to merge them.
+Select 2 nodes and drag one onto the other to merge.
 Shift-drag to group select items.`;
         return;
     }
