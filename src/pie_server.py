@@ -1,7 +1,8 @@
 import os
 from Database import *
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, abort
+import json
+from flask import Flask, render_template, request, abort, jsonify
 from jinja2 import TemplateNotFound
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 
@@ -14,6 +15,12 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 socketio = SocketIO(app)
 
+user_profile = None
+
+@socketio.on('connect')
+def handle_connect():
+    print("Client connected!")
+
 users = {}
 
 @app.route('/', defaults={'page': 'Signin.html'})
@@ -22,7 +29,7 @@ def render_page(page):
     print(f"Rendering page: {page!r}")
 
     # Don't intercept static file requests
-    if page.startswith('static/'):
+    if not page.endswith('.html'):
         abort(404)
 
     # Handle empty page or root access
@@ -33,22 +40,26 @@ def render_page(page):
     if '..' in page or page.startswith('/'):
         abort(400)
     try:
-        return render_template(page)
+        global user_profile
+        return render_template(page, data=user_profile)
     except TemplateNotFound:
         abort(404)
 
 @socketio.on('login')
 def login(email, password, longitude, latitude):
-    user = auth_user(email, password, latitude, longitude)   
+    user = auth_user(email, password, latitude, longitude)  
     if user is None:
         emit("auth", None)
     else:
+        global user_profile
+        user_profile = user
         emit("auth", user)
 
 @socketio.on('signup')
 def signup(email, password, username, latitude, longitude):
-    user = create_user(email, username, password, latitude, longitude)
-    emit("auth", user)
+    global user_profile
+    user_profile = create_user(email, username, password, latitude, longitude)
+    emit("auth", user_profile)
 
 @socketio.on('delete')
 def delete(user):
@@ -146,8 +157,9 @@ def send_f_request(sender, reciever):
     emit("request_sent", ret)
 
 @socketio.on("get_friends")
-def friend_get(uid):
-    ret = get_friends(uid)
+def friend_get(user):
+    ret = get_friends(user)
+    
     emit("friends_got", ret)
 
 @socketio.on("get_e_data")

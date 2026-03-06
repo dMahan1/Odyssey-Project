@@ -47,6 +47,7 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
+let friends = [];
 let messages = [];
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -184,8 +185,6 @@ change_event_size();
 change_inbox_size();
 change_attendees_size();
 
-add_attendee_list("Lycia")
-
 make_calendar(current_day, current_dow, current_month, current_year);
 
 
@@ -206,8 +205,8 @@ scrap_event.addEventListener('click', () => {
 
 save_event.addEventListener('click', () => {
     /* did stuff to save the event with server*/
-    socket.emit("create_event", user, event_title.value, start_time.value, end_time.value, loc.value, attendees_list.value)
-    socket.on("event_created", (key) => {
+    window.socket.emit("create_event", user_profile, event_title.value, start_time.value, end_time.value, loc.value, attendees_list.value)
+    window.socket.on("event_created", (key) => {
         /*add event pop up stuff*/
     });
     event_popup.style.display = "none";
@@ -219,8 +218,8 @@ event_popup_open.addEventListener('click', () => {
 
 inbox_button.addEventListener('click', () => {
     inbox_popup.style.display = "block";
-    socket.emit("get_user", user)
-    socket.on("return_user", (data) => {
+    window.socket.emit("get_user", user_profile)
+    window.socket.on("return_user", (data) => {
         messages = data.new_messages
 
     })
@@ -273,6 +272,26 @@ next_day.addEventListener('click', () => {
 })
 
 more_attendees_button.addEventListener('click', () => {
+    console.log("More attendees")
+    if (!window.socket) {
+        console.log("no socket")
+    }
+    if (!window.socket.connected) {
+        console.log("not connected")
+    }
+    console.log(user_profile)
+    window.socket.emit("get_friends", user_profile)
+    window.socket.on("friends_got", (ret) => {
+        friends = ret;
+        console.log("friends = "+friends)
+        friends.forEach(friend => {
+            console.log("friend: "+friend)
+            console.log("friend username: "+friend.username)
+            console.log("friend id: "+friend.id)
+
+            add_attendee_list(friend.username, friend.id)
+        });
+    });
     attendees_popup.style.display = "block";
 })
 

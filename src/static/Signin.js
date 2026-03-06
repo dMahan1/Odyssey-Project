@@ -44,7 +44,7 @@ signin_button.addEventListener('click', () =>{
                     }
                 }
                 else {
-                    set_user_data(user);
+                    console.log("user = "+user_profile)
                     window.location.href = "Map.html";
                 }
             }

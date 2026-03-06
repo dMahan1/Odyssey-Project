@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import empyrebase
+import json
 
 # Get the user's home directory path
 #home_dir = Path.home()
@@ -51,6 +52,7 @@ def get_user_data(user):
     # Get a reference to the user's data
     user_data = db.child("Users").child(user['localId']).get(token=user['idToken']).val()
 
+    print(user_data)
     return user_data
 
 def create_user(email, username, password, latitude, longitude):
@@ -305,34 +307,41 @@ def send_friend_request(sender_id, recipient_id):
     send_message(sender_id, recipient_id, message, 0)
     return True
 
-def get_friends(user_id):
+def get_friends(user):
     db = firebase.database()
-    friend_ids = db.child("Users").child(user_id).child("friend_ids").get().val()
+    try:
+        friend_ids = db.child("Users").child(user['localId']).child("friend_ids").get(token=user['idToken']).val()
+    except Exception as e:
+        print(f"Exceptioned: {e}")
+        friend_ids = []
     friends = []
     if friend_ids:
         for friend_id in friend_ids:
-            friend_data = db.child("Users").child(friend_id).get().val()
+            
+            friend_data = db.child("Users").child(friend_id).get(token=user['idToken']).val()
             if friend_data:
+                print(f"Friend: {friend_data}")
                 friends.append({
                     "id": friend_id,
-                    "username": friend_data.get("username"),
-                    "icon_image_path": friend_data.get("icon_image_path")
+                    "username": friend_data.get('username'),
+                    "icon_image_path": friend_data.get('icon_image_path')
                 })
+                print(f"friends = {friends}")
     return friends
 
-def get_event_data(event_id):
+def get_event_data(user, event_id):
     db = firebase.database()
-    event_data = db.child("Events").child(event_id).get().val()
+    event_data = db.child("Events").child(event_id).get(token=user['idToken']).val()
     return event_data
 
-def get_location_data(location_id):
+def get_location_data(user, location_id):
     db = firebase.database()
-    location_data = db.child("Locations").child(location_id).get().val()
+    location_data = db.child("Locations").child(location_id).get(token=user['idToken']).val()
     return location_data
 
-def get_user_data_by_id(user_id):
+def get_user_data_by_id(user):
     db = firebase.database()
-    user_data = db.child("Users").child(user_id).get().val()
+    user_data = db.child("Users").child(user['localId']).get(token=user['idToken']).val()
     return user_data
 
 def test():
