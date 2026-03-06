@@ -15,7 +15,8 @@ enum TraversalMode {
     WALKING,
     BIKING,
     DRIVING,
-    BUS
+    BUS,
+    PRINT_ALL // For testing: returns a path that includes all locations in the graph, ignoring edges and weights
 };
 struct Path {
     std::vector<std::string> location_ids;

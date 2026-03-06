@@ -89,15 +89,15 @@ void PathfinderBuilder::load_data_demo() {
     std::ifstream f("src/tests/DemoGraph.json");
     json data = json::parse(f);
 
-    auto stringify_json = [](const json& j) {
-        return j.dump();
-    };
+    // auto stringify_json = [](const json& j) {
+    //     return j.dump();
+    // };
 
     // Load locations
     for (auto& loc : data["nodes"]) {
         locations.emplace_back(
-            stringify_json(loc["id"]),
-            stringify_json(loc["name"]),
+            loc["id"].get<std::string>(),
+            loc["name"].get<std::string>(),
             loc["lat"].get<double>(),
             loc["lon"].get<double>()
         );
@@ -106,14 +106,14 @@ void PathfinderBuilder::load_data_demo() {
     // Load edges
     for (auto& edge : data["edges"]) {
         edges.emplace_back(
-            stringify_json(edge["from"]),
-            stringify_json(edge["to"]),
+            edge["from"].get<std::string>(),
+            edge["to"].get<std::string>(),
             edge["weight"].get<double>(),
             edge["flags"].get<uint32_t>()
         );
         edges.emplace_back(
-            stringify_json(edge["to"]),
-            stringify_json(edge["from"]),
+            edge["to"].get<std::string>(),
+            edge["from"].get<std::string>(),
             edge["weight"].get<double>(),
             edge["flags"].get<uint32_t>()
         );
