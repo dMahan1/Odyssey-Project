@@ -183,12 +183,6 @@ top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
 change_attendees_size();
-add_event("Event", "Lycia", "WALC", 0, 11, 1);
-add_event("Event", "Lycia", "WALC", 12, 13, 2);
-
-window.addEventListener("click", () => {
-    remove_event(2);
-})
 
 add_attendee_list("Lycia")
 

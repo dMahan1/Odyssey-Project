@@ -78,7 +78,7 @@ body {
 }
 
 /* Popup specific things */
-#event_popup_background, #inbox_popup_background {
+#event_popup_background, #inbox_popup_background, #user_div_background {
     display: none;
     z-index: 1;
     width: 100%;
@@ -179,13 +179,13 @@ body {
     align-items: start;
 }
 
-#accept_event, #accept_friend {
+#accept_event, #accept_friend, #add_friends {
     border-radius: 50%;
     background-color: #66ff00;
     cursor: pointer;
 }
 
-#decline_event, #decline_friend {
+#decline_event, #decline_friend, #delete_friends {
     border-radius: 50%;
     background-color: #FF000D;
     cursor: pointer;
@@ -349,7 +349,7 @@ body {
     align-items: end;
 }
 
-#logout {
+#logout, #delete {
     font-size: 20px;
     font-family: Rockwell, monaco, monospace;
     background-color: black;
@@ -368,10 +368,32 @@ body {
     width: 75%;
 
 }
+
+#username_input{
+    font-family: Rockwell, monaco, monospace;
+    background-color: #E8A2A7;
+    border: 4px solid black;
+    text-align: left;
+    align-items: center;
+    width: 40%;
+}
 #friends_bar {
     background-color: #7A7A7A;
-    width: 10px;
-    height: 10px;
+    width: 75%;
+    height: 200px;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+#add_friends {
+    align-self: flex-end;
+}
+
+#friends_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 80%;
 }
 
 .change {
@@ -381,6 +403,11 @@ body {
     height: 30px;
     width: 30px;
     margin-left: -15px;
+
+}
+
+#user_check {
+    position: relative;
 }
 
 .edits {
@@ -389,6 +416,17 @@ body {
     justify-content: flex-end;
     width: 50%;
     margin-right: 5px;
+}
 
+#user_div {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
 
+.friend {
+    background-color: #EDDEAB;
+    width: 75%;
+    align-self: center;
+    border: 1px solid black;
 }
