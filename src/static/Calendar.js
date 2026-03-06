@@ -123,7 +123,7 @@ function add_location(location_name, location_id) {
     location_search.appendChild(newLoc);
 }
 
-function add_event(event_name, event_creator, event_location, start_time, end_time) {
+function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
     const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
@@ -131,26 +131,46 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     const hour_size = 60;
     event_div.style.top = ((start_time + 1) * hour_size ) + "px";
     event_div.style.height = ((end_time - start_time) * hour_size ) + "px";
+    event_div.id = event_id;
 
-    new_event.querySelector('.event_name').innerText = event_name;
-    new_event.querySelector('.event_creator').innerText = event_creator;
-    new_event.querySelector('.event_location').innerText = event_location;
+    new_event.querySelector('.event_name').innerText = "Name: " + event_name;
+    new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
+    new_event.querySelector('.event_location').innerText = "Location: " + event_location;
 
     if (start_time > 12) {
         start_time = start_time % 12;
-        new_event.querySelector('.event_start').innerText = start_time + "pm";
+        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "pm";
 
     } else {
-        new_event.querySelector('.event_start').innerText = start_time + "am";
+        if (start_time === 0) {
+            start_time = 12;
+        }
+        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "am";
     }
     if (end_time > 12) {
         end_time = end_time % 12;
-        new_event.querySelector('.event_end').innerText = end_time + "pm";
+        new_event.querySelector('.event_end').innerText = "End: " + end_time + "pm";
     } else {
-        new_event.querySelector('.event_end').innerText = end_time + "am";
+        new_event.querySelector('.event_end').innerText = "End: " + end_time + "am";
     }
 
     main_content.appendChild(new_event);
+}
+
+function remove_event(event_id) {
+    let to_remove = document.getElementById(event_id);
+    if (to_remove) {
+        to_remove.remove();
+    }
+}
+
+function clear_events() {
+    const events = document.querySelectorAll('.event');
+    events.forEach(event => event.remove());
+}
+
+function update_events() {
+    /* Get most recent user events from backend and then check for each event if the date is equal to current stuff */
 }
 
 /* On run */
@@ -158,7 +178,12 @@ top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
 change_attendees_size();
-add_event("Event", "Lycia", "WALC", 1, 19);
+add_event("Event", "Lycia", "WALC", 0, 11, 1);
+add_event("Event", "Lycia", "WALC", 12, 13, 2);
+
+window.addEventListener("click", () => {
+    remove_event(2);
+})
 
 add_attendee_list("Lycia")
 
@@ -198,6 +223,7 @@ close_inbox.addEventListener('click', () => {
 })
 
 previous_day.addEventListener('click', () => {
+    update_events();
     current_day--;
     current_dow--;
     if (current_day < 1) {
@@ -218,6 +244,7 @@ previous_day.addEventListener('click', () => {
 })
 
 next_day.addEventListener('click', () => {
+    update_events();
     current_day++;
     current_dow++;
     if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
