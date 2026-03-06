@@ -138,12 +138,12 @@ event_popup_open.addEventListener('click', () => {
 })
 
 inbox_button.addEventListener('click', () => {
-    //socket.emit("get_user", user)
-   // socket.on("return_user", (data) => {
-       // messages = data.new_messages
-
-    //})
     inbox_popup.style.display = "block";
+    socket.emit("get_user", user)
+    socket.on("return_user", (data) => {
+        messages = data.new_messages
+
+    })
 })
 
 close_inbox.addEventListener('click', () => {
