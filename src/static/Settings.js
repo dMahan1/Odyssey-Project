@@ -9,6 +9,7 @@ const delete_account = document.getElementById('delete');
 const friends_bar = document.getElementById('friends_bar');
 const add_friends = document.getElementById('add_friends');
 const delete_friends = document.getElementById('delete_friends');
+const friends_search = document.getElementById('friends_search');
 
 // friends_bar.style.height = window_height / 2 + "px";
 
@@ -52,10 +53,17 @@ delete_friends.addEventListener('click', () => {
     /* delete friend from the list */
 })
 
+/* Adds friends to the list */
 function add_friend(name) {
     const friend_template = document.getElementById("friends_template");
     let new_friend = friend_template.content.cloneNode(true);
 
     new_friend.querySelector('label').append(name);
     friends_bar.appendChild(new_friend);
+}
+
+/* Adds users to the friends dropdown */
+function add_users(username, id) {
+    const newUser = new Option(username, id);
+    friends_search.appendChild(newUser);
 }
