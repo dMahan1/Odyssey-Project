@@ -23,7 +23,7 @@ def handle_connect():
 
 users = {}
 
-@app.route('/', defaults={'page': 'Signin.html'})
+@app.route('/', defaults={'page': 'Signup.html'})
 @app.route('/<path:page>')
 def render_page(page):
     print(f"Rendering page: {page!r}")
@@ -34,7 +34,7 @@ def render_page(page):
 
     # Handle empty page or root access
     if not page:
-        page = 'Signin.html'
+        page = 'Signup.html'
     
     # Prevent directory traversal and absolute paths
     if '..' in page or page.startswith('/'):

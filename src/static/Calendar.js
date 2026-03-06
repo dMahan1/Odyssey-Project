@@ -203,6 +203,10 @@ function add_location(location_name, location_id) {
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
+    if (event_name.value == "" || event_creator.value == "" || event_location == "" || event_id == "") {
+        alert("No empty fields!")
+        return;
+    }
     const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
