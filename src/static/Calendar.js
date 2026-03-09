@@ -203,7 +203,7 @@ function add_location(location_name, location_id) {
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
-    if (event_name.value == "" || event_creator.value == "" || event_location == "" || event_id == "") {
+    if (event_name=== "" || event_creator=== "" || event_location === "" || event_id === "") {
         alert("No empty fields!")
         return;
     }
@@ -366,7 +366,7 @@ save_event.addEventListener('click', () => {
         
         window.socket.emit("create_event", 
             user_profile, 
-            event_title.value, 
+            event_title.value,
             start_time.value, 
             end_time.value, 
             loc.value, 
@@ -381,7 +381,7 @@ save_event.addEventListener('click', () => {
                 
                 add_event(
                     event_title.value, 
-                    user_profile.username, 
+                    user_profile.username,
                     loc.value, 
                     startHour, 
                     endHour, 
