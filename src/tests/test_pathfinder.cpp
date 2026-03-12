@@ -4,8 +4,12 @@
 #include <cassert>
 
 
-bool test_get_location_by_id() {
+bool test_get_location_by_id_debug() {
     Pathfinder& pf = Pathfinder::get_instance();
+    if (pf.get_mode() != DEBUG) {
+        return true; // Skip this test if not in debug mode
+    }
+
     const Location* loc = pf.get_location_by_id("1");
     pf.print_tree();
     assert(loc != nullptr);
@@ -70,14 +74,31 @@ bool test_bad_weather_debug() {
     return path.location_ids.size() == 2; // P -> Q Tunnel
 }
 
+bool test_path_demo() {
+    Pathfinder& pf = Pathfinder::get_instance();
+    if (pf.get_mode() != DEMO) {
+        return true; // Skip this test if not in demo mode
+    }
+
+    const Location* src = pf.approximate_location(40.424499, -86.910881);
+    const Location* dst = pf.approximate_location(40.423734, -86.910446);
+    Path path1 = pf.route(*src, *dst, false, WALKING);
+    assert(!path1.location_ids.empty());
+    Path path2 = pf.route(*src, *dst, true, WALKING);
+    assert(!path2.location_ids.empty());
+    return path1.location_ids.size() > path2.location_ids.size() &&
+           path1.total_distance < path2.total_distance;
+}
+
 int main() {
     std::cout << "Running Pathfinder tests..." << std::endl;
 
 
-    assert(test_get_location_by_id());
+    assert(test_get_location_by_id_debug());
     assert(test_clear_weather_debug());
     assert(test_small_path_debug());
     assert(test_bad_weather_debug());
+    assert(test_path_demo());
     std::cout << "All Pathfinder tests passed!" << std::endl;
     return 0;
 

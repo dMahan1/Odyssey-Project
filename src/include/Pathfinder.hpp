@@ -15,7 +15,8 @@ enum TraversalMode {
     WALKING,
     BIKING,
     DRIVING,
-    BUS
+    BUS,
+    PRINT_ALL // For testing: returns a path that includes all locations in the graph, ignoring edges and weights
 };
 struct Path {
     std::vector<std::string> location_ids;
@@ -26,15 +27,13 @@ struct Path {
 class Pathfinder {
     public:
         Path route(Location src, Location dst, bool bad_weather, TraversalMode mode) const;
-        static Pathfinder& get_instance() {
-            std::unique_lock<std::shared_mutex> lock(mtx); // static init should be thread-safe,
-                                                   // but it's better to exercise caution.
-            static Pathfinder instance = Pathfinder();
+        static std::shared_ptr<Pathfinder> get_instance() {
+            static std::shared_ptr<Pathfinder> instance(new Pathfinder());
             return instance;
         }
-        const Location *get_location_by_id(std::string id) const;
-        const Location *approximate_location(double latitude, double longitude) const;
-        const Location *approximate_location_via(double latitude, double longitude, TraversalMode mode) const;
+        const std::shared_ptr<Location> get_location_by_id(std::string id) const;
+        const std::shared_ptr<Location> approximate_location(double latitude, double longitude) const;
+        const std::shared_ptr<Location> approximate_location_via(double latitude, double longitude, TraversalMode mode) const;
         Mode get_mode() const {
             return mode;
         }
@@ -54,7 +53,7 @@ class Pathfinder {
             init();
         }
         // TODO: switch to release mode.
-        Mode mode = DEBUG;
+        Mode mode = DEMO;
         std::unordered_map<std::string, int> id_indices;
         std::vector<std::vector<Edge>> adj;
         std::vector<std::shared_ptr<Location>> locations;
