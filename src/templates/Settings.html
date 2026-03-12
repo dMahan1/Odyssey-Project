@@ -9,30 +9,62 @@
     <style></style>
 </head>
 <body>
+
+<script>
+    const user_profile = {{ data|tojson }};
+</script>
+<script src="https://cdn.socket.io/4.8.3/socket.io.min.js" integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0" crossorigin="anonymous"></script>
+<script src="../static/socket_setup.js" defer></script>
 <script src="../static/Pages.js" defer></script>
 <script src="../static/Settings.js" defer></script>
 
 <div id="whole_page">
     <div id="settings_main">
-<!--        <div id="friends_bar">-->
-<!--    -->
-<!--        </div>-->
         <div class="edits">
             <label id="username_display">@username</label>
-            <button class="change">&#x270E</button>
+            <button class="change" id="username">&#x270E</button>
         </div>
         <div class="edits">
             <label id="password_display">@password</label>
-            <button class="change">&#x270E</button>
+            <button class="change" id="password">&#x270E</button>
         </div>
         <div class="edits" >
             <label id="email_display">@email</label>
-            <button class="change">&#x270E</button>
         </div>
 
         <button id="logout">
             Logout
         </button>
+        <button id="delete">
+            Delete Account
+        </button>
+        <div id="friends_bar">
+            <div class="line_up">
+                <select id="friends_search">
+                    <option value="" disabled selected>Add a new friend...</option>
+                </select>
+                <button id="add_friends" title="Send Friend Request">&#x2713</button>
+            </div>
+            
+            <div class="line_up" style="margin-top: 10px;">
+                <select id="current_friends_search">
+                    <option value="" disabled selected>Remove a friend...</option>
+                </select>
+                <button id="delete_friends" title="Remove Friend">&#x2717</button>
+            </div>
+            
+            <template id="friends_template">
+                <div class="friend">
+                    <label class="friend_name"></label>
+                </div>
+            </template>
+        </div>
+    </div>
+    <div id="user_div_background">
+        <div id="user_div">
+            <input id="username_input" type="text" placeholder="Username" />
+            <button class="change" id="user_check"> &#x2713</button>
+        </div>
     </div>
     
     <div id="nav_bar">

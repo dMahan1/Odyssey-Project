@@ -1,5 +1,9 @@
 /*Variables */
-
+const event_title = document.getElementById('title')
+const attendees_list = document.getElementById('attendees')
+const start_time = document.getElementById('start')
+const end_time = document.getElementById('end')
+const loc = document.getElementById('location_search')
 const top_bar = document.getElementById('top_bar');
 
 // Event specific variables
@@ -43,6 +47,10 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
+let friends = [];
+// Global state to store IDs of checked friends
+let selectedAttendeeIds = new Set();
+let messages = [];
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -86,32 +94,103 @@ function change_attendees_size () {
     attendees_popup_top_bar.style.height = window_height / 32 + "px";
 }
 
-function create_event_invite(event_name, event_creator){
-    const event_template = document.getElementById("event_invite_template");
-    let new_invite = event_template.content.cloneNode(true)
+function load_permanent_locations() {
+    window.socket.emit("get_permanent_locations", user_profile);
+    
+    window.socket.once("permanent_locations_got", (locations) => {
+        // Clear existing options (keeping the default placeholder)
+        location_search.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
+        
+        if (locations) {
+            locations.forEach(loc => {
+                // Uses your existing add_location function
+                add_location(loc.name, loc.id); 
+            });
+        }
+    });
+}
 
-    new_invite.querySelector('.event_name').innerText = event_name;
-    new_invite.querySelector('.event_creator').innerText = event_creator;
+function create_event_invite(event_name, event_message, event_id, message_id){
+    const event_template = document.getElementById("event_invite_template");
+    let new_invite = event_template.content.cloneNode(true);
+    
+    // Grab the actual wrapper div so we can delete it later
+    let invite_element = new_invite.querySelector('.event_invite');
+
+    invite_element.querySelector('.event_name').innerText = event_name;
+    invite_element.querySelector('.event_creator').innerText = event_message;
+
+    // --- ACCEPT BUTTON ---
+    const acceptBtn = invite_element.querySelector('#accept_event');
+    acceptBtn.addEventListener('click', () => {
+        window.socket.emit("accept_event_invite", user_profile, event_id, message_id);
+        
+        // Instantly remove it from the screen for the user
+        invite_element.remove(); 
+    });
+
+    // --- DECLINE BUTTON ---
+    const declineBtn = invite_element.querySelector('#decline_event');
+    declineBtn.addEventListener('click', () => {
+        window.socket.emit("remove_message", user_profile, message_id);
+        
+        // Instantly remove it from the screen for the user
+        invite_element.remove(); 
+    });
 
     inbox_popup_content.appendChild(new_invite);
 }
 
-function create_friend_request(friend_username) {
+function create_friend_request(friend_username, sender_id, message_id) {
     const friend_template = document.getElementById("friend_invite_template");
     let new_friend_request = friend_template.content.cloneNode(true);
+    
+    let request_element = new_friend_request.querySelector('.friend_invite');
+    request_element.querySelector('.request_username').innerText = friend_username;
 
-    new_friend_request.querySelector('.request_username').innerText = friend_username;
+    // --- ACCEPT BUTTON ---
+    const acceptBtn = request_element.querySelector('#accept_friend');
+    acceptBtn.addEventListener('click', () => {
+        // 1. Tell the server to add this user to your friends list
+        window.socket.emit("add_friend", user_profile, sender_id);
+        
+        // 2. Tell the server to delete the request notification
+        window.socket.emit("remove_message", user_profile, message_id);
+        
+        // 3. Remove it from the popup instantly
+        request_element.remove();
+    });
+
+    // --- DECLINE BUTTON ---
+    const declineBtn = request_element.querySelector('#decline_friend');
+    declineBtn.addEventListener('click', () => {
+        // Just delete the notification
+        window.socket.emit("remove_message", user_profile, message_id);
+        
+        // Remove it from the popup instantly
+        request_element.remove();
+    });
 
     inbox_popup_content.appendChild(new_friend_request);
 }
 
 function add_attendee_list(attendee_name, attendee_id) {
-    const attendee_template = document.getElementById("attendee_template");
-    let new_attendee = attendee_template.content.cloneNode(true);
+    const template = document.getElementById("attendee_template");
+    const container = document.getElementById("attendees_popup_content");
 
-    new_attendee.querySelector('label').append(attendee_name);
-    new_attendee.querySelector('.attendees_select').id = attendee_id;
-    attendees_content.appendChild(new_attendee);
+    if (!template) return;
+
+    let new_attendee = template.content.cloneNode(true);
+    const checkbox = new_attendee.querySelector('.attendees_select');
+    const label = new_attendee.querySelector('label');
+
+    checkbox.id = attendee_id;
+    checkbox.value = attendee_name; // Store name in value for easy access later
+    
+    // Add the name text next to the checkbox
+    label.appendChild(document.createTextNode(" " + attendee_name));
+
+    container.appendChild(new_attendee);
 }
 
 function make_calendar(day, dow, month, year) {
@@ -123,34 +202,118 @@ function add_location(location_name, location_id) {
     location_search.appendChild(newLoc);
 }
 
-function add_event(event_name, event_creator, event_location, start_time, end_time) {
+function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
+    if (event_name.value == "" || event_creator.value == "" || event_location == "" || event_id == "") {
+        alert("No empty fields!")
+        return;
+    }
     const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
     let event_div = new_event.querySelector('.event');
     const hour_size = 60;
-    event_div.style.top = ((start_time + 1) * hour_size ) + "px";
-    event_div.style.height = ((end_time - start_time) * hour_size ) + "px";
+    event_div.style.top = ((start_time + 1) * hour_size) + "px";
+    event_div.style.height = ((end_time - start_time) * hour_size) + "px";
+    event_div.id = event_id;
 
-    new_event.querySelector('.event_name').innerText = event_name;
-    new_event.querySelector('.event_creator').innerText = event_creator;
-    new_event.querySelector('.event_location').innerText = event_location;
+    // --- NEW DELETE LOGIC ---
+    const deleteBtn = new_event.querySelector('.delete_event_btn');
+    deleteBtn.addEventListener('click', (e) => {
+        // Prevent clicking the button from triggering other event clicks
+        e.stopPropagation(); 
+
+        if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
+            // Tell the server to delete it from the database
+            window.socket.emit("delete_event", user_profile, event_id);
+            
+            // Remove it from the UI immediately
+            remove_event(event_id);
+            window.socket.once("event_deleted", (success) => {
+                if (!success) {
+                    alert("An error occurred while deleting the event. Please try again.");
+                    add_event(event_name, event_creator, event_location, start_time, end_time, event_id); // Re-add if deletion failed
+                }
+            });
+        }
+    });
+
+    new_event.querySelector('.event_name').innerText = "Name: " + event_name;
+    new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
+    new_event.querySelector('.event_location').innerText = "Location: " + event_location;
 
     if (start_time > 12) {
         start_time = start_time % 12;
-        new_event.querySelector('.event_start').innerText = start_time + "pm";
+        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "pm";
 
     } else {
-        new_event.querySelector('.event_start').innerText = start_time + "am";
+        if (start_time === 0) {
+            start_time = 12;
+        }
+        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "am";
     }
     if (end_time > 12) {
         end_time = end_time % 12;
-        new_event.querySelector('.event_end').innerText = end_time + "pm";
+        new_event.querySelector('.event_end').innerText = "End: " + end_time + "pm";
     } else {
-        new_event.querySelector('.event_end').innerText = end_time + "am";
+        new_event.querySelector('.event_end').innerText = "End: " + end_time + "am";
     }
 
     main_content.appendChild(new_event);
+}
+
+function remove_event(event_id) {
+    let to_remove = document.getElementById(event_id);
+    if (to_remove) {
+        to_remove.remove();
+    }
+}
+
+function clear_events() {
+    const events = document.querySelectorAll('.event');
+    events.forEach(event => event.remove());
+}
+
+function update_events() {
+    window.socket.emit("get_events", user_profile);
+    window.socket.once("events_got", (events) => {
+        clear_events();
+        
+        const calendarDate = new Date(current_year, current_month, current_day);
+        calendarDate.setHours(0, 0, 0, 0); 
+
+        events.forEach(event => {
+            const startVal = new Date(event.start_time);
+            const endVal = new Date(event.end_time);
+
+            const startDay = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate());
+            const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
+
+            if (calendarDate >= startDay && calendarDate <= endDay) {
+                // Default to a full 24-hour block
+                let displayStart = 0;
+                let displayEnd = 24;
+
+                // If viewing the actual start day, use the actual start hour
+                if (calendarDate.getTime() === startDay.getTime()) {
+                    displayStart = startVal.getHours() + (startVal.getMinutes() / 60);
+                }
+
+                // If viewing the actual end day, use the actual end hour
+                if (calendarDate.getTime() === endDay.getTime()) {
+                    displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
+                }
+                
+                add_event(
+                    event.name, 
+                    event.creator_username, 
+                    event.location_name, 
+                    displayStart, 
+                    displayEnd, 
+                    event.id
+                );
+            }
+        });
+    });
 }
 
 /* On run */
@@ -158,11 +321,10 @@ top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
 change_attendees_size();
-add_event("Event", "Lycia", "WALC", 1, 19);
-
-add_attendee_list("Lycia")
 
 make_calendar(current_day, current_dow, current_month, current_year);
+update_events();
+load_permanent_locations();
 
 
 /* Event Listeners */
@@ -174,16 +336,68 @@ window.addEventListener('resize', function(){
     change_event_size();
     change_inbox_size();
     change_attendees_size();
-})
+    // Re-draw events to match new scale
+    update_events(); 
+});
 
 scrap_event.addEventListener('click', () => {
     event_popup.style.display = "none";
 })
 
 save_event.addEventListener('click', () => {
-    /* do stuff to save the event with server*/
+    // 1. Create Date objects from the inputs
+    const startVal = new Date(start_time.value);
+    const endVal = new Date(end_time.value);
+
+    // 2. Create a Date object representing the CURRENTLY VIEWED calendar day
+    // We set time to 00:00:00 to compare just the date range effectively
+    const calendarDate = new Date(current_year, current_month, current_day);
+
+    // 3. Normalize the range dates to "start of day" for a pure date-inclusion check
+    // If you want the event to show up if the calendar day matches ANY part of the event duration:
+    const startDay = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate());
+    const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
+
+    // 4. Logic check: Is the calendar date within the start and end day?
+    if (calendarDate >= startDay && calendarDate <= endDay) {
+        
+        // Prepare the data to send (including our selected attendee IDs)
+        const attendeeIdsArray = Array.from(selectedAttendeeIds);
+        
+        window.socket.emit("create_event", 
+            user_profile, 
+            event_title.value, 
+            start_time.value, 
+            end_time.value, 
+            loc.value, 
+            attendeeIdsArray
+        );
+
+        window.socket.once("event_created", (key) => {
+            if (key) {
+                // Format times for the add_event function (it expects hours 0-23)
+                const startHour = startVal.getHours();
+                const endHour = endVal.getHours();
+                
+                add_event(
+                    event_title.value, 
+                    user_profile.username, 
+                    loc.value, 
+                    startHour, 
+                    endHour, 
+                    key
+                );
+            } else {
+                alert("An error occurred while creating the event.");
+            }
+        });
+    } else {
+        window.socket.emit("create_event", user_profile, event_title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
+        console.log("Event saved, but not displayed on this specific calendar day.");
+    }
+
     event_popup.style.display = "none";
-})
+});
 
 event_popup_open.addEventListener('click', () => {
     event_popup.style.display = "block";
@@ -191,11 +405,45 @@ event_popup_open.addEventListener('click', () => {
 
 inbox_button.addEventListener('click', () => {
     inbox_popup.style.display = "block";
-})
+    inbox_popup_content.innerHTML = '';
+
+    window.socket.emit("get_user", user_profile);
+    
+    window.socket.once("return_user", (data) => {
+
+        const userMessages = data.messages;
+
+        if (userMessages) {
+            Object.entries(userMessages).forEach(([message_id, msg]) => {
+                if (msg.type === 0) {
+                    // Pass msg.sender_id so we know WHO to add to the friends list!
+                    create_friend_request(msg.sender_username, msg.sender_id, message_id);
+                }
+                else if (msg.type === 1) {
+                    create_event_invite(msg.sender_username, msg.message, msg.event_id, message_id);
+                }
+            });
+        }
+
+        if (inbox_popup_content.innerHTML === '') {
+            const emptyMsg = document.createElement('p');
+            emptyMsg.innerText = "No new notifications";
+            emptyMsg.style.textAlign = "center";
+            inbox_popup_content.appendChild(emptyMsg);
+        }
+    });
+});
 
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
 })
+
+window.socket.on("event_accepted", (success) => {
+    if (success) {
+        // Redraw the calendar now that the server has officially added us
+        update_events();
+    }
+});
 
 previous_day.addEventListener('click', () => {
     current_day--;
@@ -215,6 +463,7 @@ previous_day.addEventListener('click', () => {
         current_day =  new Date(current_year, current_month + 1, 0).getDate();
     }
     make_calendar(current_day, current_dow, current_month, current_year);
+    update_events();
 })
 
 next_day.addEventListener('click', () => {
@@ -235,13 +484,46 @@ next_day.addEventListener('click', () => {
     }
 
     make_calendar(current_day, current_dow, current_month, current_year);
+    update_events();
 })
 
 more_attendees_button.addEventListener('click', () => {
+    // 1. CLEAR the popup content so friends don't duplicate on every click
+    attendees_content.innerHTML = ''; 
+    // Re-insert the template so it's available for the next call (optional, but safer to keep template outside content div)
+    // Note: In your HTML, the template is INSIDE attendees_popup_content. 
+    // It's better to move the template OUTSIDE that div so it doesn't get deleted.
+
+    window.socket.emit("get_friends", user_profile);
+    
+    // 2. Use .once so we don't stack up multiple listeners
+    window.socket.once("friends_got", (ret) => {
+        ret.forEach(friend => {
+            add_attendee_list(friend.username, friend.id);
+            
+            // 3. Persist checkmarks: if they were saved before, check them again
+            const cb = document.getElementById(friend.id);
+            if (cb && selectedAttendeeIds.has(String(friend.id))) {
+                cb.checked = true;
+            }
+        });
+    });
     attendees_popup.style.display = "block";
-})
+});
 
 save_attendees.addEventListener('click', () => {
-    /* Do stuff to save the attendees chosen*/
+    const checkboxes = attendees_content.querySelectorAll('.attendees_select');
+    selectedAttendeeIds.clear(); // Refresh our saved list
+    
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            selectedAttendeeIds.add(cb.id);
+        }
+    });
+
+    // Update the UI text so the user sees how many are invited
+    const attendeeText = document.getElementById('attendee_text');
+    attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
+
     attendees_popup.style.display = "none";
-})
+});
