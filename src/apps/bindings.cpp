@@ -103,8 +103,8 @@ PYBIND11_MODULE(bindings, m) {
         .export_values();
 
     // Binding for Pathfinder itself
-    py::class_<Pathfinder>(m, "Pathfinder")
-        .def_static("get_instance", &Pathfinder::get_instance, py::return_value_policy::reference)
+    py::class_<Pathfinder, std::shared_ptr<Pathfinder>>(m, "Pathfinder")
+        .def_static("get_instance", &Pathfinder::get_instance)
         .def("route", &Pathfinder::route, py::return_value_policy::copy)
         .def("get_location_by_id", &Pathfinder::get_location_by_id)
         .def("approximate_location", &Pathfinder::approximate_location)

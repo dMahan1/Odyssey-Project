@@ -28,10 +28,8 @@ class Pathfinder {
     public:
         Path route(Location src, Location dst, bool bad_weather, TraversalMode mode) const;
         static std::shared_ptr<Pathfinder> get_instance() {
-            std::unique_lock<std::shared_mutex> lock(mtx); // static init should be thread-safe,
-                                                           // but it's better to exercise caution.
-            static Pathfinder instance = Pathfinder();
-            return std::make_shared<Pathfinder>(instance);
+            static std::shared_ptr<Pathfinder> instance(new Pathfinder());
+            return instance;
         }
         const std::shared_ptr<Location> get_location_by_id(std::string id) const;
         const std::shared_ptr<Location> approximate_location(double latitude, double longitude) const;
