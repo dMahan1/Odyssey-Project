@@ -1,4 +1,10 @@
 #include "PathfinderBuilder.hpp"
+#include <fstream>
+#include <filesystem>
+
+#include "json.hpp"
+using json = nlohmann::json;
+
 
 std::vector<Location> PathfinderBuilder::get_locations() const {
     return locations;
@@ -77,6 +83,43 @@ void PathfinderBuilder::load_data_debug() {
     double tunnel_dist = F.distance_to(G) + G.distance_to(O) + O.distance_to(P) + P.distance_to(Q) + 10.0;
     edges.emplace_back(F.get_id(), Q.get_id(), tunnel_dist, true, true, false, false, false);
     edges.emplace_back(Q.get_id(), F.get_id(), tunnel_dist, true, true, false, false, false);
+}
+
+
+void PathfinderBuilder::load_data_demo() {
+    std::filesystem::path base = std::filesystem::path(__FILE__).parent_path().parent_path();
+    std::ifstream f(base / "tests" / "DemoGraph.json");
+    json data = json::parse(f);
+
+    // auto stringify_json = [](const json& j) {
+    //     return j.dump();
+    // };
+
+    // Load locations
+    for (auto& loc : data["nodes"]) {
+        locations.emplace_back(
+            loc["id"].get<std::string>(),
+            loc["name"].get<std::string>(),
+            loc["lat"].get<double>(),
+            loc["lon"].get<double>()
+        );
+    }
+
+    // Load edges
+    for (auto& edge : data["edges"]) {
+        edges.emplace_back(
+            edge["from"].get<std::string>(),
+            edge["to"].get<std::string>(),
+            edge["weight"].get<double>(),
+            edge["flags"].get<uint32_t>()
+        );
+        edges.emplace_back(
+            edge["to"].get<std::string>(),
+            edge["from"].get<std::string>(),
+            edge["weight"].get<double>(),
+            edge["flags"].get<uint32_t>()
+        );
+    }
 }
 
 void PathfinderBuilder::load_data_release() {
