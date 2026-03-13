@@ -1,10 +1,12 @@
 /*Variables */
-const event_title = document.getElementById('title')
-const attendees_list = document.getElementById('attendees')
 const start_time = document.getElementById('start')
 const end_time = document.getElementById('end')
 const loc = document.getElementById('location_search')
 const top_bar = document.getElementById('top_bar');
+const title = document.getElementById('title');
+const attendees = document.getElementById('attendees');
+const start_label = document.getElementById('start_label');
+const end_label = document.getElementById('end_label');
 
 // Event specific variables
 const scrap_event = document.getElementById('scrap_event');
@@ -13,14 +15,6 @@ const event_popup = document.getElementById('event_popup_background');
 const event_popup_open = document.getElementById('event_button');
 const event_popup_top_bar = document.getElementById('event_popup_bar');
 const event_popup_content = document.getElementById('event_popup_content');
-
-const title = document.getElementById('title');
-const attendees = document.getElementById('attendees');
-const start = document.getElementById('start');
-const end = document.getElementById('end');
-const location_search = document.getElementById('location_search');
-const start_label = document.getElementById('start_label');
-const end_label = document.getElementById('end_label');
 
 const attendees_popup = document.getElementById('attendees_popup_background')
 const attendees_content = document.getElementById('attendees_popup_content');
@@ -71,20 +65,20 @@ function change_event_size() {
     title.style.height =
         title.style.fontSize =
         attendees.style.height =
-        start.style.height =
-        end.style.height =
+        start_time.style.height =
+        end_time.style.height =
         end_label.style.height =
         start_label.style.height =
-        location_search.style.height =
+        loc.style.height =
         end_label.style.lineHeight =
         start_label.style.lineHeight =
         window_height * .05 + "px";
 
     title.style.fontSize =
         attendees.style.fontSize =
-        start.style.fontSize =
-        end.style.fontSize =
-        location_search.style.fontSize =
+        start_time.style.fontSize =
+        end_time.style.fontSize =
+        loc.style.fontSize =
         end_label.style.fontSize =
         start_label.style.fontSize =
         window_height * .03 + "px";
@@ -99,7 +93,7 @@ function load_permanent_locations() {
     
     window.socket.once("permanent_locations_got", (locations) => {
         // Clear existing options (keeping the default placeholder)
-        location_search.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
+        loc.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
         
         if (locations) {
             locations.forEach(loc => {
@@ -199,14 +193,10 @@ function make_calendar(day, dow, month, year) {
 
 function add_location(location_name, location_id) {
     const newLoc = new Option(location_name, location_id);
-    location_search.appendChild(newLoc);
+    loc.appendChild(newLoc);
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
-    if (event_name=== "" || event_creator=== "" || event_location === "" || event_id === "") {
-        alert("No empty fields!")
-        return;
-    }
     const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
@@ -241,21 +231,31 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
     new_event.querySelector('.event_location').innerText = "Location: " + event_location;
 
-    if (start_time > 12) {
-        start_time = start_time % 12;
-        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "pm";
+    let start_hour = Math.floor(start_time);
+    let start_minute = Math.floor((start_time * 60) % 60)
+
+    if (start_hour > 12) {
+        start_hour = start_hour % 12;
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "pm";
 
     } else {
-        if (start_time === 0) {
-            start_time = 12;
+        if (start_hour === 0) {
+            start_hour = 12;
         }
-        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "am";
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "am";
     }
-    if (end_time > 12) {
-        end_time = end_time % 12;
-        new_event.querySelector('.event_end').innerText = "End: " + end_time + "pm";
+
+    let end_hour = Math.floor(end_time);
+    let end_minute = Math.floor((end_time * 60) % 60);
+
+    if (end_hour > 12) {
+        end_hour = end_hour % 12;
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "pm";
     } else {
-        new_event.querySelector('.event_end').innerText = "End: " + end_time + "am";
+        if (end_hour === 0) {
+            end_hour = 12;
+        }
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "am";
     }
 
     main_content.appendChild(new_event);
@@ -302,11 +302,11 @@ function update_events() {
                 if (calendarDate.getTime() === endDay.getTime()) {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
-                
+
                 add_event(
                     event.name, 
-                    event.creator_username, 
-                    event.location_name, 
+                    event.creator_username,
+                    event.location_name,
                     displayStart, 
                     displayEnd, 
                     event.id
@@ -345,6 +345,9 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
+    // add this?
+    const selectedLocationName = loc.options[loc.selectedIndex].text;
+
     // 1. Create Date objects from the inputs
     const startVal = new Date(start_time.value);
     const endVal = new Date(end_time.value);
@@ -363,28 +366,41 @@ save_event.addEventListener('click', () => {
         
         // Prepare the data to send (including our selected attendee IDs)
         const attendeeIdsArray = Array.from(selectedAttendeeIds);
-        
+        if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
+            alert("No empty fields!")
+            return;
+        }
         window.socket.emit("create_event", 
             user_profile, 
-            event_title.value,
+            title.value,
             start_time.value, 
             end_time.value, 
-            loc.value, 
+            loc.value,
             attendeeIdsArray
         );
 
         window.socket.once("event_created", (key) => {
             if (key) {
                 // Format times for the add_event function (it expects hours 0-23)
-                const startHour = startVal.getHours();
-                const endHour = endVal.getHours();
-                
+                const start_hour = startVal.getHours();
+                const start_minute = startVal.getMinutes();
+                const end_hour = endVal.getHours();
+                const end_minute = endVal.getMinutes();
+
+                let start_time = start_hour + "." + start_minute;
+                start_time = Number(start_time);
+
+                let end_time = end_hour + "." + end_minute;
+                end_time = Number(end_time);
+
+
                 add_event(
-                    event_title.value, 
+                    title.value,
                     user_profile.username,
-                    loc.value, 
-                    startHour, 
-                    endHour, 
+                    //loc.value,
+                    selectedLocationName,
+                    start_time,
+                    end_time,
                     key
                 );
             } else {
@@ -392,7 +408,7 @@ save_event.addEventListener('click', () => {
             }
         });
     } else {
-        window.socket.emit("create_event", user_profile, event_title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
+        window.socket.emit("create_event", user_profile, title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
