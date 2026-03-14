@@ -68,6 +68,7 @@ def create_user(email, username, password, latitude, longitude):
         elif "INVALID_EMAIL" in err:
             return "Invalid"
         else:
+            print(err)
             return "Error"
         
     else: 
@@ -248,10 +249,12 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
     db = firebase.database()
     data = {
         "creator_id": user['localId'],
+        "creator_username": db.child("Users").child(user['localId']).child("username").get(token=user['idToken']).val(),
         "name": name,
         "start_time": start_time,
         "end_time": end_time,
         "locationid": locationid,
+        "location_name": get_location_data(user, locationid).get("name"),
         "attendee_ids": attendee_ids
     }
     key = firebase.database().generate_key()
@@ -430,7 +433,13 @@ def get_friends(user):
 def get_event_data(user, event_id):
     db = firebase.database()
     event_data = db.child("Events").child(event_id).get(token=user['idToken']).val()
+    location_data = get_location_data(user, event_data.get("locationid"))
+    event_data["location_name"] = location_data.get("name")
     return event_data
+
+def get_user_name(user, id):
+    db = firebase.database()
+    return db.child("Users").child(id).child("username").get(token=user['idToken']).val()
 
 def get_location_data(user, location_id):
     db = firebase.database()
@@ -477,6 +486,7 @@ def test():
     auth = firebase.auth()
 
     user = create_user("dylan.mahan@gmail.com", "Dylan AutoTest", "Test123", 40.42728, -86.91406)
+    print(user)
     print(get_user_data(user))
 
     user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)
@@ -510,4 +520,4 @@ def test():
     except Exception as e:
         print("User deleted successfully, data retrieval failed as expected.")
 
-#test()
+test()
