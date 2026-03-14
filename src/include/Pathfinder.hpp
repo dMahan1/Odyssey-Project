@@ -59,6 +59,10 @@ class Pathfinder {
         std::vector<std::shared_ptr<Location>> locations;
         static std::shared_mutex mtx;
         KdTree<double> location_tree;
+        //KdTree<double> car_tree;  Ideally, these will be unused.
+        //KdTree<double> bus_tree;  However, depending on the current code,
+        //KdTree<double> walking_tree; We may need these to fix runtime
+        //KdTree<double> biking_tree; and/or correctness
         Path reconstruct_path(Location src, Location dst, const std::vector<int>& prev, double total_distance) const;
         Path route_impl(const Location *src, const Location *dst, bool bad_weather, TraversalMode mode) const;
 

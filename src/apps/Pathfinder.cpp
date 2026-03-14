@@ -62,8 +62,37 @@ const std::shared_ptr<Location> Pathfinder::approximate_location(double latitude
     return locations.at(id_indices.at(raw_closest->get_id()));
 }
 
-const std::shared_ptr<Location> Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode mode) const {
-    return approximate_location(latitude, longitude);
+const std::shared_ptr<Location> Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode t_mode) const {
+    std::shared_lock lock(mtx);
+    auto dist = [t_mode](const void *a, const void *b) {
+        const Location* locA = static_cast<const Location*>(a);
+        const Location* locB = static_cast<const Location*>(b);
+        int mask = 0;
+        switch (t_mode) {
+            case TraversalMode::WALKING:
+                mask = 0b10;
+                break;
+            case TraversalMode::BIKING:
+                mask = 0b100;
+                break;
+            case TraversalMode::DRIVING:
+                mask = 0b1000;
+                break;
+            case TraversalMode::BUS:
+                mask = 0b10000;
+                break;
+        }
+        for (Edge e : locB->get_edges()) {
+            if ((e.get_mask() & mask) != 0) {
+                return locA->euclidean_distance_to(*locB);
+            }
+        }
+        return std::numeric_limits<double>::infinity();
+    };
+    Location query("Query", "QueryLoc", latitude, longitude);
+    const Location *raw_closest =
+        static_cast<const Location*>(location_tree.nearest_neighbor({query.get_x(), query.get_y(), query.get_z()}, &query, dist));
+    return locations.at(id_indices.at(raw_closest->get_id()));
 }
 
 Path Pathfinder::reconstruct_path(Location src, Location dst, const std::vector<int>& prev, double total_distance) const {
@@ -77,14 +106,14 @@ Path Pathfinder::reconstruct_path(Location src, Location dst, const std::vector<
     return Path{location_ids, total_distance};
 }
 
-Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMode mode) const {
+Path Pathfinder::route(Location src, Location dst, bool bad_weather, TraversalMode t_mode) const {
     std::shared_lock lock(mtx);
-    return route_impl(&src, &dst, bad_weather, mode);
+    return route_impl(&src, &dst, bad_weather, t_mode);
 }
 
-Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_weather, TraversalMode mode) const {
+Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_weather, TraversalMode t_mode) const {
 
-    if (mode == PRINT_ALL) {
+    if (t_mode == PRINT_ALL) {
         Path path = Path{.location_ids = {}, .total_distance = 0.0};
         for (const auto& loc : locations) {
             path.location_ids.push_back(loc->get_id());
@@ -93,7 +122,7 @@ Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_w
     }
 
     double weather_multiplier;
-    switch (mode) {
+    switch (t_mode) {
         case DEMO:
         case DEBUG:
             weather_multiplier = 10.0;
@@ -128,10 +157,10 @@ Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_w
         }
 
         for (const Edge& e : adj[curr]) {
-            if ((mode == DRIVING && !e.is_drivable_by_car()) ||
-                (mode == BUS && !e.is_drivable_by_bus()) ||
-                (mode == BIKING && !e.is_bikeable()) ||
-                (mode == WALKING && !e.is_walkable())) {
+            if ((t_mode == DRIVING && !e.is_drivable_by_car()) ||
+                (t_mode == BUS && !e.is_drivable_by_bus()) ||
+                (t_mode == BIKING && !e.is_bikeable()) ||
+                (t_mode == WALKING && !e.is_walkable())) {
                 continue;
             }
             std::string to = e.get_vertex2();
