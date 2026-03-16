@@ -23,7 +23,7 @@ def handle_connect():
 
 users = {}
 
-@app.route('/', defaults={'page': 'Signup.html'})
+@app.route('/', defaults={'page': 'Signin.html'})
 @app.route('/<path:page>')
 def render_page(page):
     print(f"Rendering page: {page!r}")
@@ -34,7 +34,7 @@ def render_page(page):
 
     # Handle empty page or root access
     if not page:
-        page = 'Signup.html'
+        page = 'Signin.html'
     
     # Prevent directory traversal and absolute paths
     if '..' in page or page.startswith('/'):
@@ -102,8 +102,8 @@ def handle_get_perm_locs(user):
     emit("permanent_locations_got", locations)
 
 @socketio.on("create_event")
-def event_create(user, name, start_time, end_time, locationid, attendee_ids):
-    key = create_event(user, name, start_time, end_time, locationid, attendee_ids)
+def event_create(user_data, name, start_time, end_time, locationid, attendee_ids):
+    key = create_event(user_data, name, start_time, end_time, locationid, attendee_ids)
     emit("event_created", key)
 
 @socketio.on("get_events")
@@ -128,8 +128,8 @@ def event_delete(user, event_id):
 
 @socketio.on("send_invite")
 #check if none
-def send_invite(sender, reciever, event_id):
-    ret = send_event_invite(sender, reciever, event_id)
+def send_invite(sender, receiver, event_id):
+    ret = send_event_invite(sender, receiver, event_id)
     emit("invite_sent", ret)
 
 @socketio.on("join_event")
@@ -145,8 +145,8 @@ def event_delete(user, event_id):
     emit("event_deleted", ret)
 
 @socketio.on("send_message")
-def message_send(sender, reciever, message, type):
-    send_message(sender, reciever, message, type)
+def message_send(sender, receiver, message, type):
+    send_message(sender, receiver, message, type)
     emit("message_sent")
 
 @socketio.on("remove_message")
@@ -167,8 +167,8 @@ def friend_remove(user, fid):
 
 @socketio.on("send_friend_request")
 #check none
-def send_f_request(sender, reciever):
-    ret = send_friend_request(sender, reciever)
+def send_f_request(sender, receiver):
+    ret = send_friend_request(sender, receiver)
     emit("request_sent", ret)
 
 @socketio.on("get_friends")
@@ -184,17 +184,19 @@ def handle_get_all_users(user):
 
 @socketio.on("get_e_data")
 def get_e_data(eid):
-    ret = get_event_data(eid)
+    global user_profile
+    ret = get_event_data(user_profile, eid)
     emit("event_got", ret)
 
 @socketio.on("got_l_data")
 def get_l_data(lid):
-    ret = get_location_data(lid)
+    global user_profile
+    ret = get_location_data(user_profile, lid)
     emit("location_got", ret)
 
 @socketio.on("get_u_by_id")
-def get_u_by_id(uid):
-    ret = get_user_data_by_id(uid)
+def get_u_by_id(user): #changed from uid
+    ret = get_user_data_by_id(user)
     emit("user_via_id", ret)
 
 @socketio.on("reset_password")
@@ -214,4 +216,4 @@ def handle_update_username(user, new_username):
     emit("username_updated", result)
 
 if __name__ == '__main__':
-    socketio.run(app, port=8080)
+    socketio.run(app, port=8080, allow_unsafe_werkzeug=True)

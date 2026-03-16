@@ -68,6 +68,7 @@ def create_user(email, username, password, latitude, longitude):
         elif "INVALID_EMAIL" in err:
             return "Invalid"
         else:
+            print(err)
             return "Error"
         
     else: 
@@ -245,13 +246,21 @@ def get_permanent_locations(user):
     return perm_locations
 
 def create_event(user, name, start_time, end_time, locationid, attendee_ids):
+
     db = firebase.database()
+
+    loc_data = get_location_data(user, locationid)
+    location_name = loc_data.get("name") if loc_data else "Unknown"
+    creator_username = db.child("Users").child(user['localId']).child("username").get(token=user['idToken']).val()
+
     data = {
         "creator_id": user['localId'],
+        "creator_username": creator_username or "Unknown",
         "name": name,
         "start_time": start_time,
         "end_time": end_time,
         "locationid": locationid,
+        "location_name": location_name,
         "attendee_ids": attendee_ids
     }
     key = firebase.database().generate_key()
@@ -430,7 +439,13 @@ def get_friends(user):
 def get_event_data(user, event_id):
     db = firebase.database()
     event_data = db.child("Events").child(event_id).get(token=user['idToken']).val()
+    location_data = get_location_data(user, event_data.get("locationid"))
+    event_data["location_name"] = location_data.get("name")
     return event_data
+
+def get_user_name(user, id):
+    db = firebase.database()
+    return db.child("Users").child(id).child("username").get(token=user['idToken']).val()
 
 def get_location_data(user, location_id):
     db = firebase.database()
@@ -465,9 +480,11 @@ def get_user_events(user):
                 events.append({
                     "id": event_id,
                     "name": event_data.get('name'),
+                    "creator_username": event_data.get('creator_username'), # <-- ALSO ADD THIS for the GUI
                     "start_time": event_data.get('start_time'),
                     "end_time": event_data.get('end_time'),
                     "locationid": event_data.get('locationid'),
+                    "location_name": event_data.get('location_name'), # <-- ADD THIS LINE
                     "attendee_ids": event_data.get('attendee_ids')
                 })
     return events
@@ -477,6 +494,7 @@ def test():
     auth = firebase.auth()
 
     user = create_user("dylan.mahan@gmail.com", "Dylan AutoTest", "Test123", 40.42728, -86.91406)
+    print(user)
     print(get_user_data(user))
 
     user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)

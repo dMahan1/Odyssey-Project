@@ -303,6 +303,8 @@ function update_events() {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
 
+                console.log(event);
+
                 add_event(
                     event.name, 
                     event.creator_username,
@@ -345,9 +347,6 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
-    // add this?
-    const selectedLocationName = loc.options[loc.selectedIndex].text;
-
     // 1. Create Date objects from the inputs
     const startVal = new Date(start_time.value);
     const endVal = new Date(end_time.value);
@@ -381,28 +380,7 @@ save_event.addEventListener('click', () => {
 
         window.socket.once("event_created", (key) => {
             if (key) {
-                // Format times for the add_event function (it expects hours 0-23)
-                const start_hour = startVal.getHours();
-                const start_minute = startVal.getMinutes();
-                const end_hour = endVal.getHours();
-                const end_minute = endVal.getMinutes();
-
-                let start_time = start_hour + "." + start_minute;
-                start_time = Number(start_time);
-
-                let end_time = end_hour + "." + end_minute;
-                end_time = Number(end_time);
-
-
-                add_event(
-                    title.value,
-                    user_profile.username,
-                    //loc.value,
-                    selectedLocationName,
-                    start_time,
-                    end_time,
-                    key
-                );
+                update_events();
             } else {
                 alert("An error occurred while creating the event.");
             }
