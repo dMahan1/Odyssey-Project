@@ -1,0 +1,216 @@
+{
+  "nodes": [
+    {
+      "id": "jOVfXyGYJIqSeK8Z-TLv",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42453587760915,
+      "lon": -86.91110619345575
+    },
+    {
+      "id": "zkKbZ71OYIFrH4JKe_5Q",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42442976609365,
+      "lon": -86.91110619345575
+    },
+    {
+      "id": "8snQlKRGFqXYOOOj5A0C",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42442976609365,
+      "lon": -86.91098819668645
+    },
+    {
+      "id": "eGNtcnRvoen2wDCd_ljv",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42449302490189,
+      "lon": -86.9109962419207
+    },
+    {
+      "id": "APC7xiLAMnsshZEwfU2C",
+      "name": "Walk On's Sports Bistreaux",
+      "lat": 40.424615461135964,
+      "lon": -86.91099892366547
+    },
+    {
+      "id": "eOQj-dhcqXY-BYfc5tFh",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424499146718894,
+      "lon": -86.91088092689618
+    },
+    {
+      "id": "ZODvU5IMDjXytOrnQrcr",
+      "name": "North Grant Street",
+      "lat": 40.424615461135964,
+      "lon": -86.91087556340665
+    },
+    {
+      "id": "Cs2FWDTuduzp-C-i2zh_",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42443792852387,
+      "lon": -86.91091042608849
+    },
+    {
+      "id": "Pqp4ss7_YGJYK0SHRYnG",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.42431549196669,
+      "lon": -86.9107602483821
+    },
+    {
+      "id": "aoPe79jx8YX8iV07HUfO",
+      "name": "Parrish Library of Management & Economics",
+      "lat": 40.4241195930116,
+      "lon": -86.91052157309873
+    },
+    {
+      "id": "fejTcOfXA4-BoFPICvci",
+      "name": "Krannert School of Management",
+      "lat": 40.42389104350963,
+      "lon": -86.91050548263021
+    },
+    {
+      "id": "AINkuJ002DQEsK2VlBP6",
+      "name": "Krannert School of Management",
+      "lat": 40.42373391527652,
+      "lon": -86.91044648424557
+    },
+    {
+      "id": "7A8q7MKNN_BUgwKTpZnU",
+      "name": "North Grant Street",
+      "lat": 40.42443180670131,
+      "lon": -86.91050816437497
+    },
+    {
+      "id": "qEH3eApD8CqKppIB7kC1",
+      "name": "Mitch Daniels Boulevard",
+      "lat": 40.424217542560456,
+      "lon": -86.91097746970742
+    },
+    {
+      "id": "yLNCYS72Auy40GtlOHk1",
+      "name": "Krannert School of Management",
+      "lat": 40.424123674245656,
+      "lon": -86.91097478796266
+    },
+    {
+      "id": "Lel2yskenPJmyHk6kNG2",
+      "name": "University Book Store",
+      "lat": 40.424425875733995,
+      "lon": -86.91021732522475
+    }
+  ],
+  "edges": [
+    {
+      "from": "jOVfXyGYJIqSeK8Z-TLv",
+      "to": "zkKbZ71OYIFrH4JKe_5Q",
+      "weight": 11.799062182127962,
+      "flags": 2
+    },
+    {
+      "from": "zkKbZ71OYIFrH4JKe_5Q",
+      "to": "8snQlKRGFqXYOOOj5A0C",
+      "weight": 9.988244848548705,
+      "flags": 2
+    },
+    {
+      "from": "8snQlKRGFqXYOOOj5A0C",
+      "to": "eGNtcnRvoen2wDCd_ljv",
+      "weight": 7.066948625077645,
+      "flags": 2
+    },
+    {
+      "from": "eGNtcnRvoen2wDCd_ljv",
+      "to": "APC7xiLAMnsshZEwfU2C",
+      "weight": 13.616180480894213,
+      "flags": 2
+    },
+    {
+      "from": "eGNtcnRvoen2wDCd_ljv",
+      "to": "eOQj-dhcqXY-BYfc5tFh",
+      "weight": 9.784936244860711,
+      "flags": 2
+    },
+    {
+      "from": "eOQj-dhcqXY-BYfc5tFh",
+      "to": "ZODvU5IMDjXytOrnQrcr",
+      "weight": 12.941539235430355,
+      "flags": 2
+    },
+    {
+      "from": "8snQlKRGFqXYOOOj5A0C",
+      "to": "Cs2FWDTuduzp-C-i2zh_",
+      "weight": 6.64543332196736,
+      "flags": 2
+    },
+    {
+      "from": "Cs2FWDTuduzp-C-i2zh_",
+      "to": "Pqp4ss7_YGJYK0SHRYnG",
+      "weight": 18.626672800838065,
+      "flags": 2
+    },
+    {
+      "from": "Pqp4ss7_YGJYK0SHRYnG",
+      "to": "aoPe79jx8YX8iV07HUfO",
+      "weight": 29.709957521203314,
+      "flags": 2
+    },
+    {
+      "from": "aoPe79jx8YX8iV07HUfO",
+      "to": "fejTcOfXA4-BoFPICvci",
+      "weight": 25.450018335143678,
+      "flags": 2
+    },
+    {
+      "from": "fejTcOfXA4-BoFPICvci",
+      "to": "AINkuJ002DQEsK2VlBP6",
+      "weight": 18.171617723038192,
+      "flags": 2
+    },
+    {
+      "from": "Cs2FWDTuduzp-C-i2zh_",
+      "to": "7A8q7MKNN_BUgwKTpZnU",
+      "weight": 34.05763559406133,
+      "flags": 2
+    },
+    {
+      "from": "7A8q7MKNN_BUgwKTpZnU",
+      "to": "Pqp4ss7_YGJYK0SHRYnG",
+      "weight": 24.952185334351398,
+      "flags": 2
+    },
+    {
+      "from": "7A8q7MKNN_BUgwKTpZnU",
+      "to": "aoPe79jx8YX8iV07HUfO",
+      "weight": 34.73512781872529,
+      "flags": 2
+    },
+    {
+      "from": "8snQlKRGFqXYOOOj5A0C",
+      "to": "qEH3eApD8CqKppIB7kC1",
+      "weight": 23.615643460675397,
+      "flags": 2
+    },
+    {
+      "from": "qEH3eApD8CqKppIB7kC1",
+      "to": "yLNCYS72Auy40GtlOHk1",
+      "weight": 10.440148638997435,
+      "flags": 2
+    },
+    {
+      "from": "yLNCYS72Auy40GtlOHk1",
+      "to": "aoPe79jx8YX8iV07HUfO",
+      "weight": 38.36680018354083,
+      "flags": 2
+    },
+    {
+      "from": "qEH3eApD8CqKppIB7kC1",
+      "to": "Pqp4ss7_YGJYK0SHRYnG",
+      "weight": 21.371108022685604,
+      "flags": 2
+    },
+    {
+      "from": "ZODvU5IMDjXytOrnQrcr",
+      "to": "AINkuJ002DQEsK2VlBP6",
+      "weight": 120.53616291284433,
+      "flags": 3
+    }
+  ]
+}
