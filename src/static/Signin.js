@@ -2,26 +2,35 @@
 const signin_email = document.getElementById('signin_email');
 const signin_password = document.getElementById('signin_password');
 const signin_button = document.getElementById('signin_button');
+
+const forgot_button = document.getElementById('forgot_button');
 /* On run */
 
 signin_email.style.fontSize =
     signin_password.style.fontSize =
     signin_button.style.fontSize =
+    forgot_button.style.fontSize =
     height * .175 + "px";
 
 block.style.gap = width * .12 + "px"
 sign_here.style.marginTop = -height * .23 + "px"
 
+//forgot_button.style.marginTop = -height * .25 + "px"
+forgot_button.style.fontSize = height * .0875 +"px"
 
 window.addEventListener('resize', () => {
     // signin adjustments
     signin_email.style.fontSize =
         signin_password.style.fontSize =
         signin_button.style.fontSize =
+        forgot_button.style.fontSize =
         height * .175 + "px";
 
     block.style.gap = width * .12 + "px"
     sign_here.style.marginTop = -height * .23 + "px"
+
+    //forgot_button.style.marginTop = -height * .25 + "px"
+    forgot_button.style.fontSize = height * .0875 +"px"
 })
 
 forgot_button.addEventListener('click', () => {

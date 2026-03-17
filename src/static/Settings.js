@@ -1,7 +1,6 @@
 // Variables
 const logout = document.getElementById('logout');
 const password_change = document.getElementById('password');
-const email_change = document.getElementById('email');
 const username_change = document.getElementById('username');
 const user_div_background = document.getElementById('user_div_background');
 const user_check = document.getElementById('user_check');
