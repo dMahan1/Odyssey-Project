@@ -11,11 +11,29 @@ const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
 
+let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
+
+socket.on("auth", (user) => {
+    if (user) {
+        // 1. Save to local JS variable
+        current_user = user;
+
+        // 2. Save to browser storage (survives page refresh)
+        sessionStorage.setItem('user', JSON.stringify(user));
+
+        // 3. Redirect to home or update UI
+        window.location.href = "/Home.html";
+    } else {
+        alert("Login failed!");
+    }
+});
 
 // friends_bar.style.height = window_height / 2 + "px";
 
 // On run
 logout.addEventListener('click', () => {
+    current_user = null;
+    sessionStorage.removeItem('user');
     window.location.href = "Signin.html";
 })
 
@@ -30,10 +48,10 @@ window.addEventListener('click', () => {
 document.addEventListener("DOMContentLoaded", () => {
     if (user_profile) {
         // (Your existing profile display code here...)
-        document.getElementById('username_display').innerText = user_profile.username || "Unknown User";
+        document.getElementById('username_display').innerText = user_profile.displayName || "Unknown User";
         document.getElementById('email_display').innerText = user_profile.email || "Unknown Email";
-        document.getElementById('password_display').innerText = "********"; 
-        
+        document.getElementById('password_display').innerText = "********";
+
         // Request the list of all available users
         window.socket.emit("get_all_users", user_profile);
         window.socket.emit("get_friends", user_profile);
@@ -43,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.socket.on("friends_got", (friends) => {
     // Clear the dropdown and set a default placeholder
     current_friends_search.innerHTML = '<option value="" disabled selected>Remove a friend...</option>';
-    
+
     if (friends && friends.length > 0) {
         friends.forEach(f => {
             // Uses standard JavaScript Option constructor (Text, Value)
@@ -58,7 +76,7 @@ window.socket.on("friends_got", (friends) => {
 window.socket.on("all_users_got", (users) => {
     // Clear the dropdown and set a default placeholder
     friends_search.innerHTML = '<option value="" disabled selected>Select a user...</option>';
-    
+
     if (users) {
         users.forEach(u => {
             add_users(u.username, u.id); // Uses your existing function
@@ -69,7 +87,7 @@ window.socket.on("all_users_got", (users) => {
 // 3. Handle the Checkmark (Add Friend) Button click
 add_friends.addEventListener('click', () => {
     const recipient_id = friends_search.value;
-    
+
     // Prevent sending if they haven't selected anyone
     if (!recipient_id) {
         alert("Please select a user to add.");
@@ -78,18 +96,18 @@ add_friends.addEventListener('click', () => {
 
     // Emit the request to your existing "send_friend_request" python route
     window.socket.emit("send_friend_request", user_profile, recipient_id);
-    
+
     // Listen for the confirmation
     window.socket.once("request_sent", (success) => {
         if (success) {
             alert("Friend request sent!");
-            
+
             // Remove that user from the dropdown so you can't spam them with requests
             const optionToRemove = friends_search.querySelector(`option[value="${recipient_id}"]`);
             if (optionToRemove) optionToRemove.remove();
-            
+
             // Reset dropdown to default
-            friends_search.value = ""; 
+            friends_search.value = "";
         } else {
             alert("Failed to send friend request. Please try again.");
         }
@@ -98,7 +116,7 @@ add_friends.addEventListener('click', () => {
 
 delete_friends.addEventListener('click', () => {
     const friend_id = current_friends_search.value;
-    
+
     if (!friend_id) {
         alert("Please select a friend to remove.");
         return;
@@ -108,10 +126,10 @@ delete_friends.addEventListener('click', () => {
     if(confirm("Are you sure you want to remove this friend?")) {
         // Tell the server to mutually remove the friendship
         window.socket.emit("remove_friend", user_profile, friend_id);
-        
+
         window.socket.once("removed_friend", () => {
             alert("Friend removed.");
-            
+
             // Refresh BOTH dropdown lists to keep the UI perfectly synced!
             // (The removed friend should now reappear in the "Add Friend" list)
             window.socket.emit("get_friends", user_profile);
@@ -125,7 +143,7 @@ password_change.addEventListener('click', () => {
     if (user_profile && user_profile.email) {
         // Send the request to the server
         window.socket.emit("reset_password", user_profile.email);
-        
+
         // Listen for the response
         window.socket.once("password_reset_sent", (success) => {
             if (success) {
@@ -160,32 +178,32 @@ user_check.addEventListener('click', () => {
         alert("Username cannot be empty.");
         return;
     }
-    if (newUsername === user_profile.username) {
+    if (newUsername === user_profile.displayName) {
         user_div_background.style.display = "none";
         return; // No change needed
     }
 
     // Send the request to the server
     window.socket.emit("update_username", user_profile, newUsername);
-    
+
     // Listen for the specific response
     window.socket.once("username_updated", (status) => {
         if (status === "Success") {
             // 1. Update the local variable
-            user_profile.username = newUsername; 
-            
+            user_profile.displayName = newUsername;
+
             // 2. Update the UI text
-            document.getElementById('username_display').innerText = newUsername; 
-            
+            document.getElementById('username_display').innerText = newUsername;
+
             // 3. Hide popup and clear input
             user_div_background.style.display = "none";
-            usernameInput.value = ""; 
-            
+            usernameInput.value = "";
+
             alert("Username successfully updated!");
-        } 
+        }
         else if (status === "Username") {
             alert("That username is already taken. Please choose another one.");
-        } 
+        }
         else {
             alert("An error occurred while updating your username. Please try again.");
         }

@@ -41,7 +41,6 @@ def auth_user(email, password, latitude, longitude):
     else: 
         # Update the user's location
         update_user_location(user, latitude, longitude)
-
         return user
 
 def get_user_data(user):
@@ -98,8 +97,10 @@ def create_user(email, username, password, latitude, longitude):
         }
 
         db.child("Users").child(user['localId']).set(data, token=user['idToken'])
-
+        auth.update_profile(user['idToken'], display_name=username)
+        user['displayName'] = username
         return user
+
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
@@ -114,6 +115,8 @@ def update_username(user, new_username):
         db.child("Users").child(user['localId']).update({
             "username": new_username
         }, token=user['idToken'])
+        auth.update_profile(user['idToken'], display_name=new_username) #added as of Dylan
+        user['displayName'] = new_username
     except Exception as e:
         print(f"Error updating username: {e}")
         return "Error"
@@ -176,10 +179,11 @@ def get_all_users(user):
             if uid != user['localId'] and uid not in my_friends:
                 
                 # Verify the database entry is a dictionary before extracting data
+                print(f"Data: {data}")
                 if isinstance(data, dict):
                     users_list.append({
                         "id": uid,
-                        "username": data.get("username", "Unknown User")
+                        "username": data.get("username", "Unknown User") # test
                     })
                 else:
                     # Optional: Log the anomaly so you can clean up your database later

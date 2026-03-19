@@ -2,7 +2,7 @@ import os
 from Database import *
 from dotenv import load_dotenv
 import json
-from flask import Flask, render_template, request, abort, jsonify
+from flask import Flask, render_template, request, abort, jsonify, session
 from jinja2 import TemplateNotFound
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 
@@ -14,8 +14,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 
 socketio = SocketIO(app)
-
-user_profile = None
 
 @socketio.on('connect')
 def handle_connect():
@@ -40,8 +38,8 @@ def render_page(page):
     if '..' in page or page.startswith('/'):
         abort(400)
     try:
-        global user_profile
-        return render_template(page, data=user_profile)
+        current_user = session.get('user')
+        return render_template(page, data=current_user)
     except TemplateNotFound:
         abort(404)
 
@@ -51,15 +49,14 @@ def login(email, password, longitude, latitude):
     if user is None:
         emit("auth", None)
     else:
-        global user_profile
-        user_profile = user
+        session['user'] = user
         emit("auth", user)
 
 @socketio.on('signup')
 def signup(email, password, username, latitude, longitude):
-    global user_profile
-    user_profile = create_user(email, username, password, latitude, longitude)
-    emit("auth", user_profile)
+    user = create_user(email, username, password, latitude, longitude)
+    session['user'] = user
+    emit("auth", user)
 
 @socketio.on('delete')
 def delete(user):
@@ -68,6 +65,7 @@ def delete(user):
 
 @socketio.on('get_user')
 def get_user(user):
+    user = session.get('user')
     data = get_user_data(user)
     emit("return_user", data)
 
@@ -88,11 +86,13 @@ def update_toucoins(user, amount):
 
 @socketio.on("drop_pin")
 def drop_pins(user, latitude, longitude):
+    user = session.get('user') #added
     key = drop_pin(user, latitude, longitude)
     emit("pin_dropped", key)
 
 @socketio.on("pulled_pin")
 def pulled_pins(user, key):
+    user = session.get('user')
     ret = pull_pin(user, key)
     emit("pin_pulled", ret)
 
@@ -103,11 +103,13 @@ def handle_get_perm_locs(user):
 
 @socketio.on("create_event")
 def event_create(user_data, name, start_time, end_time, locationid, attendee_ids):
+    user_data = session.get('user')
     key = create_event(user_data, name, start_time, end_time, locationid, attendee_ids)
     emit("event_created", key)
 
 @socketio.on("get_events")
 def get_events(user):
+    user = session.get('user')
     events = get_user_events(user)
     emit("events_got", events)
 
@@ -135,6 +137,7 @@ def send_invite(sender, receiver, event_id):
 @socketio.on("join_event")
 #check if none
 def event_join(user, event_id):
+    user = session.get('user')
     ret = join_event(user, event_id)
     emit("event_joined", ret)
 
@@ -173,25 +176,33 @@ def send_f_request(sender, receiver):
 
 @socketio.on("get_friends")
 def friend_get(user):
+    user = session.get('user') #added
     ret = get_friends(user)
     
     emit("friends_got", ret)
 
 @socketio.on("get_all_users")
 def handle_get_all_users(user):
-    users = get_all_users(user)
-    emit("all_users_got", users)
+    user = session.get('user')
+    users_list = get_all_users(user)
+    emit("all_users_got", users_list)
 
 @socketio.on("get_e_data")
 def get_e_data(eid):
-    global user_profile
-    ret = get_event_data(user_profile, eid)
+    user = session.get('user')
+    if not user:
+            return emit("error", "Not logged in")
+
+    ret = get_event_data(user, eid)
     emit("event_got", ret)
 
 @socketio.on("got_l_data")
 def get_l_data(lid):
-    global user_profile
-    ret = get_location_data(user_profile, lid)
+    user = session.get('user')
+    if not user:
+        return emit("error", "Not logged in")
+
+    ret = get_location_data(user, lid)
     emit("location_got", ret)
 
 @socketio.on("get_u_by_id")
