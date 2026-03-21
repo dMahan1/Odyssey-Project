@@ -58,6 +58,7 @@ signup_button.addEventListener('click', () =>{
                         }
                     }
                     else {
+                        sessionStorage.setItem('user', JSON.stringify(user));
                         window.location.href = "Map.html";
                     }
                 }

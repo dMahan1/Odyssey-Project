@@ -11,6 +11,20 @@ const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
 
+const socket = io({
+    withCredentials: true,
+    transports: ['websocket', 'polling'] // Force websocket to keep the session stable
+});
+window.socket = socket;
+
+// added
+const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+if (backupUser) {
+    // Manually tell the server "Hey, remember me?"
+    // This helps the server re-fill the session['user'] if it got wiped
+    socket.emit("verify_session", backupUser);
+}
+
 let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
 
 socket.on("auth", (user) => {
@@ -21,8 +35,11 @@ socket.on("auth", (user) => {
         // 2. Save to browser storage (survives page refresh)
         sessionStorage.setItem('user', JSON.stringify(user));
 
-        // 3. Redirect to home or update UI
-        window.location.href = "/Home.html";
+        // time to save cookies
+        setTimeout(() => {
+            window.location.href = "/Home.html";
+        }, 100);
+
     } else {
         alert("Login failed!");
     }
@@ -46,15 +63,16 @@ window.addEventListener('click', () => {
 // Populate the UI with the user's current data
 // 1. Load users into the dropdown when the page loads
 document.addEventListener("DOMContentLoaded", () => {
-    if (user_profile) {
+    console.log(current_user);
+    if (current_user) {
         // (Your existing profile display code here...)
-        document.getElementById('username_display').innerText = user_profile.displayName || "Unknown User";
-        document.getElementById('email_display').innerText = user_profile.email || "Unknown Email";
+        document.getElementById('username_display').innerText = current_user.displayName || "Unknown User";
+        document.getElementById('email_display').innerText = current_user.email || "Unknown Email";
         document.getElementById('password_display').innerText = "********";
 
         // Request the list of all available users
-        window.socket.emit("get_all_users", user_profile);
-        window.socket.emit("get_friends", user_profile);
+        window.socket.emit("get_all_users");
+        window.socket.emit("get_friends");
     }
 });
 
@@ -95,7 +113,7 @@ add_friends.addEventListener('click', () => {
     }
 
     // Emit the request to your existing "send_friend_request" python route
-    window.socket.emit("send_friend_request", user_profile, recipient_id);
+    window.socket.emit("send_friend_request", current_user, recipient_id);
 
     // Listen for the confirmation
     window.socket.once("request_sent", (success) => {
@@ -125,29 +143,29 @@ delete_friends.addEventListener('click', () => {
     // Double check before deleting
     if(confirm("Are you sure you want to remove this friend?")) {
         // Tell the server to mutually remove the friendship
-        window.socket.emit("remove_friend", user_profile, friend_id);
+        window.socket.emit("remove_friend", current_user, friend_id);
 
         window.socket.once("removed_friend", () => {
             alert("Friend removed.");
 
             // Refresh BOTH dropdown lists to keep the UI perfectly synced!
             // (The removed friend should now reappear in the "Add Friend" list)
-            window.socket.emit("get_friends", user_profile);
-            window.socket.emit("get_all_users", user_profile);
+            window.socket.emit("get_friends", current_user);
+            window.socket.emit("get_all_users", current_user);
         });
     }
 });
 
 password_change.addEventListener('click', () => {
     // Check if the user object exists
-    if (user_profile && user_profile.email) {
+    if (current_user && current_user.email) {
         // Send the request to the server
-        window.socket.emit("reset_password", user_profile.email);
+        window.socket.emit("reset_password", current_user.email);
 
         // Listen for the response
         window.socket.once("password_reset_sent", (success) => {
             if (success) {
-                alert(`A password reset link has been sent to ${user_profile.email}`);
+                alert(`A password reset link has been sent to ${current_user.email}`);
             } else {
                 alert("Failed to send reset email. Please try again later.");
             }
@@ -178,19 +196,19 @@ user_check.addEventListener('click', () => {
         alert("Username cannot be empty.");
         return;
     }
-    if (newUsername === user_profile.displayName) {
+    if (newUsername === current_user.displayName) {
         user_div_background.style.display = "none";
         return; // No change needed
     }
 
     // Send the request to the server
-    window.socket.emit("update_username", user_profile, newUsername);
+    window.socket.emit("update_username", newUsername);
 
     // Listen for the specific response
     window.socket.once("username_updated", (status) => {
-        if (status === "Success") {
+        if (status.status === "Success") {
             // 1. Update the local variable
-            user_profile.displayName = newUsername;
+            current_user.displayName = newUsername;
 
             // 2. Update the UI text
             document.getElementById('username_display').innerText = newUsername;
@@ -201,7 +219,7 @@ user_check.addEventListener('click', () => {
 
             alert("Username successfully updated!");
         }
-        else if (status === "Username") {
+        else if (status.status === "Username") {
             alert("That username is already taken. Please choose another one.");
         }
         else {
@@ -220,7 +238,7 @@ delete_account.addEventListener('click', () => {
         delete_account.innerText = "Deleting...";
 
         // 2. Emit the existing 'delete' event to your server
-        window.socket.emit("delete", user_profile);
+        window.socket.emit("delete", current_user);
         
         // 3. Listen for the 'deleted' confirmation from main.py
         window.socket.once("deleted", () => {

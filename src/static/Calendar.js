@@ -46,6 +46,14 @@ let friends = [];
 let selectedAttendeeIds = new Set();
 let messages = [];
 
+const socket = io({
+    withCredentials: true,
+    transports: ['websocket', 'polling'] // Force websocket to keep the session stable
+});
+window.socket = socket;
+
+let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
+
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -89,7 +97,7 @@ function change_attendees_size () {
 }
 
 function load_permanent_locations() {
-    window.socket.emit("get_permanent_locations", user_profile);
+    window.socket.emit("get_permanent_locations");
     
     window.socket.once("permanent_locations_got", (locations) => {
         // Clear existing options (keeping the default placeholder)
@@ -117,7 +125,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     // --- ACCEPT BUTTON ---
     const acceptBtn = invite_element.querySelector('#accept_event');
     acceptBtn.addEventListener('click', () => {
-        window.socket.emit("accept_event_invite", user_profile, event_id, message_id);
+        window.socket.emit("accept_event_invite", event_id, message_id);
         
         // Instantly remove it from the screen for the user
         invite_element.remove(); 
@@ -126,7 +134,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     // --- DECLINE BUTTON ---
     const declineBtn = invite_element.querySelector('#decline_event');
     declineBtn.addEventListener('click', () => {
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // Instantly remove it from the screen for the user
         invite_element.remove(); 
@@ -146,10 +154,10 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const acceptBtn = request_element.querySelector('#accept_friend');
     acceptBtn.addEventListener('click', () => {
         // 1. Tell the server to add this user to your friends list
-        window.socket.emit("add_friend", user_profile, sender_id);
+        window.socket.emit("add_friend", sender_id);
         
         // 2. Tell the server to delete the request notification
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // 3. Remove it from the popup instantly
         request_element.remove();
@@ -159,7 +167,7 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const declineBtn = request_element.querySelector('#decline_friend');
     declineBtn.addEventListener('click', () => {
         // Just delete the notification
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // Remove it from the popup instantly
         request_element.remove();
@@ -214,7 +222,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
 
         if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
             // Tell the server to delete it from the database
-            window.socket.emit("delete_event", user_profile, event_id);
+            window.socket.emit("delete_event", event_id);
             
             // Remove it from the UI immediately
             remove_event(event_id);
@@ -274,7 +282,7 @@ function clear_events() {
 }
 
 function update_events() {
-    window.socket.emit("get_events", user_profile);
+    window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
         clear_events();
         
@@ -325,8 +333,10 @@ change_inbox_size();
 change_attendees_size();
 
 make_calendar(current_day, current_dow, current_month, current_year);
-update_events();
-load_permanent_locations();
+setTimeout(() => {
+    update_events();
+    load_permanent_locations();
+}, 200);
 
 
 /* Event Listeners */
@@ -370,7 +380,6 @@ save_event.addEventListener('click', () => {
             return;
         }
         window.socket.emit("create_event", 
-            user_profile, 
             title.value,
             start_time.value, 
             end_time.value, 
@@ -386,7 +395,7 @@ save_event.addEventListener('click', () => {
             }
         });
     } else {
-        window.socket.emit("create_event", user_profile, title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
+        window.socket.emit("create_event", title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
@@ -401,7 +410,7 @@ inbox_button.addEventListener('click', () => {
     inbox_popup.style.display = "block";
     inbox_popup_content.innerHTML = '';
 
-    window.socket.emit("get_user", user_profile);
+    window.socket.emit("get_user");
     
     window.socket.once("return_user", (data) => {
 
@@ -488,7 +497,7 @@ more_attendees_button.addEventListener('click', () => {
     // Note: In your HTML, the template is INSIDE attendees_popup_content. 
     // It's better to move the template OUTSIDE that div so it doesn't get deleted.
 
-    window.socket.emit("get_friends", user_profile);
+    window.socket.emit("get_friends");
     
     // 2. Use .once so we don't stack up multiple listeners
     window.socket.once("friends_got", (ret) => {

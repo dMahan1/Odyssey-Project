@@ -34,13 +34,19 @@ window.addEventListener ('resize', () => {
 })
 
 calendar_button.addEventListener('click', () => {
-    window.location.href = "Calendar.html";
+    setTimeout(() => {
+        window.location.href = "Calendar.html";
+    }, 200);
 })
 
 settings_button.addEventListener('click', () => {
-    window.location.href = "Settings.html";
+    setTimeout(() => {
+        window.location.href = "Settings.html";
+    }, 200);
 })
 
 map_button.addEventListener('click', () => {
-    window.location.href = "Map.html";
+    setTimeout(() => {
+        window.location.href = "Map.html";
+    }, 200);
 })

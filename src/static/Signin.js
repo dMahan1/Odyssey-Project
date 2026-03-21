@@ -63,8 +63,13 @@ signin_button.addEventListener('click', () =>{
                     }
                 }
                 else {
+                    //added
+                    sessionStorage.setItem('user', JSON.stringify(user));
+                    localStorage.setItem('user_backup', JSON.stringify(user));
                     console.log("user = "+user_profile)
-                    window.location.href = "Map.html";
+                    setTimeout(() => {
+                        window.location.href = "Map.html";
+                    }, 200);
                 }
             }
         });
