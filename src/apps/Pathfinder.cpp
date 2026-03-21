@@ -64,7 +64,7 @@ const std::shared_ptr<Location> Pathfinder::approximate_location(double latitude
 
 const std::shared_ptr<Location> Pathfinder::approximate_location_via(double latitude, double longitude, TraversalMode t_mode) const {
     std::shared_lock lock(mtx);
-    auto dist = [t_mode](const void *a, const void *b) {
+    auto dist = [this, t_mode](const void *a, const void *b) {
         const Location* locA = static_cast<const Location*>(a);
         const Location* locB = static_cast<const Location*>(b);
         int mask = 0;
@@ -81,9 +81,11 @@ const std::shared_ptr<Location> Pathfinder::approximate_location_via(double lati
             case TraversalMode::BUS:
                 mask = 0b10000;
                 break;
+            default:
+                return std::numeric_limits<double>::infinity();
         }
-        for (Edge e : locB->get_edges()) {
-            if ((e.get_mask() & mask) != 0) {
+        for (Edge e : adj[id_indices.at(locA->get_id())]) {
+            if ((e.get_flags() & mask) != 0) {
                 return locA->euclidean_distance_to(*locB);
             }
         }
