@@ -9,6 +9,6 @@ describe('login page', () => {
     cy.get('#signin_email').type('cypress@test.qin');
     cy.get('#signin_password').type('password');
     cy.get('#signin_button').click();
-    cy.url({ timeout: 15000 }).should('include', 'Map.html');
+    cy.url().should('include', 'Map.html');
   });
 });
