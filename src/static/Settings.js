@@ -35,17 +35,10 @@ socket.on("auth", (user) => {
         // 2. Save to browser storage (survives page refresh)
         sessionStorage.setItem('user', JSON.stringify(user));
 
-        // time to save cookies
-        setTimeout(() => {
-            window.location.href = "/Home.html";
-        }, 100);
-
     } else {
         alert("Login failed!");
     }
 });
-
-// friends_bar.style.height = window_height / 2 + "px";
 
 // On run
 logout.addEventListener('click', () => {
@@ -54,16 +47,14 @@ logout.addEventListener('click', () => {
     window.location.href = "Signin.html";
 })
 
-window.addEventListener('click', () => {
+window.addEventListener('resize', () => {
     window_height = window.innerHeight;
     window_width = window.innerWidth;
-    // friends_bar.style.height = window_height / 2 + "px";
 })
 
 // Populate the UI with the user's current data
 // 1. Load users into the dropdown when the page loads
 document.addEventListener("DOMContentLoaded", () => {
-    console.log(current_user);
     if (current_user) {
         // (Your existing profile display code here...)
         document.getElementById('username_display').innerText = current_user.displayName || "Unknown User";
@@ -93,7 +84,7 @@ window.socket.on("friends_got", (friends) => {
 
 window.socket.on("all_users_got", (users) => {
     // Clear the dropdown and set a default placeholder
-    friends_search.innerHTML = '<option value="" disabled selected>Select a user...</option>';
+    friends_search.innerHTML = '<option value="" disabled selected>Add a new friend...</option>';
 
     if (users) {
         users.forEach(u => {
@@ -249,10 +240,6 @@ delete_account.addEventListener('click', () => {
         });
     }
 });
-
-delete_friends.addEventListener('click', () => {
-    /* delete friend from the list */
-})
 
 /* Adds friends to the list */
 function add_friend(name) {

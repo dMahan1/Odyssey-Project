@@ -8,6 +8,8 @@ const attendees = document.getElementById('attendees');
 const start_label = document.getElementById('start_label');
 const end_label = document.getElementById('end_label');
 
+let permanent_locations = [];
+
 // Event specific variables
 const scrap_event = document.getElementById('scrap_event');
 const save_event = document.getElementById('save_event');
@@ -21,6 +23,7 @@ const attendees_content = document.getElementById('attendees_popup_content');
 const more_attendees_button = document.getElementById('more_attendees');
 const attendees_popup_top_bar = document.getElementById('attendees_popup_bar');
 const save_attendees = document.getElementById('save_attendees');
+const attendeeText = document.getElementById('attendee_text');
 
 const main_content = document.querySelector('.main_content');
 
@@ -42,6 +45,7 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let friends = [];
+
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
 let messages = [];
@@ -51,6 +55,13 @@ const socket = io({
     transports: ['websocket', 'polling'] // Force websocket to keep the session stable
 });
 window.socket = socket;
+// added
+const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+if (backupUser) {
+    // Manually tell the server "Hey, remember me?"
+    // This helps the server re-fill the session['user'] if it got wiped
+    socket.emit("verify_session", backupUser);
+}
 
 let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
 
@@ -101,15 +112,20 @@ function load_permanent_locations() {
     
     window.socket.once("permanent_locations_got", (locations) => {
         // Clear existing options (keeping the default placeholder)
-        loc.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
-        
-        if (locations) {
-            locations.forEach(loc => {
-                // Uses your existing add_location function
-                add_location(loc.name, loc.id); 
-            });
-        }
+        permanent_locations = locations;
+        update_permanent_locations();
     });
+}
+
+function update_permanent_locations() {
+    loc.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
+
+    if (permanent_locations) {
+        permanent_locations.forEach(loc => {
+            // Uses your existing add_location function
+            add_location(loc.name, loc.id);
+        });
+    }
 }
 
 function create_event_invite(event_name, event_message, event_id, message_id){
@@ -326,6 +342,14 @@ function update_events() {
     });
 }
 
+function clear_event_window() {
+    title.value = null;
+    start_time.value = null;
+    end_time.value = null;
+    update_permanent_locations();
+    attendeeText.innerText = `Attendees`;
+}
+
 /* On run */
 top_bar.style.height = window_height / 16 + "px";
 change_event_size();
@@ -333,11 +357,8 @@ change_inbox_size();
 change_attendees_size();
 
 make_calendar(current_day, current_dow, current_month, current_year);
-setTimeout(() => {
-    update_events();
-    load_permanent_locations();
-}, 200);
-
+update_events();
+load_permanent_locations();
 
 /* Event Listeners */
 window.addEventListener('resize', function(){
@@ -354,6 +375,7 @@ window.addEventListener('resize', function(){
 
 scrap_event.addEventListener('click', () => {
     event_popup.style.display = "none";
+    clear_event_window();
 })
 
 save_event.addEventListener('click', () => {
@@ -399,7 +421,9 @@ save_event.addEventListener('click', () => {
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
+
     event_popup.style.display = "none";
+    clear_event_window();
 });
 
 event_popup_open.addEventListener('click', () => {
@@ -525,8 +549,6 @@ save_attendees.addEventListener('click', () => {
     });
 
     // Update the UI text so the user sees how many are invited
-    const attendeeText = document.getElementById('attendee_text');
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
-
     attendees_popup.style.display = "none";
 });
