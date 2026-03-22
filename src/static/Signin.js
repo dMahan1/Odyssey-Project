@@ -49,6 +49,9 @@ signin_button.addEventListener('click', () =>{
                     if (user === "Invalid") {
                         alert("Please enter a valid email")
                     }
+                    else if (user === "Bad_Pass") {
+                        alert("Incorrect Password")
+                    }
                     else {
                         alert("An error occured. Please try again.")
                     }

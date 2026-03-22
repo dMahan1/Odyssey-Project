@@ -35,6 +35,8 @@ def auth_user(email, password, latitude, longitude):
         err = str(e)
         if "INVALID_EMAIL" in err:
             return "Invalid"
+        elif "INVALID_LOGIN_CREDENTIALS" in err:
+            return "Bad_Pass"
         else:
             return "Error"
         
