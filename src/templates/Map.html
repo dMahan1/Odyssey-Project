@@ -20,7 +20,18 @@
 <script src="../static/Pages.js" defer></script>
 
 <div id="whole_page">
-    <div id="map"></div>
+    <div id="map_top_bar">
+        <span id="project_title">ODYSSEY (TODO: add search bar & pf options up here.)</span>
+    </div>
+    <div id="main_content">
+        <div id="side_controls">
+            <button class="side-btn" id="walk_btn"><img src="../static/images/walking_icon.png" alt="Walk icon"></button>
+            <button class="side-btn" id="bike_btn"><img src="../static/images/bike_icon.png" alt="Bike icon"></button>
+            <button class="side-btn" id="car_btn"><img src="../static/images/car_icon.png" alt="Car icon"></button>
+            <button class="side-btn" id="bus_btn"><img src="../static/images/bus_icon.png" alt="Bus icon"></button>
+        </div>
+        <div id="map"></div>
+    </div>
     <div id="nav_bar">
         <button class="On" id="map_button">
             <img class="Map" src="../static/images/Map_icon.png" id="Map_icon" alt="Map icon">
