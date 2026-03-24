@@ -34,13 +34,18 @@ def auth_user(email, password, latitude, longitude):
     except Exception as e:
         err = str(e)
         if "INVALID_EMAIL" in err:
-            return "Invalid"
+            return {"status": "Invalid"}
         else:
-            return "Error"
+            return {"status": "Error"}
         
-    else: 
+    else:
+        # Verify the user has data in the database
+        user_data = get_user_data(user)
+        if user_data is None:
+            return {"status" : "NoAccount"}
         # Update the user's location
         update_user_location(user, latitude, longitude)
+        user["status"] = "Success"
         return user
 
 def get_user_data(user):
@@ -156,7 +161,11 @@ def delete_user(user):
     db.child("Users").child(user['localId']).remove(token=user['idToken'])
 
     # Delete the user
-    auth.delete_user_account(user['idToken'])
+    try :
+        auth.delete_user_account(user['idToken'])
+        return "Success"
+    except Exception as e:
+        return e
 
 def get_all_users(user):
     db = firebase.database()

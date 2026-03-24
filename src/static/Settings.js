@@ -28,22 +28,16 @@ if (backupUser) {
 let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
 
 socket.on("auth", (user) => {
-    if (user) {
-        // 1. Save to local JS variable
-        current_user = user;
-
-        // 2. Save to browser storage (survives page refresh)
-        sessionStorage.setItem('user', JSON.stringify(user));
-
-    } else {
-        alert("Login failed!");
-    }
+    current_user = user;
+    sessionStorage.setItem('user', JSON.stringify(user));
 });
 
 // On run
 logout.addEventListener('click', () => {
     current_user = null;
     sessionStorage.removeItem('user');
+    localStorage.removeItem('user_backup');
+    socket.emit('logout');
     window.location.href = "Signin.html";
 })
 
@@ -201,10 +195,14 @@ user_check.addEventListener('click', () => {
             // 1. Update the local variable
             current_user.displayName = newUsername;
 
-            // 2. Update the UI text
+            // 2. Persist to storage so it survives page navigation
+            sessionStorage.setItem('user', JSON.stringify(current_user));
+            localStorage.setItem('user_backup', JSON.stringify(current_user));
+
+            // 3. Update the UI text
             document.getElementById('username_display').innerText = newUsername;
 
-            // 3. Hide popup and clear input
+            // 4. Hide popup and clear input
             user_div_background.style.display = "none";
             usernameInput.value = "";
 
@@ -229,7 +227,7 @@ delete_account.addEventListener('click', () => {
         delete_account.innerText = "Deleting...";
 
         // 2. Emit the existing 'delete' event to your server
-        window.socket.emit("delete", current_user);
+        window.socket.emit("delete");
         
         // 3. Listen for the 'deleted' confirmation from main.py
         window.socket.once("deleted", () => {

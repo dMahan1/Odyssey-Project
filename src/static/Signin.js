@@ -44,33 +44,25 @@ forgot_button.addEventListener('click', () => {
     })
 })
 signin_button.addEventListener('click', () =>{
-    seenAlert = false;
     if (location_success) {
         socket.emit("login", signin_email.value, signin_password.value, longitude, latitude)
-        socket.on("auth", (user) => {
-            if (seenAlert) return;
-            seenAlert = true;
-            if (user === null) {
+
+        socket.once("auth", (user) => {
+            sessionStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('user_backup', JSON.stringify(user));
+            setTimeout(() => {
+                window.location.href = "Map.html";
+            }, 200);
+        });
+
+        socket.once("authfail", (result) => {
+            const status = result.status;
+            if (status === "Invalid") {
+                alert("Please enter a valid email");
+            } else if (status === "NoAccount") {
+                alert("No account found for this email. Please sign up.");
+            } else {
                 alert("Incorrect Email or Password");
-            }
-            else {
-                if (typeof user === 'string') {
-                    if (user === "Invalid") {
-                        alert("Please enter a valid email")
-                    }
-                    else {
-                        alert("An error occured. Please try again.")
-                    }
-                }
-                else {
-                    //added
-                    sessionStorage.setItem('user', JSON.stringify(user));
-                    localStorage.setItem('user_backup', JSON.stringify(user));
-                    console.log("user = "+user_profile)
-                    setTimeout(() => {
-                        window.location.href = "Map.html";
-                    }, 200);
-                }
             }
         });
     }

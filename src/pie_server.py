@@ -66,8 +66,8 @@ def render_page(page):
 def login(email, password, longitude, latitude):
     user = auth_user(email, password, latitude, longitude)
     print(f"User: {user}")
-    if not isinstance(user, dict):
-        emit("auth", None)
+    if not user.get("status") == "Success":
+        emit("authfail", user)
     else:
         session['user'] = user
         sesh = session.get('user')
@@ -87,11 +87,20 @@ def signup(email, password, username, latitude, longitude):
         session.modified = True
         emit("auth", user)
 
+@socketio.on('logout')
+def logout():
+    session.pop('user', None)
+    session.modified = True
+    emit("logged_out")
+
 @socketio.on('delete')
 def delete():
     user = session.get('user')
-    delete_user(user)
-    emit("deleted")
+    status = delete_user(user)
+    if (status == "Success"):
+        emit("deleted")
+    else:
+        emit("deleteError")
 
 @socketio.on('get_user')
 def get_user():
@@ -271,6 +280,7 @@ def handle_update_username(new_username):
 
         # 2. Re-save it to the session and mark as modified
         session['user'] = user
+        print(session['user'])
         session.modified = True
 
         # 3. Send the NEW user object back so JS can update its storage
