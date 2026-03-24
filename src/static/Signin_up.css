@@ -67,5 +67,19 @@ body {
 
 ::placeholder {
     color: #7A7A7A;
+}
 
+#forgot_button {
+    background-color: #E8A2A7;
+    border: none;
+    font-family: Rockwell, monaco, monospace;
+    font-size: 15px;
+    position: absolute;
+    bottom: 0;
+}
+
+#forgot_button:hover {
+    color: #800080;
+    cursor: pointer;
+    text-decoration: underline;
 }

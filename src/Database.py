@@ -35,14 +35,18 @@ def auth_user(email, password, latitude, longitude):
     except Exception as e:
         err = str(e)
         if "INVALID_EMAIL" in err:
-            return "Invalid"
+            return {"status": "Invalid"}
         else:
-            return "Error"
+            return {"status": "Error"}
 
     else:
+        # Verify the user has data in the database
+        user_data = get_user_data(user)
+        if user_data is None:
+            return {"status": "NoAccount"}
         # Update the user's location
         update_user_location(user, latitude, longitude)
-
+        user["status"] = "Success"
         return user
 
 
@@ -73,6 +77,7 @@ def create_user(email, username, password, latitude, longitude):
         elif "INVALID_EMAIL" in err:
             return "Invalid"
         else:
+            print(err)
             return "Error"
 
     else:
@@ -105,7 +110,8 @@ def create_user(email, username, password, latitude, longitude):
         }
 
         db.child("Users").child(user["localId"]).set(data, token=user["idToken"])
-
+        auth.update_profile(user["idToken"], display_name=username)
+        user["displayName"] = username
         return user
 
 
@@ -130,6 +136,10 @@ def update_username(user, new_username):
         db.child("Users").child(user["localId"]).update(
             {"username": new_username}, token=user["idToken"]
         )
+        auth.update_profile(
+            user["idToken"], display_name=new_username
+        )  # added as of Dylan
+        user["displayName"] = new_username
     except Exception as e:
         print(f"Error updating username: {e}")
         return "Error"
@@ -172,7 +182,11 @@ def delete_user(user):
     db.child("Users").child(user["localId"]).remove(token=user["idToken"])
 
     # Delete the user
-    auth.delete_user_account(user["idToken"])
+    try:
+        auth.delete_user_account(user["idToken"])
+        return "Success"
+    except Exception as e:
+        return e
 
 
 def get_all_users(user):
@@ -195,9 +209,13 @@ def get_all_users(user):
             # Exclude self and exclude existing friends
             if uid != user["localId"] and uid not in my_friends:
                 # Verify the database entry is a dictionary before extracting data
+                print(f"Data: {data}")
                 if isinstance(data, dict):
                     users_list.append(
-                        {"id": uid, "username": data.get("username", "Unknown User")}
+                        {
+                            "id": uid,
+                            "username": data.get("username", "Unknown User"),  # test
+                        }
                     )
                 else:
                     # Optional: Log the anomaly so you can clean up your database later
@@ -301,13 +319,27 @@ def get_locations_from_name(user, loc_name):
 
 
 def create_event(user, name, start_time, end_time, locationid, attendee_ids):
+
     db = firebase.database()
+
+    loc_data = get_location_data(user, locationid)
+    location_name = loc_data.get("name") if loc_data else "Unknown"
+    creator_username = (
+        db.child("Users")
+        .child(user["localId"])
+        .child("username")
+        .get(token=user["idToken"])
+        .val()
+    )
+
     data = {
         "creator_id": user["localId"],
+        "creator_username": creator_username or "Unknown",
         "name": name,
         "start_time": start_time,
         "end_time": end_time,
         "locationid": locationid,
+        "location_name": location_name,
         "attendee_ids": attendee_ids,
     }
     key = firebase.database().generate_key()
@@ -566,7 +598,16 @@ def get_friends(user):
 def get_event_data(user, event_id):
     db = firebase.database()
     event_data = db.child("Events").child(event_id).get(token=user["idToken"]).val()
+    location_data = get_location_data(user, event_data.get("locationid"))
+    event_data["location_name"] = location_data.get("name")
     return event_data
+
+
+def get_user_name(user, id):
+    db = firebase.database()
+    return (
+        db.child("Users").child(id).child("username").get(token=user["idToken"]).val()
+    )
 
 
 def get_location_data(user, location_id):
@@ -627,9 +668,15 @@ def get_user_events(user):
                     {
                         "id": event_id,
                         "name": event_data.get("name"),
+                        "creator_username": event_data.get(
+                            "creator_username"
+                        ),  # <-- ALSO ADD THIS for the GUI
                         "start_time": event_data.get("start_time"),
                         "end_time": event_data.get("end_time"),
                         "locationid": event_data.get("locationid"),
+                        "location_name": event_data.get(
+                            "location_name"
+                        ),  # <-- ADD THIS LINE
                         "attendee_ids": event_data.get("attendee_ids"),
                     }
                 )
@@ -643,6 +690,7 @@ def test():
     user = create_user(
         "dylan.mahan@gmail.com", "Dylan AutoTest", "Test123", 40.42728, -86.91406
     )
+    print(user)
     print(get_user_data(user))
 
     user = auth_user("dylan.mahan@gmail.com", "Test123", 40.42728, -86.91406)
