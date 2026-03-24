@@ -32,40 +32,30 @@ window.addEventListener('resize', () =>{
 })
 
 signup_button.addEventListener('click', () =>{
-    seenAlert = false;
     if (location_success) {
         if (signup_password.value === signup_pass_conf.value) {
-            socket.emit("signup", signup_email.value, signup_password.value, signup_username.value, latitude, longitude)
-            socket.on("auth", (user) => {
-                if (seenAlert) return;
-                seenAlert = true;
-                if(user != null) {
-                    if (typeof user === 'string') {
-                        if (user === "Weak") {
-                            alert("Password must be greater than 6 characters.");
-                        }
-                        else if (user === "Exist") {
-                            alert("Email already registered. Did you mean to sign in instead?")
-                        }
-                        else if (user === "Username") {
-                            alert("Username is already taken.")
-                        }
-                        else if (user === "Invalid") {
-                            alert("Please enter a valid email")
-                        }
-                        else {
-                            alert("An error occured. Please try again.")
-                        }
-                    }
-                    else {
-                        sessionStorage.setItem('user', JSON.stringify(user));
-                        window.location.href = "Map.html";
-                    }
+            socket.emit("signup", signup_email.value, signup_password.value, signup_username.value, latitude, longitude);
+
+            socket.once("auth", (user) => {
+                sessionStorage.setItem('user', JSON.stringify(user));
+                localStorage.setItem('user_backup', JSON.stringify(user));
+                window.location.href = "Map.html";
+            });
+
+            socket.once("authfail", (result) => {
+                const status = result && result.status;
+                if (status === "Weak") {
+                    alert("Password must be greater than 6 characters.");
+                } else if (status === "Exist") {
+                    alert("Email already registered. Did you mean to sign in instead?");
+                } else if (status === "Username") {
+                    alert("Username is already taken.");
+                } else if (status === "Invalid") {
+                    alert("Please enter a valid email.");
+                } else {
+                    alert("An error occurred. Please try again.");
                 }
-                else {
-                    alert("Please choose a stronger password")
-                }
-            }); 
+            });
         } else {
             alert("Passwords do not match");
         }

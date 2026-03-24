@@ -71,14 +71,14 @@ def create_user(email, username, password, latitude, longitude):
     except Exception as e:
         err = str(e)
         if "WEAK_PASSWORD" in err:
-            return "Weak"
+            return {"status": "Weak"}
         elif "EMAIL_EXISTS" in err:
-            return "Exist"
+            return {"status": "Exist"}
         elif "INVALID_EMAIL" in err:
-            return "Invalid"
+            return {"status": "Invalid"}
         else:
             print(err)
-            return "Error"
+            return {"status": "Error"}
 
     else:
         db = firebase.database()
@@ -93,7 +93,7 @@ def create_user(email, username, password, latitude, longitude):
         print("duplicate_username", duplicate_username)
         if duplicate_username:
             auth.delete_user_account(user["idToken"])
-            return "Username"
+            return {"status": "Username"}
 
         data = {
             "email": email,
@@ -112,6 +112,7 @@ def create_user(email, username, password, latitude, longitude):
         db.child("Users").child(user["localId"]).set(data, token=user["idToken"])
         auth.update_profile(user["idToken"], display_name=username)
         user["displayName"] = username
+        user["status"] = "Success"
         return user
 
 

@@ -228,13 +228,17 @@ delete_account.addEventListener('click', () => {
 
         // 2. Emit the existing 'delete' event to your server
         window.socket.emit("delete");
-        
-        // 3. Listen for the 'deleted' confirmation from main.py
+
+        // 3. Listen for success or failure from the server
         window.socket.once("deleted", () => {
             alert("Your account has been successfully deleted.");
-            
-            // 4. Redirect the user back to the sign-in/sign-up page
-            window.location.href = "Signin.html"; 
+            window.location.href = "Signin.html";
+        });
+
+        window.socket.once("deleteError", () => {
+            alert("Failed to delete your account. Please try again.");
+            delete_account.disabled = false;
+            delete_account.innerText = "Delete Account";
         });
     }
 });
