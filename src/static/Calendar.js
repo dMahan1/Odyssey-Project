@@ -46,6 +46,9 @@ let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let friends = [];
 
+// Message specific variables
+let message_popup_bar = document.getElementById('message_popup_bar');
+
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
 let messages = [];
@@ -74,7 +77,10 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 function change_inbox_size() {
     inbox_popup_top_bar.style.height = window_height / 16 + "px";
+}
 
+function change_message_size() {
+    message_popup_bar.style.height = window_height / 16 + "px";
 }
 
 function change_event_size() {
@@ -355,10 +361,15 @@ top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
 change_attendees_size();
+change_message_size();
 
-make_calendar(current_day, current_dow, current_month, current_year);
-update_events();
-load_permanent_locations();
+// make_calendar(current_day, current_dow, current_month, current_year);
+// update_events();
+// load_permanent_locations();
+
+// for testing only!!!
+
+add_event("My event", "Lycia", "Stewart Center", 1.24, 4.35, 1234);
 
 /* Event Listeners */
 window.addEventListener('resize', function(){
@@ -369,6 +380,8 @@ window.addEventListener('resize', function(){
     change_event_size();
     change_inbox_size();
     change_attendees_size();
+    change_message_size();
+
     // Re-draw events to match new scale
     update_events(); 
 });
@@ -464,6 +477,8 @@ inbox_button.addEventListener('click', () => {
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
 })
+
+
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
