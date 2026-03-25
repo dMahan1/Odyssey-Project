@@ -79,12 +79,14 @@ def login(email, password, longitude, latitude):
 @socketio.on('signup')
 def signup(email, password, username, latitude, longitude):
     user = create_user(email, username, password, latitude, longitude)
-    if not isinstance(user, dict):
-        emit("auth", None)
+    if not user.get("status") == "Success":
+        emit("authfail", user)
     else:
         session['user'] = user
+        sesh = session.get('user')
         session.permanent = True  # <--- FORCE IT TO PERSIST
         session.modified = True
+        print(f"Error sending password reset: {sesh}")
         emit("auth", user)
 
 @socketio.on('logout')
