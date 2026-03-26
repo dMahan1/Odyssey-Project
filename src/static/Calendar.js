@@ -1,10 +1,14 @@
 /*Variables */
-const event_title = document.getElementById('title')
-const attendees_list = document.getElementById('attendees')
 const start_time = document.getElementById('start')
 const end_time = document.getElementById('end')
 const loc = document.getElementById('location_search')
 const top_bar = document.getElementById('top_bar');
+const title = document.getElementById('title');
+const attendees = document.getElementById('attendees');
+const start_label = document.getElementById('start_label');
+const end_label = document.getElementById('end_label');
+
+let permanent_locations = [];
 
 // Event specific variables
 const scrap_event = document.getElementById('scrap_event');
@@ -14,19 +18,12 @@ const event_popup_open = document.getElementById('event_button');
 const event_popup_top_bar = document.getElementById('event_popup_bar');
 const event_popup_content = document.getElementById('event_popup_content');
 
-const title = document.getElementById('title');
-const attendees = document.getElementById('attendees');
-const start = document.getElementById('start');
-const end = document.getElementById('end');
-const location_search = document.getElementById('location_search');
-const start_label = document.getElementById('start_label');
-const end_label = document.getElementById('end_label');
-
 const attendees_popup = document.getElementById('attendees_popup_background')
 const attendees_content = document.getElementById('attendees_popup_content');
 const more_attendees_button = document.getElementById('more_attendees');
 const attendees_popup_top_bar = document.getElementById('attendees_popup_bar');
 const save_attendees = document.getElementById('save_attendees');
+const attendeeText = document.getElementById('attendee_text');
 
 const main_content = document.querySelector('.main_content');
 
@@ -48,9 +45,25 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let friends = [];
+
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
 let messages = [];
+
+const socket = io({
+    withCredentials: true,
+    transports: ['websocket', 'polling'] // Force websocket to keep the session stable
+});
+window.socket = socket;
+// added
+const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+if (backupUser) {
+    // Manually tell the server "Hey, remember me?"
+    // This helps the server re-fill the session['user'] if it got wiped
+    socket.emit("verify_session", backupUser);
+}
+
+let current_user = JSON.parse(sessionStorage.getItem('user')) || null;
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
@@ -71,20 +84,20 @@ function change_event_size() {
     title.style.height =
         title.style.fontSize =
         attendees.style.height =
-        start.style.height =
-        end.style.height =
+        start_time.style.height =
+        end_time.style.height =
         end_label.style.height =
         start_label.style.height =
-        location_search.style.height =
+        loc.style.height =
         end_label.style.lineHeight =
         start_label.style.lineHeight =
         window_height * .05 + "px";
 
     title.style.fontSize =
         attendees.style.fontSize =
-        start.style.fontSize =
-        end.style.fontSize =
-        location_search.style.fontSize =
+        start_time.style.fontSize =
+        end_time.style.fontSize =
+        loc.style.fontSize =
         end_label.style.fontSize =
         start_label.style.fontSize =
         window_height * .03 + "px";
@@ -95,19 +108,24 @@ function change_attendees_size () {
 }
 
 function load_permanent_locations() {
-    window.socket.emit("get_permanent_locations", user_profile);
+    window.socket.emit("get_permanent_locations");
     
     window.socket.once("permanent_locations_got", (locations) => {
         // Clear existing options (keeping the default placeholder)
-        location_search.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
-        
-        if (locations) {
-            locations.forEach(loc => {
-                // Uses your existing add_location function
-                add_location(loc.name, loc.id); 
-            });
-        }
+        permanent_locations = locations;
+        update_permanent_locations();
     });
+}
+
+function update_permanent_locations() {
+    loc.innerHTML = '<option hidden="hidden">&#x2315 Location</option>';
+
+    if (permanent_locations) {
+        permanent_locations.forEach(loc => {
+            // Uses your existing add_location function
+            add_location(loc.name, loc.id);
+        });
+    }
 }
 
 function create_event_invite(event_name, event_message, event_id, message_id){
@@ -123,7 +141,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     // --- ACCEPT BUTTON ---
     const acceptBtn = invite_element.querySelector('#accept_event');
     acceptBtn.addEventListener('click', () => {
-        window.socket.emit("accept_event_invite", user_profile, event_id, message_id);
+        window.socket.emit("accept_event_invite", event_id, message_id);
         
         // Instantly remove it from the screen for the user
         invite_element.remove(); 
@@ -132,7 +150,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     // --- DECLINE BUTTON ---
     const declineBtn = invite_element.querySelector('#decline_event');
     declineBtn.addEventListener('click', () => {
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // Instantly remove it from the screen for the user
         invite_element.remove(); 
@@ -152,10 +170,10 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const acceptBtn = request_element.querySelector('#accept_friend');
     acceptBtn.addEventListener('click', () => {
         // 1. Tell the server to add this user to your friends list
-        window.socket.emit("add_friend", user_profile, sender_id);
+        window.socket.emit("add_friend", sender_id);
         
         // 2. Tell the server to delete the request notification
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // 3. Remove it from the popup instantly
         request_element.remove();
@@ -165,7 +183,7 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const declineBtn = request_element.querySelector('#decline_friend');
     declineBtn.addEventListener('click', () => {
         // Just delete the notification
-        window.socket.emit("remove_message", user_profile, message_id);
+        window.socket.emit("remove_message", message_id);
         
         // Remove it from the popup instantly
         request_element.remove();
@@ -199,14 +217,10 @@ function make_calendar(day, dow, month, year) {
 
 function add_location(location_name, location_id) {
     const newLoc = new Option(location_name, location_id);
-    location_search.appendChild(newLoc);
+    loc.appendChild(newLoc);
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
-    if (event_name.value == "" || event_creator.value == "" || event_location == "" || event_id == "") {
-        alert("No empty fields!")
-        return;
-    }
     const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
@@ -224,7 +238,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
 
         if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
             // Tell the server to delete it from the database
-            window.socket.emit("delete_event", user_profile, event_id);
+            window.socket.emit("delete_event", event_id);
             
             // Remove it from the UI immediately
             remove_event(event_id);
@@ -241,21 +255,31 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
     new_event.querySelector('.event_location').innerText = "Location: " + event_location;
 
-    if (start_time > 12) {
-        start_time = start_time % 12;
-        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "pm";
+    let start_hour = Math.floor(start_time);
+    let start_minute = Math.floor((start_time * 60) % 60)
+
+    if (start_hour > 12) {
+        start_hour = start_hour % 12;
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "pm";
 
     } else {
-        if (start_time === 0) {
-            start_time = 12;
+        if (start_hour === 0) {
+            start_hour = 12;
         }
-        new_event.querySelector('.event_start').innerText = "Start: " + start_time + "am";
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "am";
     }
-    if (end_time > 12) {
-        end_time = end_time % 12;
-        new_event.querySelector('.event_end').innerText = "End: " + end_time + "pm";
+
+    let end_hour = Math.floor(end_time);
+    let end_minute = Math.floor((end_time * 60) % 60);
+
+    if (end_hour > 12) {
+        end_hour = end_hour % 12;
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "pm";
     } else {
-        new_event.querySelector('.event_end').innerText = "End: " + end_time + "am";
+        if (end_hour === 0) {
+            end_hour = 12;
+        }
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "am";
     }
 
     main_content.appendChild(new_event);
@@ -274,7 +298,7 @@ function clear_events() {
 }
 
 function update_events() {
-    window.socket.emit("get_events", user_profile);
+    window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
         clear_events();
         
@@ -302,11 +326,13 @@ function update_events() {
                 if (calendarDate.getTime() === endDay.getTime()) {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
-                
+
+                console.log(event);
+
                 add_event(
                     event.name, 
-                    event.creator_username, 
-                    event.location_name, 
+                    event.creator_username,
+                    event.location_name,
                     displayStart, 
                     displayEnd, 
                     event.id
@@ -314,6 +340,14 @@ function update_events() {
             }
         });
     });
+}
+
+function clear_event_window() {
+    title.value = null;
+    start_time.value = null;
+    end_time.value = null;
+    update_permanent_locations();
+    attendeeText.innerText = `Attendees`;
 }
 
 /* On run */
@@ -325,7 +359,6 @@ change_attendees_size();
 make_calendar(current_day, current_dow, current_month, current_year);
 update_events();
 load_permanent_locations();
-
 
 /* Event Listeners */
 window.addEventListener('resize', function(){
@@ -342,6 +375,7 @@ window.addEventListener('resize', function(){
 
 scrap_event.addEventListener('click', () => {
     event_popup.style.display = "none";
+    clear_event_window();
 })
 
 save_event.addEventListener('click', () => {
@@ -363,40 +397,33 @@ save_event.addEventListener('click', () => {
         
         // Prepare the data to send (including our selected attendee IDs)
         const attendeeIdsArray = Array.from(selectedAttendeeIds);
-        
+        if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
+            alert("No empty fields!")
+            return;
+        }
         window.socket.emit("create_event", 
-            user_profile, 
-            event_title.value, 
+            title.value,
             start_time.value, 
             end_time.value, 
-            loc.value, 
+            loc.value,
             attendeeIdsArray
         );
 
         window.socket.once("event_created", (key) => {
             if (key) {
-                // Format times for the add_event function (it expects hours 0-23)
-                const startHour = startVal.getHours();
-                const endHour = endVal.getHours();
-                
-                add_event(
-                    event_title.value, 
-                    user_profile.username, 
-                    loc.value, 
-                    startHour, 
-                    endHour, 
-                    key
-                );
+                update_events();
             } else {
                 alert("An error occurred while creating the event.");
             }
         });
     } else {
-        window.socket.emit("create_event", user_profile, event_title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
+        window.socket.emit("create_event", title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
+
     event_popup.style.display = "none";
+    clear_event_window();
 });
 
 event_popup_open.addEventListener('click', () => {
@@ -407,7 +434,7 @@ inbox_button.addEventListener('click', () => {
     inbox_popup.style.display = "block";
     inbox_popup_content.innerHTML = '';
 
-    window.socket.emit("get_user", user_profile);
+    window.socket.emit("get_user");
     
     window.socket.once("return_user", (data) => {
 
@@ -494,7 +521,7 @@ more_attendees_button.addEventListener('click', () => {
     // Note: In your HTML, the template is INSIDE attendees_popup_content. 
     // It's better to move the template OUTSIDE that div so it doesn't get deleted.
 
-    window.socket.emit("get_friends", user_profile);
+    window.socket.emit("get_friends");
     
     // 2. Use .once so we don't stack up multiple listeners
     window.socket.once("friends_got", (ret) => {
@@ -522,8 +549,6 @@ save_attendees.addEventListener('click', () => {
     });
 
     // Update the UI text so the user sees how many are invited
-    const attendeeText = document.getElementById('attendee_text');
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
-
     attendees_popup.style.display = "none";
 });
