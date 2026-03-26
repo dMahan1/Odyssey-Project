@@ -11,6 +11,66 @@ body {
     height: 100vh;
 }
 
+#main_content {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: calc(100vh - 120px);
+}
+#map_top_bar {
+    height: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-family: Rockwell, monaco, monospace;
+}
+#map {
+    flex-grow: 1;
+    height: 100%;
+}
+
+#side_controls {
+    width: 60px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding-top: 20px;
+    background-color: #eddeab;
+    border: 3px solid black;
+    border-bottom: none;
+}
+
+.side-btn {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #e8a2a7;
+    border: 1px solid black;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.side-btn img {
+    max-width: 65%;
+    max-height: 65%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.side-btn:hover {
+    background-color: #b41923;
+    border-color: black;
+}
+
 #nav_bar {
     flex-shrink: 0;
     background-color: #E8A2A7;
@@ -54,7 +114,6 @@ body {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
-
 }
 
 #event_button, #change_mode_button {
@@ -67,13 +126,13 @@ body {
 
 #Inbox_icon {
     width: auto;
-    max-height: 100%
+    max-height: 100%;
 }
 
 #inbox_button {
     border: none;
     cursor: pointer;
-    max-height:  100px;
+    max-height: 100px;
     background-color: #E8A2A7;
 }
 
@@ -83,7 +142,7 @@ body {
     z-index: 1;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
     position: fixed;
 }
 
@@ -146,7 +205,6 @@ body {
     width: 75%;
     border: 1px solid black;
     height: 20px;
-
 }
 
 #attendees {
@@ -232,7 +290,6 @@ body {
     flex-direction: column;
     margin-top: 40px;
     border: 3px solid black;
-
 }
 
 #attendees_popup_content {
@@ -312,7 +369,7 @@ body {
     background-color: white;
     padding-top: 45px;
     padding-bottom: 15px;
-    position:relative;
+    position: relative;
 }
 
 .time_block {
@@ -422,7 +479,7 @@ body {
     overflow: hidden;
 }
 
-#username_input{
+#username_input {
     font-family: Rockwell, monaco, monospace;
     background-color: #E8A2A7;
     border: 4px solid black;
@@ -456,7 +513,6 @@ body {
     height: 30px;
     width: 30px;
     margin-left: -15px;
-
 }
 
 #user_check {
