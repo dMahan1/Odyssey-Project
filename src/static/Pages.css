@@ -19,12 +19,42 @@ body {
 }
 #map_top_bar {
     height: 50px;
+    background-color: #e8a2a7;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     font-family: Rockwell, monaco, monospace;
+    border-bottom: thick solid black;
 }
+#loc_search_bar {
+    border-radius: 5px;
+    width: 300px;
+    padding: 5px 10px;
+    border: 1px solid black;
+}
+#loc_search_btn {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #e8a2a7;
+    border: 0px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+#loc_search_btn img {
+    max-width: 65%;
+    max-height: 65%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
+}
+
 #map {
     flex-grow: 1;
     height: 100%;
@@ -39,8 +69,7 @@ body {
     gap: 15px;
     padding-top: 20px;
     background-color: #eddeab;
-    border: 3px solid black;
-    border-bottom: none;
+    border-right: thick solid black;
 }
 
 .side-btn {
@@ -70,6 +99,11 @@ body {
     background-color: #b41923;
     border-color: black;
 }
+#loc_search {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
 
 #nav_bar {
     flex-shrink: 0;
@@ -79,7 +113,7 @@ body {
     margin-top: auto;
     display: flex;
     justify-content: center;
-    border-block: thick solid black;
+    border-top: thick solid black;
 }
 
 #settings_button.On,
