@@ -1,6 +1,12 @@
 describe('signup page', () => {
     it('passes', () => {
+        const latitude = 40.427083;
+        const longitude = -86.92;
         cy.visit('/');
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.get('#sign_here a').click();
         cy.stubGeolocation();
         cy.window().then((win) => {
             win.success({
@@ -23,7 +29,7 @@ describe('signup page', () => {
         cy.url().should('include', 'Map.html');
         cy.get('#settings_button').click();
         cy.get('#logout').click();
-        cy.url().should('include', 'Signin.html');
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
         cy.stubGeolocation();
         cy.get('#signin_email').type('cypressAlso@test.dln');
         cy.get('#signin_password').type('password');
@@ -36,6 +42,6 @@ describe('signup page', () => {
             win.alert = () => {};
         });
         cy.get('#delete').click();
-        cy.url().should('include', 'Signin.html');
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
     });
 });
