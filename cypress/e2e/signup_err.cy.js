@@ -1,5 +1,5 @@
 describe('signup page', () => {
-    it('passes', () => {
+    it('signup_err', () => {
         const latitude = 40.427083;
         const longitude = -86.92;
         cy.visit('/');

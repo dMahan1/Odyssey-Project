@@ -1,26 +1,11 @@
 describe('signup page', () => {
-    it('passes', () => {
+    it('signup', () => {
         const latitude = 40.427083;
         const longitude = -86.92;
         cy.visit('/');
-        cy.window().then((win) => {
-            win.alert = () => {};
-        });
         cy.get('#sign_here a').click();
+        cy.url().should('include', 'Signup.html');
         cy.stubGeolocation();
-        cy.window().then((win) => {
-            win.success({
-                coords: {
-                    latitude: 40.427083,
-                    longitude: -86.92,
-                    accuracy: 100,
-                    altitude: null,
-                    altitudeAccuracy: null,
-                    heading: null,
-                    speed: null,
-                }
-            });
-        });
         cy.get('#signup_email').type('cypressAlso@test.dln');
         cy.get('#signup_username').type('TestyMcTestFace');
         cy.get('#signup_password').type('password');
