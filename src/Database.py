@@ -40,7 +40,7 @@ def auth_user(email, password, latitude, longitude):
             return {"status": "Bad_Pass"}
         else:
             return {"status": "Error"}
-
+          
     else:
         # Verify the user has data in the database
         user_data = get_user_data(user)
