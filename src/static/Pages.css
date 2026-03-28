@@ -206,6 +206,7 @@ body {
     border: 3px solid black;
 }
 
+#search_popup_close,
 #scrap_event,
 #save_event,
 #close_inbox {
@@ -215,6 +216,7 @@ body {
     z-index: 2;
 }
 
+#loc_search_popup_bar,
 #event_popup_bar,
 #inbox_popup_bar,
 #attendees_popup_bar {

@@ -1,10 +1,12 @@
-import os
-from Database import *
-from dotenv import load_dotenv
 import json
-from flask import Flask, render_template, request, abort, jsonify, session
+import os
+
+from dotenv import load_dotenv
+from flask import Flask, abort, jsonify, render_template, request, session
+from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from jinja2 import TemplateNotFound
-from flask_socketio import SocketIO, send, emit, join_room, leave_room
+
+from Database import *
 
 load_dotenv()
 
@@ -289,6 +291,30 @@ def handle_update_username(new_username):
         emit("username_updated", {"status": "Success", "user": user})
     else:
         emit("username_updated", {"status": result})
+
+@socketio.on("search_locations")
+def handle_search_locations(loc_name):
+    user = session.get('user')
+    if not user:
+        return emit("search_result", {"status": "error", "message": "Not logged in"})
+
+    matches = get_locations_from_name(user, loc_name)
+
+    if matches:
+        all_results = []
+        for match in matches:
+            full_data = get_location_data(user, match['id'])
+            if full_data and 'coordinates' in full_data:
+                all_results.append({
+                    "id": match['id'],
+                    "name": full_data.get("name", "Unnamed Location"),
+                    "latitude": full_data['coordinates']['latitude'],
+                    "longitude": full_data['coordinates']['longitude']
+                })
+
+        emit("search_result", {"status": "success", "results": all_results})
+    else:
+        emit("search_result", {"status": "error", "message": "No matches found"})
 
 if __name__ == '__main__':
     socketio.run(app, port=8080, allow_unsafe_werkzeug=True)

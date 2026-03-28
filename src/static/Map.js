@@ -132,8 +132,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const searchBtn = document.getElementById('loc_search_btn');
     const searchPopup = document.getElementById('loc_search_popup_background');
+    const searchPopupClose = document.getElementById('search_popup_close');
+    const searchBar = document.getElementById('loc_search_bar');
+
     searchBtn.addEventListener('click', () => {
-      searchPopup.style.display = 'flex';
+        searchPopup.style.display = 'flex';
+        const query = searchBar.value.trim();
+        if (query) {
+          socket.emit("search_locations", query);
+        }
     });
 
     searchPopup.addEventListener('click', (event) => {
@@ -141,4 +148,19 @@ document.addEventListener("DOMContentLoaded", () => {
         searchPopup.style.display = 'none';
       }
     });
+
+    searchPopupClose.addEventListener('click', () => {
+      searchPopup.style.display = 'none';
+    });
+
+    searchBar.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchBtn.click();
+    });
+
+
+});
+
+window.socket.on("search_result", (data) => {
+  // TODO: render on page
+  console.log("Search result received:", JSON.stringify(data, null, 2));
 });
