@@ -98,7 +98,7 @@ add_friends.addEventListener('click', () => {
     }
 
     // Emit the request to your existing "send_friend_request" python route
-    window.socket.emit("send_friend_request", current_user, recipient_id);
+    window.socket.emit("send_friend_request", recipient_id);
 
     // Listen for the confirmation
     window.socket.once("request_sent", (success) => {

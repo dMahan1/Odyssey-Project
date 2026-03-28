@@ -17,6 +17,9 @@ body {
     width: 100%;
     height: calc(100vh - 120px);
 }
+
+
+/* Map css */
 #map_top_bar {
     height: 50px;
     background-color: #e8a2a7;
@@ -26,6 +29,11 @@ body {
     padding: 0 20px;
     font-family: Rockwell, monaco, monospace;
     border-bottom: thick solid black;
+}
+#loc_search {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
 #loc_search_bar {
     border-radius: 5px;
@@ -54,12 +62,11 @@ body {
     object-fit: contain;
     pointer-events: none;
 }
-
 #map {
     flex-grow: 1;
+    z-index: 0;
     height: 100%;
 }
-
 #side_controls {
     width: 60px;
     flex-shrink: 0;
@@ -71,7 +78,6 @@ body {
     background-color: #eddeab;
     border-right: thick solid black;
 }
-
 .side-btn {
     width: 44px !important;
     height: 44px !important;
@@ -85,7 +91,6 @@ body {
     cursor: pointer;
     border-radius: 8px;
 }
-
 .side-btn img {
     max-width: 65%;
     max-height: 65%;
@@ -94,15 +99,9 @@ body {
     object-fit: contain;
     pointer-events: none;
 }
-
 .side-btn:hover {
     background-color: #b41923;
     border-color: black;
-}
-#loc_search {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
 }
 
 #nav_bar {
@@ -180,6 +179,7 @@ body {
 }
 
 /* Popup specific things */
+#loc_search_popup_background,
 #event_popup_background,
 #inbox_popup_background,
 #user_div_background {
@@ -191,6 +191,7 @@ body {
     position: fixed;
 }
 
+#loc_search_popup,
 #event_popup,
 #inbox_popup {
     background-color: #ababab;

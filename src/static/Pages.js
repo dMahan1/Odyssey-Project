@@ -5,25 +5,15 @@ let window_width = window.innerWidth;
 const calendar_button = document.getElementById("calendar_button");
 const map_button = document.getElementById("map_button");
 const settings_button = document.getElementById("settings_button");
-let map;
 
 // Functions
 function change_buttons(button) {
     button.style.height = window_height / 8 + "px";
     button.style.width = window_width / 4 + "px";
 }
-function initMap() {
-    map = L.map("map").setView([40.4237, -86.9212], 15);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap",
-    }).addTo(map);
-}
 
 // On run
 document.addEventListener("DOMContentLoaded", () => {
-    initMap();
-
     nav_bar.style.height = window_height / 8 + "px";
     nav_bar.style.gap = window_width / 8 + "px";
 

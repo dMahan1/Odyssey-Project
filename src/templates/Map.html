@@ -18,9 +18,6 @@
         <style></style>
     </head>
     <body>
-        <script>
-            const user_profile = {{ data|tojson }};
-        </script>
         <script
             src="https://cdn.socket.io/4.8.3/socket.io.min.js"
             integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0"
@@ -28,8 +25,18 @@
         ></script>
         <script src="../static/socket_setup.js" defer></script>
         <script src="../static/Pages.js" defer></script>
+        <script src="../static/Map.js" defer></script>
 
         <div id="whole_page">
+
+            <!-- Search popup -->
+            <div id="loc_search_popup_background">
+                <div id="loc_search_popup" class="popup">
+                    <div id = "loc_search_popup_bar">
+                    </div>
+                </div>
+            </div>
+
             <div id="map_top_bar">
                 <span id="loc_search">
                     <input
@@ -100,6 +107,3 @@
                     />
                 </button>
             </div>
-        </div>
-    </body>
-</html>
