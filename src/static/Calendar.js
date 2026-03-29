@@ -44,10 +44,13 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
-let friends = [];
 
 // Message specific variables
-let message_popup_bar = document.getElementById('message_popup_bar');
+const message_popup_bar = document.getElementById('message_popup_bar');
+const close_message = document.getElementById('close_message');
+const message_popup = document.getElementById('message_popup_background');
+const message_text = document.getElementById('message_text');
+const send_message = document.getElementById('send_message');
 
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
@@ -227,7 +230,6 @@ function add_location(location_name, location_id) {
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
-    const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
     let event_div = new_event.querySelector('.event');
@@ -256,6 +258,12 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
             });
         }
     });
+
+    const message_button = new_event.querySelector('.message_button');
+    message_button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        message_popup.style.display = "block";
+    })
 
     new_event.querySelector('.event_name').innerText = "Name: " + event_name;
     new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
@@ -363,13 +371,9 @@ change_inbox_size();
 change_attendees_size();
 change_message_size();
 
-// make_calendar(current_day, current_dow, current_month, current_year);
-// update_events();
-// load_permanent_locations();
-
-// for testing only!!!
-
-add_event("My event", "Lycia", "Stewart Center", 1.24, 4.35, 1234);
+make_calendar(current_day, current_dow, current_month, current_year);
+update_events();
+load_permanent_locations();
 
 /* Event Listeners */
 window.addEventListener('resize', function(){
@@ -567,3 +571,25 @@ save_attendees.addEventListener('click', () => {
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
     attendees_popup.style.display = "none";
 });
+
+close_message.addEventListener('click', () => {
+    message_popup.style.display = "none";
+    message_text.value = null;
+})
+
+send_message.addEventListener('click', () => {
+    if (message_text.value === "") {
+        alert("Please enter a message!");
+    } else {
+        // send message logic
+
+
+        console.log(message_text.value);
+        message_popup.style.display = "none";
+        message_text.value = null;
+    }
+})
+
+
+
+
