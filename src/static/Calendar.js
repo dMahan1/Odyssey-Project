@@ -52,6 +52,7 @@ const message_popup = document.getElementById('message_popup_background');
 const message_text = document.getElementById('message_text');
 const send_message = document.getElementById('send_message');
 
+
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
 let messages = [];
@@ -199,6 +200,15 @@ function create_friend_request(friend_username, sender_id, message_id) {
     });
 
     inbox_popup_content.appendChild(new_friend_request);
+}
+
+function create_message(sender_username) {
+    const message_template = document.getElementById("message_template");
+    let new_message = message_template.content.cloneNode(true);
+
+    let message_element = new_message.querySelector('.message');
+    message_element.querySelector('.message_username').innerText = sender_username;
+    inbox_popup_content.appendChild(new_message);
 }
 
 function add_attendee_list(attendee_name, attendee_id) {
@@ -452,7 +462,7 @@ inbox_button.addEventListener('click', () => {
     inbox_popup_content.innerHTML = '';
 
     window.socket.emit("get_user");
-    
+
     window.socket.once("return_user", (data) => {
 
         const userMessages = data.messages;
@@ -583,13 +593,9 @@ send_message.addEventListener('click', () => {
     } else {
         // send message logic
 
-
+        create_message(current_user["displayName"])
         console.log(message_text.value);
         message_popup.style.display = "none";
         message_text.value = null;
     }
 })
-
-
-
-
