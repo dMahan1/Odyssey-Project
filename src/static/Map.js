@@ -122,6 +122,29 @@ async function updateMarker() {
     setTimeout(updateLoc, 10000);
 }
 
+function getSelectedMode() {
+    const activeBtn = document.querySelector('.side-btn.active');
+
+    if (activeBtn) {
+        switch (activeBtn.id) {
+            case 'walk_btn':
+                return 'WALK';
+            case 'bike_btn':
+                return 'BIKE';
+            case 'car_btn':
+                return 'CAR';
+            case 'bus_btn':
+                return 'BUS';
+            default:
+                console.log("Unknown mode button, defaulting to WALK");
+                return 'WALK';
+        }
+    }
+
+    console.log("No active mode button found, defaulting to WALK");
+    return 'WALK';
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     if (navigator.geolocation) {
@@ -157,7 +180,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === 'Enter') searchBtn.click();
     });
 
+    const modeButtons = document.querySelectorAll('.side-btn');
+    let currentMode = getSelectedMode();
 
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentMode = getSelectedMode();
+            console.log("Traversal mode changed to:", currentMode);
+        });
+    });
 });
 
 window.socket.on("search_result", (data) => {
