@@ -1,0 +1,7 @@
+.venv
+.env
+*.so
+*:Zone.Identifier
+__pycache__/
+*.pyc
+.idea/
