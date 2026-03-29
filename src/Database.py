@@ -191,6 +191,10 @@ def delete_user(user):
 
     # Delete the user's data
     db = firebase.database()
+    friends = db.child("Users").child(user["localId"]).child("friend_ids").get(token=user["idToken"]).val()
+    if friends:
+        for friend_id in friends:
+            remove_friend(user, friend_id)
     db.child("Users").child(user["localId"]).remove(token=user["idToken"])
 
     # Delete the user
