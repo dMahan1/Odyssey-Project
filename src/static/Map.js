@@ -162,5 +162,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 window.socket.on("search_result", (data) => {
   // TODO: render on page
-  console.log("Search result received:", JSON.stringify(data, null, 2));
+    console.log("Search result received:", JSON.stringify(data, null, 2));
+    const popupBody = document.getElementById('loc_search_popup');
+    const template = document.getElementById('loc_results_template');
+
+    const existingResults = popupBody.querySelectorAll('.loc_search_result');
+    existingResults.forEach(res => res.remove());
+
+    if (data.status !== "success" || !data.results || data.results.length === 0) {
+            const noResult = document.createElement('div');
+            noResult.className = 'loc_search_result';
+            noResult.innerHTML = '<label class="loc_name">No locations found.</label>';
+            popupBody.appendChild(noResult);
+            return;
+    }
+    data.results.forEach(location => {
+        const clone = template.content.cloneNode(true);
+
+        const nameLabel = clone.querySelector('.loc_name');
+        nameLabel.textContent = location.name || "Unknown Location";
+
+        popupBody.appendChild(clone);
+    });
 });
