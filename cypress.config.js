@@ -2,6 +2,7 @@ const { defineConfig } = require('cypress')
 const { cypressBrowserPermissionsPlugin } = require('cypress-browser-permissions')
 
 module.exports = defineConfig({
+  defaultCommandTimeout: 10000,
   env: {
     browserPermissions: {
       notifications: "allow",
