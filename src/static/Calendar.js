@@ -44,6 +44,7 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
+let current_event_id = null; // To track which event we're messaging about, if any
 
 // Message specific variables
 const message_popup_bar = document.getElementById('message_popup_bar');
@@ -202,12 +203,23 @@ function create_friend_request(friend_username, sender_id, message_id) {
     inbox_popup_content.appendChild(new_friend_request);
 }
 
-function create_message(sender_username) {
+function create_message(sender_username, message_id, message_text) {
     const message_template = document.getElementById("message_template");
     let new_message = message_template.content.cloneNode(true);
 
     let message_element = new_message.querySelector('.message');
-    message_element.querySelector('.message_username').innerText = sender_username;
+    message_element.querySelector('.message_text').innerText = message_text;
+    message_element.querySelector('.sender_username').innerText = sender_username;
+
+    const declineBtn = message_element.querySelector('#remove_message');
+    declineBtn.addEventListener('click', () => {
+        // Just delete the notification
+        window.socket.emit("remove_message", message_id);
+        
+        // Remove it from the popup instantly
+        message_element.remove();
+    });
+
     inbox_popup_content.appendChild(new_message);
 }
 
@@ -272,6 +284,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     const message_button = new_event.querySelector('.message_button');
     message_button.addEventListener('click', (e) => {
         e.stopPropagation();
+        current_event_id = event_id; // Set the global variable to know which event we're messaging about
         message_popup.style.display = "block";
     })
 
@@ -464,17 +477,18 @@ inbox_button.addEventListener('click', () => {
     window.socket.emit("get_user");
 
     window.socket.once("return_user", (data) => {
+        console.log(data);
 
         const userMessages = data.messages;
 
         if (userMessages) {
             Object.entries(userMessages).forEach(([message_id, msg]) => {
                 if (msg.type === 0) {
-                    // Pass msg.sender_id so we know WHO to add to the friends list!
                     create_friend_request(msg.sender_username, msg.sender_id, message_id);
-                }
-                else if (msg.type === 1) {
+                } else if (msg.type === 1) {
                     create_event_invite(msg.sender_username, msg.message, msg.event_id, message_id);
+                } else if (msg.type === 2) {
+                    create_message(msg.sender_username, message_id, msg.message);
                 }
             });
         }
@@ -593,7 +607,11 @@ send_message.addEventListener('click', () => {
     } else {
         // send message logic
 
-        create_message(current_user["displayName"])
+        window.socket.emit("send_message", message_text.value, current_event_id);
+        window.socket.once("message_sent", (status) => {
+            alert(status);
+        });
+        current_event_id = null;
         console.log(message_text.value);
         message_popup.style.display = "none";
         message_text.value = null;

@@ -189,11 +189,11 @@ def event_join(event_id):
     ret = join_event(user, event_id)
     emit("event_joined", ret)
 
-# @socketio.on("send_message")
-# def message_send(receiver, message, message_type):
-#     sender = session.get('user')
-#     send_message(sender, receiver, message, message_type)
-#     emit("message_sent")
+@socketio.on("send_message")
+def message_send(message, event_id):
+     sender = session.get('user')
+     status = send_message_to_attendees(sender, event_id=event_id, message=message)
+     emit("message_sent", status)
 
 @socketio.on("remove_message")
 def message_remove(mid):
