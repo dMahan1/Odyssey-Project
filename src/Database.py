@@ -2,6 +2,7 @@ import os
 
 import empyrebase
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -36,9 +37,11 @@ def auth_user(email, password, latitude, longitude):
         err = str(e)
         if "INVALID_EMAIL" in err:
             return {"status": "Invalid"}
+        elif "INVALID_LOGIN_CREDENTIALS" in err:
+            return {"status": "Bad_Pass"}
         else:
             return {"status": "Error"}
-
+          
     else:
         # Verify the user has data in the database
         user_data = get_user_data(user)
@@ -118,6 +121,16 @@ def create_user(email, username, password, latitude, longitude):
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
+
+
+def store_report(user, subject_id):
+    db = firebase.database()
+    data = {
+        "reporter": user["localId"],
+        "subject": subject_id,
+        "date_time": datetime.now(timezone.utc).isoformat()
+    }
+    db.child("Reports").push(data, token=user["idToken"])
 
 
 def update_username(user, new_username):
@@ -710,6 +723,8 @@ def test():
     )
     print(f"Created Event: {get_user_data(user)}")
 
+    store_report(user, "default_user")
+
     try:
         pull_pin(user, key)
         print("Error: Pin pull should have failed since it's being used in an event.")
@@ -733,4 +748,3 @@ def test():
         print("User deleted successfully, data retrieval failed as expected.")
 
 
-# test()
