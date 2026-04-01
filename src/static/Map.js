@@ -128,21 +128,20 @@ function getSelectedMode() {
     if (activeBtn) {
         switch (activeBtn.id) {
             case 'walk_btn':
-                return 'WALK';
+                return 'WALKING';
             case 'bike_btn':
-                return 'BIKE';
+                return 'BIKING';
             case 'car_btn':
-                return 'CAR';
+                return 'DRIVING';
             case 'bus_btn':
                 return 'BUS';
             default:
                 console.log("Unknown mode button, defaulting to WALK");
-                return 'WALK';
+                return 'WALKING';
         }
     }
-
     console.log("No active mode button found, defaulting to WALK");
-    return 'WALK';
+    return 'WALKING';
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -194,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.socket.on("search_result", (data) => {
-  // TODO: render on page
     console.log("Search result received:", JSON.stringify(data, null, 2));
     const popupBody = document.getElementById('loc_search_popup');
     const template = document.getElementById('loc_results_template');
@@ -215,6 +213,34 @@ window.socket.on("search_result", (data) => {
         const nameLabel = clone.querySelector('.loc_name');
         nameLabel.textContent = location.name || "Unknown Location";
 
+        const routeBtn = clone.querySelector('.loc_result_route');
+        routeBtn.dataset.id = location.id;
+        routeBtn.addEventListener('click', () => {
+            const mode = getSelectedMode();
+            console.log(`Routing to: ${location.name} at ${location.latitude}, ${location.longitude} as ${mode}`);
+
+            map.setView([location.latitude, location.longitude], 17);
+
+            document.getElementById('loc_search_popup_background').style.display = 'none';
+
+            window.socket.emit("get_route",
+                latitude,
+                longitude,
+                location.id,
+                true,
+                mode
+            );
+
+
+        });
+
         popupBody.appendChild(clone);
     });
+});
+
+window.socket.on("route_result", (data) => {
+    console.log("Route received:", data);
+    if(data.status === "success") {
+        //  TODO: Draw location_ids on the map
+    }
 });

@@ -1,6 +1,7 @@
 import json
 import os
 
+import bindings
 from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
@@ -22,6 +23,8 @@ app.config.update(
 )
 
 socketio = SocketIO(app, manage_session=True)
+
+pathfinder = bindings.Pathfinder.get_instance()
 
 # added
 @socketio.on("verify_session")
@@ -315,6 +318,26 @@ def handle_search_locations(loc_name):
         emit("search_result", {"status": "success", "results": all_results})
     else:
         emit("search_result", {"status": "error", "message": "No matches found"})
+
+@socketio.on("get_route")
+def handle_get_route(src_lat, src_lon, dst_id, bad_weather, traversal_mode):
+    user = session.get('user')
+    if not user:
+        return emit("route_result", {"status": "error", "message": "Not logged in"})
+    try:
+        traversal_mode = getattr(bindings.TraversalMode, traversal_mode)
+    except AttributeError:
+        traversal_mode = bindings.TraversalMode.WALKING
+    src = pathfinder.approximate_location_via(src_lat, src_lon, traversal_mode)
+    true_dst = pathfinder.get_location_by_id(dst_id)
+    dst = pathfinder.approximate_location_via(true_dst.get_latitude(), true_dst.get_longitude(), traversal_mode)
+
+    path_raw = pathfinder.route(src, dst, bad_weather, traversal_mode)
+    path_result = {
+        "location_ids": path_raw.location_ids,
+        "total_distance": path_raw.total_distance
+        }
+    emit("route_result", {"status": "success", "route": path_result})
 
 if __name__ == '__main__':
     socketio.run(app, port=8080, allow_unsafe_werkzeug=True)
