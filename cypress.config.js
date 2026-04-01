@@ -1,12 +1,26 @@
-const { defineConfig } = require("cypress");
+const { defineConfig } = require('cypress')
+const { cypressBrowserPermissionsPlugin } = require('cypress-browser-permissions')
 
 module.exports = defineConfig({
-  e2e: {
-    setupNodeEvents(on, config) {
-      // implement node event listeners here
+  defaultCommandTimeout: 10000,
+  env: {
+    browserPermissions: {
+      notifications: "allow",
+      geolocation: "allow",
     },
-    baseUrl: "http://localhost:8080",
-    specPattern: "Testing/**/*.cy.js",
-    supportFile: false,
   },
-});
+  chromeWebSecurity: false,
+  e2e: {
+    baseUrl: 'http://127.0.0.1:8080',
+    setupNodeEvents(on, config) {
+      config = cypressBrowserPermissionsPlugin(on, config)
+      on('task', {
+        log(message) {
+          console.log(message)
+          return null
+        }
+      })
+      return config
+    },
+  },
+})

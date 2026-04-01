@@ -59,6 +59,8 @@ signin_button.addEventListener('click', () =>{
             const status = result.status;
             if (status === "Invalid") {
                 alert("Please enter a valid email");
+            } else if (status === "Bad_Pass") {
+                alert("Incorrect Password for provided email")
             } else if (status === "NoAccount") {
                 alert("No account found for this email. Please sign up.");
             } else {
