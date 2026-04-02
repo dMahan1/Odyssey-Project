@@ -1,43 +1,92 @@
 import glob
 import os
+import shutil
 import subprocess
 import sys
 import sysconfig
 
 import pybind11
 
-# On Windows + MinGW, -std=c++20 defines __STRICT_ANSI__ which hides strdup
-# from MinGW's <string.h>. We pass -U__STRICT_ANSI__ to the compiler so
-# strdup is visible again. pybind11's original `strdup` macro is correct;
-# revert any previous _strdup patches we may have applied.
-def _restore_pybind11_strdup():
-    PATCHED   = "#    define PYBIND11_COMPAT_STRDUP _strdup"
-    ORIGINAL  = "#    define PYBIND11_COMPAT_STRDUP strdup"
 
+def _find_mingw_compiler():
+    """
+    Find a g++ that targets Windows natively (x86_64-w64-mingw32).
+    MSYS2 ships two separate compilers:
+      - x86_64-pc-msys   : POSIX emulation layer (WRONG for Python extensions)
+      - x86_64-w64-mingw32: Native Windows target (CORRECT)
+    We detect which one we have by checking `g++ -dumpmachine`.
+    """
     candidates = [
+        # Explicit MinGW-w64 cross-compiler name (works in MSYS2 + standalone)
+        "x86_64-w64-mingw32-g++",
+        # MSYS2 environment-specific paths (mingw64 / ucrt64 / clang64)
+        "/mingw64/bin/g++",
+        "/ucrt64/bin/g++",
+        "/clang64/bin/g++",
+        # Generic fallback — might be MinGW-w64 OR MSYS2 native
+        "g++",
+    ]
+    for cxx in candidates:
+        exe = shutil.which(cxx) or (cxx if os.path.isfile(cxx) else None)
+        if not exe:
+            continue
+        try:
+            machine = subprocess.check_output(
+                [exe, "-dumpmachine"], stderr=subprocess.DEVNULL, timeout=5
+            ).decode().strip()
+        except Exception:
+            continue
+        if "mingw" in machine:
+            print(f"[build] Compiler: {exe}  (target: {machine})")
+            return exe
+        # Found a compiler but it targets MSYS2/Cygwin — skip with a warning
+        print(f"[build] Skipping {exe} (target: {machine} — not a Windows-native toolchain)")
+
+    print(
+        "[build] ERROR: No MinGW-w64 compiler found.\n"
+        "        Install one via MSYS2: pacman -S mingw-w64-x86_64-gcc\n"
+        "        Then reopen WebStorm so the new PATH is picked up."
+    )
+    sys.exit(1)
+
+
+def _patch_pybind11_strdup():
+    """
+    Patch pybind11 headers to use _strdup instead of strdup.
+
+    In MinGW-w64, _strdup is the Windows CRT form and is declared in
+    <string.h> without any __STRICT_ANSI__ guard.  strdup (the POSIX form)
+    is hidden by __STRICT_ANSI__, which -std=c++20 sets unconditionally.
+    """
+    OLD = "#    define PYBIND11_COMPAT_STRDUP strdup"
+    NEW = "#    define PYBIND11_COMPAT_STRDUP _strdup"
+    for header in [
         pybind11.get_include() + "/pybind11/detail/common.h",
         pybind11.get_include() + "/pybind11/pybind11.h",
-    ]
-    for header in candidates:
+    ]:
         if not os.path.exists(header):
             continue
         with open(header, "r", encoding="utf-8") as f:
             src = f.read()
-        if PATCHED in src:
-            with open(header, "w", encoding="utf-8") as f:
-                f.write(src.replace(PATCHED, ORIGINAL))
-            print(f"[build] pybind11 reverted to strdup: {header}")
-        # else: already original, nothing to do
+        if OLD not in src:
+            continue  # already patched or not present in this file
+        with open(header, "w", encoding="utf-8") as f:
+            f.write(src.replace(OLD, NEW))
+        print(f"[build] pybind11 patched (strdup → _strdup): {header}")
 
-# Run from project root regardless of CWD
+
+# ── Run from project root regardless of CWD ──────────────────────────────────
 _here = os.path.dirname(os.path.abspath(__file__))
 _root = os.path.dirname(_here)
 os.chdir(_root)
 
 if sys.platform == "win32":
-    _restore_pybind11_strdup()
+    compiler = _find_mingw_compiler()
+    _patch_pybind11_strdup()
+else:
+    compiler = "c++"
 
-# Include paths
+# ── Includes / sources / output ───────────────────────────────────────────────
 includes = [
     pybind11.get_include(),
     sysconfig.get_path("include"),
@@ -51,8 +100,6 @@ if not source_files:
     print("Error: No source files found in src/apps/")
     sys.exit(1)
 
-compiler = "g++" if sys.platform == "win32" else "c++"
-
 cmd = [
     compiler,
     "-O3", "-Wall", "-shared", "-std=c++20", "-fPIC",
@@ -62,11 +109,8 @@ cmd = [
 ]
 
 if sys.platform == "win32":
-    # -U__STRICT_ANSI__: un-hides strdup (and other POSIX names) from MinGW
-    #   headers without enabling _GNU_SOURCE (which would set LONG_BIT=64 and
-    #   conflict with Python's pyport.h on Windows LLP64).
-    # -D_hypot=hypot: fixes naming mismatch in Python's Windows math headers.
-    cmd += ["-U__STRICT_ANSI__", "-D_hypot=hypot"]
+    # -D_hypot=hypot  : fixes naming mismatch in Python's Windows math headers
+    cmd += ["-D_hypot=hypot"]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
