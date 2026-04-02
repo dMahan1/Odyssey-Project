@@ -6,33 +6,28 @@ import sysconfig
 
 import pybind11
 
-# On Windows + MinGW, pybind11 unconditionally defines PYBIND11_COMPAT_STRDUP
-# to `strdup`, which is hidden in strict C++20 mode (__STRICT_ANSI__).
-# Patch the installed header to use _strdup instead before compiling.
-def _patch_pybind11_mingw():
-    OLD = "#    define PYBIND11_COMPAT_STRDUP strdup"
-    NEW = "#    define PYBIND11_COMPAT_STRDUP _strdup"
+# On Windows + MinGW, -std=c++20 defines __STRICT_ANSI__ which hides strdup
+# from MinGW's <string.h>. We pass -U__STRICT_ANSI__ to the compiler so
+# strdup is visible again. pybind11's original `strdup` macro is correct;
+# revert any previous _strdup patches we may have applied.
+def _restore_pybind11_strdup():
+    PATCHED   = "#    define PYBIND11_COMPAT_STRDUP _strdup"
+    ORIGINAL  = "#    define PYBIND11_COMPAT_STRDUP strdup"
 
     candidates = [
         pybind11.get_include() + "/pybind11/detail/common.h",
         pybind11.get_include() + "/pybind11/pybind11.h",
     ]
-    found_any = False
     for header in candidates:
         if not os.path.exists(header):
             continue
         with open(header, "r", encoding="utf-8") as f:
             src = f.read()
-        if OLD not in src:
-            print(f"[build] pybind11 already patched: {header}")
-            found_any = True
-            continue
-        with open(header, "w", encoding="utf-8") as f:
-            f.write(src.replace(OLD, NEW))
-        print(f"[build] pybind11 patched: {header}")
-        found_any = True
-    if not found_any:
-        print("[build] pybind11 patch pattern not found — skipping")
+        if PATCHED in src:
+            with open(header, "w", encoding="utf-8") as f:
+                f.write(src.replace(PATCHED, ORIGINAL))
+            print(f"[build] pybind11 reverted to strdup: {header}")
+        # else: already original, nothing to do
 
 # Run from project root regardless of CWD
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +35,7 @@ _root = os.path.dirname(_here)
 os.chdir(_root)
 
 if sys.platform == "win32":
-    _patch_pybind11_mingw()
+    _restore_pybind11_strdup()
 
 # Include paths
 includes = [
@@ -67,7 +62,11 @@ cmd = [
 ]
 
 if sys.platform == "win32":
-    cmd += ["-D_hypot=hypot"]
+    # -U__STRICT_ANSI__: un-hides strdup (and other POSIX names) from MinGW
+    #   headers without enabling _GNU_SOURCE (which would set LONG_BIT=64 and
+    #   conflict with Python's pyport.h on Windows LLP64).
+    # -D_hypot=hypot: fixes naming mismatch in Python's Windows math headers.
+    cmd += ["-U__STRICT_ANSI__", "-D_hypot=hypot"]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
