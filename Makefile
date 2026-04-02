@@ -17,7 +17,7 @@ SOURCES  := $(wildcard src/apps/*.cpp)
 TARGET   := src/bindings$(EXT_SUFFIX)
 
 ifeq ($(OS),Windows_NT)
-    CXXFLAGS += -D_USE_MATH_DEFINES -D_hypot=hypot
+    CXXFLAGS += -include src/include/win_compat.h
 else
     UNAME := $(shell uname -s)
     ifeq ($(UNAME),Darwin)
