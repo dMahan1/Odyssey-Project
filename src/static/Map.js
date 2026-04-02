@@ -159,10 +159,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchBar = document.getElementById('loc_search_bar');
 
     searchBtn.addEventListener('click', () => {
+        const popupBody = document.getElementById('loc_search_popup');
+        const loadingLabel = document.getElementById('loading_label');
+        const existingResults = popupBody.querySelectorAll('.loc_search_result');
+        existingResults.forEach(res => res.remove());
+        loadingLabel.textContent = 'Searching...';
+
         searchPopup.style.display = 'flex';
         const query = searchBar.value.trim();
         if (query) {
           socket.emit("search_locations", query);
+        } else {
+            const existingResults = popupBody.querySelectorAll('.loc_search_result');
+            existingResults.forEach(res => res.remove());
+            const empty = document.createElement('div');
+            empty.className = 'loc_search_result';
+            empty.innerHTML = '<label class="loc_name">Empty Search Phrase</label>';
+            popupBody.appendChild(empty);
+            return;
         }
     });
 
@@ -197,6 +211,8 @@ window.socket.on("search_result", (data) => {
     console.log("Search result received:", JSON.stringify(data, null, 2));
     const popupBody = document.getElementById('loc_search_popup');
     const template = document.getElementById('loc_results_template');
+    const loadingLabel = document.getElementById('loading_label');
+    loadingLabel.textContent = '';
 
     const existingResults = popupBody.querySelectorAll('.loc_search_result');
     existingResults.forEach(res => res.remove());
