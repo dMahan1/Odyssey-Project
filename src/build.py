@@ -39,10 +39,9 @@ cmd = [
 
 cmd += ["-fPIC"]
 if sys.platform == "win32":
-    # strdup=_strdup: redirects strdup (hidden under __STRICT_ANSI__ from -std=c++20)
-    #   to _strdup, which MinGW always exposes without any feature test macros.
+    # _USE_MATH_DEFINES: exposes M_PI and other math constants on Windows.
     # _hypot=hypot: fixes a naming mismatch in Python's Windows math headers.
-    cmd += ["-Dstrdup=_strdup", "-D_hypot=hypot"]
+    cmd += ["-D_USE_MATH_DEFINES", "-D_hypot=hypot"]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
