@@ -13,6 +13,19 @@ function change_buttons(button) {
     button.style.width = window_width / 4 + "px";
 }
 
+// Auth guard — redirect to signin if no stored user, otherwise restore session
+const _storedUser = JSON.parse(sessionStorage.getItem("user") || "null");
+if (!_storedUser) {
+    window.location.href = "Signin.html";
+} else {
+    window.socket.on("connect", () => {
+        socket.emit("verify_session", _storedUser);
+    });
+    if (window.socket.connected) {
+        socket.emit("verify_session", _storedUser);
+    }
+}
+
 // On run
 document.addEventListener("DOMContentLoaded", () => {
     nav_bar.style.height = window_height / 8 + "px";

@@ -1,10 +1,13 @@
 import os
+import uuid
 from Database import *
 from dotenv import load_dotenv
 import json
 from flask import Flask, render_template, request, abort, jsonify, session
 from jinja2 import TemplateNotFound
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
+
+SERVER_INSTANCE_ID = str(uuid.uuid4())
 
 load_dotenv()
 
@@ -31,7 +34,7 @@ def verify_session(user_data):
 
 @socketio.on('connect')
 def handle_connect():
-    # print("Client connected!")
+    emit('server_instance', SERVER_INSTANCE_ID)
     user = session.get('user')
     if user:
         print(f"Connected: {user.get('username')} (Session Active)")
