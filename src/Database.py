@@ -485,6 +485,7 @@ def send_message(user, recipient_id, message, message_type, event_id=None):
         "message": message,
         "type": message_type,
         "event_id": event_id,  # Added so frontend knows which event to join
+        "event_name": db.child("Events").child(event_id).child("name").get(token=user["idToken"]).val() if event_id else None,  # Optional: Include event name for better UX
     }
     db.child("Users").child(recipient_id).child("messages").push(
         message_data, token=user["idToken"]

@@ -203,11 +203,12 @@ function create_friend_request(friend_username, sender_id, message_id) {
     inbox_popup_content.appendChild(new_friend_request);
 }
 
-function create_message(sender_username, message_id, message_text) {
+function create_message(sender_username, message_id, message_text, event_name) {
     const message_template = document.getElementById("message_template");
     let new_message = message_template.content.cloneNode(true);
 
     let message_element = new_message.querySelector('.message');
+    message_element.querySelector('.event_name').innerText = event_name ? `${event_name}` : "Message";
     message_element.querySelector('.message_text').innerText = message_text;
     message_element.querySelector('.sender_username').innerText = sender_username;
 
@@ -488,7 +489,7 @@ inbox_button.addEventListener('click', () => {
                 } else if (msg.type === 1) {
                     create_event_invite(msg.sender_username, msg.message, msg.event_id, message_id);
                 } else if (msg.type === 2) {
-                    create_message(msg.sender_username, message_id, msg.message);
+                    create_message(msg.sender_username, message_id, msg.message, (msg.event_name) ? msg.event_name : "Event Message");
                 }
             });
         }
