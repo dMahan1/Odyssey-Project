@@ -6,7 +6,6 @@ const calendar_button = document.getElementById("calendar_button");
 const map_button = document.getElementById("map_button");
 const settings_button = document.getElementById("settings_button");
 let map;
-
 // Functions
 function change_buttons(button) {
     button.style.height = window_height / 8 + "px";

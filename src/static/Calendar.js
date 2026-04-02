@@ -25,6 +25,8 @@ const attendees_popup_top_bar = document.getElementById('attendees_popup_bar');
 const save_attendees = document.getElementById('save_attendees');
 const attendeeText = document.getElementById('attendee_text');
 
+const message_button = document.getElementById('message_button');
+
 const main_content = document.querySelector('.main_content');
 
 // Inbox specific variables
@@ -210,7 +212,7 @@ function create_message(sender_username, message_id, message_text, event_name) {
     let message_element = new_message.querySelector('.message');
     message_element.querySelector('.event_name').innerText = event_name ? `${event_name}` : "Message";
     message_element.querySelector('.message_text').innerText = message_text;
-    message_element.querySelector('.sender_username').innerText = sender_username;
+    message_element.querySelector('.sender_username').innerText = "@" + sender_username;
 
     const declineBtn = message_element.querySelector('#remove_message');
     declineBtn.addEventListener('click', () => {
@@ -318,6 +320,10 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
             end_hour = 12;
         }
         new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "am";
+    }
+
+    if (event_creator !== current_user.displayName) {
+        message_button.style.display = "none";
     }
 
     main_content.appendChild(new_event);
