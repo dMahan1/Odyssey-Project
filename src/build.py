@@ -26,9 +26,29 @@ if not source_files:
 
 # 4. Construct the Command
 if sys.platform == "win32":
+    # Find cl.exe via vswhere if it's not already on PATH
+    import shutil
+    cl_exe = shutil.which("cl")
+    if cl_exe is None:
+        vswhere = r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
+        if os.path.exists(vswhere):
+            vs_path = subprocess.check_output(
+                [vswhere, "-latest", "-property", "installationPath"], text=True
+            ).strip()
+            # Search for cl.exe under the VS install path
+            for root, dirs, files in os.walk(vs_path):
+                if "cl.exe" in files and "Hostx64" in root and "x64" in root:
+                    cl_exe = os.path.join(root, "cl.exe")
+                    break
+        if cl_exe is None:
+            print(
+                "Error: cl.exe not found. Please run this script from a "
+                "'Developer Command Prompt for VS' or install MSVC build tools."
+            )
+            sys.exit(1)
     # MSVC (Visual Studio) Logic
     cmd = [
-        "cl",
+        cl_exe,
         "/O2",
         "/W3",
         "/LD",
