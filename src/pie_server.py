@@ -2,8 +2,12 @@ import os
 import subprocess
 import sys
 
-# Build bindings before importing
+# Normalise CWD to the project root regardless of how WebStorm launches the script
 _src_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.dirname(_src_dir)
+os.chdir(_project_root)
+
+# Build bindings before importing
 _build_script = os.path.join(_src_dir, "build.py")
 
 if os.path.exists(_build_script):
