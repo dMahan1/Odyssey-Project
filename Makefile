@@ -17,20 +17,26 @@ SOURCES  := $(wildcard src/apps/*.cpp)
 TARGET   := src/bindings$(EXT_SUFFIX)
 
 ifeq ($(OS),Windows_NT)
-    # PYBIND11_COMPAT_STRDUP: pybind11 guards this with #ifndef, so pre-defining it
-    # prevents pybind11 from choosing `strdup` (hidden in strict C++20 mode on MinGW).
-    # _strdup is always available from the Windows CRT without feature-test macros.
-    CXXFLAGS += -DPYBIND11_COMPAT_STRDUP=_strdup -D_hypot=hypot
+    # Patch pybind11 to use _strdup instead of strdup (hidden in strict C++20/MinGW).
+    # Also remap _hypot -> hypot for Python/MinGW compatibility.
+    CXXFLAGS += -D_hypot=hypot
+    PATCH_CMD := "$(PYTHON)" src/fix_pybind11_mingw.py
 else
     UNAME := $(shell uname -s)
     ifeq ($(UNAME),Darwin)
         CXXFLAGS += -undefined dynamic_lookup
     endif
+    PATCH_CMD :=
 endif
 
-.PHONY: all clean
+.PHONY: all clean patch-pybind11
 
-all: $(TARGET)
+all: patch-pybind11 $(TARGET)
+
+patch-pybind11:
+ifneq ($(PATCH_CMD),)
+	$(PATCH_CMD)
+endif
 
 $(TARGET): $(SOURCES)
 	$(CXX) $(CXXFLAGS) $(SOURCES) $(INCLUDES) -o $@
