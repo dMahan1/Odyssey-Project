@@ -38,7 +38,9 @@ cmd = [
 ]
 
 cmd += ["-fPIC"]
-if sys.platform == "darwin":
+if sys.platform == "win32":
+    cmd += ["-D_POSIX_C_SOURCE=200809L"]
+elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
 # 5. Run the build
