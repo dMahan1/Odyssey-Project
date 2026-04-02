@@ -141,7 +141,15 @@ if sys.platform == "win32":
         base_python_dir, "libs",
         f"python{sys.version_info.major}{sys.version_info.minor}.lib"
     )
-    cmd += ["-D_hypot=hypot", python_lib_file]
+    # Statically link MinGW runtime DLLs into the .pyd so it has no external
+    # DLL dependencies on libstdc++, libgcc, or libwinpthread.
+    cmd += [
+        "-D_hypot=hypot",
+        python_lib_file,
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wl,-Bstatic,-lwinpthread,-Bdynamic",
+    ]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
