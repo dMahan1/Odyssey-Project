@@ -39,7 +39,7 @@ cmd = [
 
 cmd += ["-fPIC"]
 if sys.platform == "win32":
-    cmd += ["-D_POSIX_C_SOURCE=200809L"]
+    cmd += ["-DMS_WIN64"]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
