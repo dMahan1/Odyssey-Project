@@ -8,11 +8,17 @@ _project_root = os.path.dirname(_src_dir)
 os.chdir(_project_root)
 
 # Build bindings before importing
-_build_script = os.path.join(_src_dir, "build.py")
-
-if os.path.exists(_build_script):
+# Windows: use build.py (make is not reliably available)
+# macOS/Linux: use Makefile
+if sys.platform == "win32":
+    _build_script = os.path.join(_src_dir, "build.py")
     subprocess.check_call(
         [sys.executable, _build_script],
+        stdin=subprocess.DEVNULL,
+    )
+else:
+    subprocess.check_call(
+        ["make", "all", f"PYTHON={sys.executable}"],
         stdin=subprocess.DEVNULL,
     )
 
