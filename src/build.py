@@ -25,12 +25,18 @@ if not source_files:
     sys.exit(1)
 
 # 4. Construct the Command
+# On Windows, -std=gnu++20 avoids __STRICT_ANSI__ (which hides strdup in MinGW).
+# LONG_BIT=32 forces the value to match Windows's sizeof(long)==4, which
+# Python 3.14's pyport.h validates. _hypot=hypot fixes a naming mismatch
+# in Python's Windows math headers.
+std = "gnu++20" if sys.platform == "win32" else "c++20"
+
 cmd = [
     "g++",
     "-O3",
     "-Wall",
     "-shared",
-    "-std=c++20",
+    f"-std={std}",
     *source_files,
     *[f"-I{i}" for i in includes],
     "-o",
@@ -39,10 +45,7 @@ cmd = [
 
 cmd += ["-fPIC"]
 if sys.platform == "win32":
-    # MinGW + CPython compat: _GNU_SOURCE exposes strdup without triggering
-    # the POSIX header chain that causes the LONG_BIT conflict.
-    # _hypot=hypot fixes a naming mismatch in Python's Windows math headers.
-    cmd += ["-D_GNU_SOURCE", "-D_hypot=hypot"]
+    cmd += ["-DLONG_BIT=32", "-D_hypot=hypot"]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
