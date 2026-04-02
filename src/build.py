@@ -12,40 +12,60 @@ def _find_mingw_compiler():
     """
     Find a g++ that targets Windows natively (x86_64-w64-mingw32).
     MSYS2 ships two separate compilers:
-      - x86_64-pc-msys   : POSIX emulation layer (WRONG for Python extensions)
+      - x86_64-pc-msys    : POSIX emulation layer (WRONG for Python extensions)
       - x86_64-w64-mingw32: Native Windows target (CORRECT)
-    We detect which one we have by checking `g++ -dumpmachine`.
+    We detect which one we have by checking `g++ -dumpmachine`, and when we
+    find an MSYS2-native one we derive the MSYS2 root from its path and look
+    for the mingw64/ucrt64 sub-environment there.
     """
-    candidates = [
-        # Explicit MinGW-w64 cross-compiler name (works in MSYS2 + standalone)
-        "x86_64-w64-mingw32-g++",
-        # MSYS2 environment-specific paths (mingw64 / ucrt64 / clang64)
-        "/mingw64/bin/g++",
-        "/ucrt64/bin/g++",
-        "/clang64/bin/g++",
-        # Generic fallback — might be MinGW-w64 OR MSYS2 native
-        "g++",
-    ]
-    for cxx in candidates:
-        exe = shutil.which(cxx) or (cxx if os.path.isfile(cxx) else None)
-        if not exe:
-            continue
+    def _machine(exe):
         try:
-            machine = subprocess.check_output(
+            return subprocess.check_output(
                 [exe, "-dumpmachine"], stderr=subprocess.DEVNULL, timeout=5
             ).decode().strip()
         except Exception:
+            return ""
+
+    msys2_roots = set()
+
+    # First pass: PATH-visible compilers
+    for cxx in [
+        "x86_64-w64-mingw32-g++",  # explicit MinGW-w64 name
+        "/mingw64/bin/g++",          # MSYS2 mingw64 shell env
+        "/ucrt64/bin/g++",           # MSYS2 ucrt64 shell env
+        "/clang64/bin/g++",
+        "g++",                       # generic fallback
+    ]:
+        exe = shutil.which(cxx) or (cxx if os.path.isfile(cxx) else None)
+        if not exe:
             continue
-        if "mingw" in machine:
-            print(f"[build] Compiler: {exe}  (target: {machine})")
+        m = _machine(exe)
+        if "mingw" in m:
+            print(f"[build] Compiler: {exe}  (target: {m})")
             return exe
-        # Found a compiler but it targets MSYS2/Cygwin — skip with a warning
-        print(f"[build] Skipping {exe} (target: {machine} — not a Windows-native toolchain)")
+        if "msys" in m or "cygwin" in m:
+            # Derive MSYS2 root: .../msys64/usr/bin/g++.EXE → .../msys64
+            root = os.path.dirname(os.path.dirname(os.path.dirname(exe)))
+            if os.path.isdir(root):
+                msys2_roots.add(root)
+            print(f"[build] Skipping {exe} (target: {m} — not a Windows-native toolchain)")
+
+    # Second pass: look inside the detected MSYS2 installation for mingw64/ucrt64
+    for root in msys2_roots:
+        for subenv in ["mingw64", "ucrt64", "clang64", "mingw32"]:
+            cxx = os.path.join(root, subenv, "bin", "g++.exe")
+            if not os.path.isfile(cxx):
+                continue
+            m = _machine(cxx)
+            if "mingw" in m:
+                print(f"[build] Compiler: {cxx}  (target: {m})")
+                return cxx
 
     print(
         "[build] ERROR: No MinGW-w64 compiler found.\n"
-        "        Install one via MSYS2: pacman -S mingw-w64-x86_64-gcc\n"
-        "        Then reopen WebStorm so the new PATH is picked up."
+        "        Open an MSYS2 terminal and run:\n"
+        "          pacman -S mingw-w64-x86_64-gcc\n"
+        "        The compiler will be installed to C:\\msys64\\mingw64\\bin\\g++.exe"
     )
     sys.exit(1)
 
