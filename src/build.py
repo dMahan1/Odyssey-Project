@@ -17,6 +17,7 @@ def _patch_pybind11_mingw():
         pybind11.get_include() + "/pybind11/detail/common.h",
         pybind11.get_include() + "/pybind11/pybind11.h",
     ]
+    found_any = False
     for header in candidates:
         if not os.path.exists(header):
             continue
@@ -24,12 +25,14 @@ def _patch_pybind11_mingw():
             src = f.read()
         if OLD not in src:
             print(f"[build] pybind11 already patched: {header}")
-            return
+            found_any = True
+            continue
         with open(header, "w", encoding="utf-8") as f:
             f.write(src.replace(OLD, NEW))
         print(f"[build] pybind11 patched: {header}")
-        return
-    print("[build] pybind11 patch pattern not found — skipping")
+        found_any = True
+    if not found_any:
+        print("[build] pybind11 patch pattern not found — skipping")
 
 # Run from project root regardless of CWD
 _here = os.path.dirname(os.path.abspath(__file__))
