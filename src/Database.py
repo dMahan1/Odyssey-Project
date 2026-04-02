@@ -37,9 +37,11 @@ def auth_user(email, password, latitude, longitude):
         err = str(e)
         if "INVALID_EMAIL" in err:
             return {"status": "Invalid"}
+        elif "INVALID_LOGIN_CREDENTIALS" in err:
+            return {"status": "Bad_Pass"}
         else:
             return {"status": "Error"}
-
+          
     else:
         # Verify the user has data in the database
         user_data = get_user_data(user)
