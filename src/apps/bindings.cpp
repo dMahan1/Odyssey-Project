@@ -1,10 +1,3 @@
-#ifdef _WIN32
-// On Windows, strdup is hidden in strict C++ mode. _strdup is always declared
-// in <string.h> by the Windows CRT. Redirect strdup to _strdup so pybind11
-// can find it — this works for both MSVC and MinGW.
-#include <string.h>
-#define strdup _strdup
-#endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <iostream>

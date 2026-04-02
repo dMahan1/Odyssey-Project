@@ -17,7 +17,10 @@ SOURCES  := $(wildcard src/apps/*.cpp)
 TARGET   := src/bindings$(EXT_SUFFIX)
 
 ifeq ($(OS),Windows_NT)
-    CXXFLAGS += -D_hypot=hypot
+    # PYBIND11_COMPAT_STRDUP: pybind11 guards this with #ifndef, so pre-defining it
+    # prevents pybind11 from choosing `strdup` (hidden in strict C++20 mode on MinGW).
+    # _strdup is always available from the Windows CRT without feature-test macros.
+    CXXFLAGS += -DPYBIND11_COMPAT_STRDUP=_strdup -D_hypot=hypot
 else
     UNAME := $(shell uname -s)
     ifeq ($(UNAME),Darwin)
