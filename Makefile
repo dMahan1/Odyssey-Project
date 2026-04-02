@@ -1,4 +1,4 @@
-PYTHON := python
+PYTHON ?= python
 
 ifeq ($(OS),Windows_NT)
     CXX := g++

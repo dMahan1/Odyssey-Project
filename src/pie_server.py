@@ -7,7 +7,7 @@ _src_dir = os.path.dirname(os.path.abspath(__file__))
 _project_root = os.path.dirname(_src_dir)
 
 if os.path.exists("Makefile"):
-    subprocess.check_call(["make", "all"], cwd=_project_root)
+    subprocess.check_call(["make", "all", f"PYTHON={sys.executable}"], cwd=_project_root)
 
 # Ensure src/ is on the path so the built bindings module can be found
 if _src_dir not in sys.path:
