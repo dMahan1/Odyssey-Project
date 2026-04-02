@@ -1,0 +1,91 @@
+describe('signup page', () => {
+    it('friends_event', () => {
+        let date = new Date().toLocaleDateString();
+        const [month, day, year] = date.split('/');
+        date = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+        cy.visit('/');
+        cy.get('#sign_here a').click();
+        cy.url().should('include', 'Signup.html');
+        cy.stubGeolocation();
+        cy.get('#signup_email').type('cypressTheGreat@test.cdy');
+        cy.get('#signup_username').type('EventMcEventFace');
+        cy.get('#signup_password').type('password');
+        cy.get('#signup_pass_conf').type('password');
+        cy.get('#signup_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#settings_button').click();
+        cy.url().should('include', 'Settings.html');
+        cy.get('#friends_search').select('TestUser');
+        cy.window().then((win) => {
+            cy.stub(win, 'confirm').returns(true);
+            win.alert = () => {};
+        });
+        cy.get('#add_friends').click();
+        cy.get('#logout').click();
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.stubGeolocation();
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('alert');
+        });
+        cy.get('#signin_email').type('cypress@test.qin');
+        cy.get('#signin_password').type('password');
+        cy.get('#signin_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#calendar_button').should('exist').click();
+        cy.url().should('include', 'Calendar.html');
+        cy.get('#inbox_button').click();
+        cy.get('#accept_friend').first().click();
+        cy.get('#close_inbox').click();
+        cy.get('#event_button').click();
+        cy.get('#title').type('TestEvent');
+        cy.get('#more_attendees').click();
+        cy.get('input.attendees_select[value="EventMcEventFace"]').check();
+        cy.get('#save_attendees').click();
+        cy.get('#start').invoke('val', `${date}T05:00`).trigger('input').trigger('change');
+        cy.get('#end').invoke('val', `${date}T06:00`).trigger('input').trigger('change');
+        cy.get('#location_search').first().select('University Book Store');
+        cy.get('#save_event').click();
+        cy.contains('.event_name', 'Name: TestEvent').should('exist');
+        cy.get('#settings_button').click();
+        cy.url().should('include', 'Settings.html');
+        cy.get('#logout').click();
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.stubGeolocation();
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.get('#signin_email').type('cypressTheGreat@test.cdy');
+        cy.get('#signin_password').type('password');
+        cy.get('#signin_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#calendar_button').click();
+        cy.url().should('include', 'Calendar.html');
+        cy.get('#inbox_button').click();
+        cy.get('#accept_event').click();
+        cy.get('#close_inbox').click();
+        cy.contains('.event_name', 'Name: TestEvent').should('exist');
+        cy.get('#settings_button').click();
+        cy.url().should('include', 'Settings.html');
+        cy.window().then((win) => {
+            cy.stub(win, 'confirm').returns(true);
+            win.alert = () => {};
+        });
+        cy.get('#delete').click();
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
+         cy.stubGeolocation();
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('alert');
+        });
+        cy.get('#signin_email').type('cypress@test.qin');
+        cy.get('#signin_password').type('password');
+        cy.get('#signin_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#calendar_button').click();
+        cy.url().should('include', 'Calendar.html');
+        cy.window().then((win) => {
+            cy.stub(win, 'confirm').returns(true);
+        });
+        cy.get('.delete_event_btn').click();
+        cy.contains('.event_name', 'Name: TestEvent').should('not.exist');
+    });
+});

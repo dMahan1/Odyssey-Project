@@ -44,7 +44,15 @@ let current_day = current_date.getDate();
 let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
-let friends = [];
+let current_event_id = null; // To track which event we're messaging about, if any
+
+// Message specific variables
+const message_popup_bar = document.getElementById('message_popup_bar');
+const close_message = document.getElementById('close_message');
+const message_popup = document.getElementById('message_popup_background');
+const message_text = document.getElementById('message_text');
+const send_message = document.getElementById('send_message');
+
 
 // Global state to store IDs of checked friends
 let selectedAttendeeIds = new Set();
@@ -74,7 +82,10 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 function change_inbox_size() {
     inbox_popup_top_bar.style.height = window_height / 16 + "px";
+}
 
+function change_message_size() {
+    message_popup_bar.style.height = window_height / 16 + "px";
 }
 
 function change_event_size() {
@@ -192,6 +203,27 @@ function create_friend_request(friend_username, sender_id, message_id) {
     inbox_popup_content.appendChild(new_friend_request);
 }
 
+function create_message(sender_username, message_id, message_text, event_name) {
+    const message_template = document.getElementById("message_template");
+    let new_message = message_template.content.cloneNode(true);
+
+    let message_element = new_message.querySelector('.message');
+    message_element.querySelector('.event_name').innerText = event_name ? `${event_name}` : "Message";
+    message_element.querySelector('.message_text').innerText = message_text;
+    message_element.querySelector('.sender_username').innerText = sender_username;
+
+    const declineBtn = message_element.querySelector('#remove_message');
+    declineBtn.addEventListener('click', () => {
+        // Just delete the notification
+        window.socket.emit("remove_message", message_id);
+        
+        // Remove it from the popup instantly
+        message_element.remove();
+    });
+
+    inbox_popup_content.appendChild(new_message);
+}
+
 function add_attendee_list(attendee_name, attendee_id) {
     const template = document.getElementById("attendee_template");
     const container = document.getElementById("attendees_popup_content");
@@ -221,7 +253,6 @@ function add_location(location_name, location_id) {
 }
 
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
-    const event_template = document.getElementById("event_template");
     let new_event = event_template.content.cloneNode(true);
 
     let event_div = new_event.querySelector('.event');
@@ -250,6 +281,13 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
             });
         }
     });
+
+    const message_button = new_event.querySelector('.message_button');
+    message_button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        current_event_id = event_id; // Set the global variable to know which event we're messaging about
+        message_popup.style.display = "block";
+    })
 
     new_event.querySelector('.event_name').innerText = "Name: " + event_name;
     new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
@@ -355,6 +393,7 @@ top_bar.style.height = window_height / 16 + "px";
 change_event_size();
 change_inbox_size();
 change_attendees_size();
+change_message_size();
 
 make_calendar(current_day, current_dow, current_month, current_year);
 update_events();
@@ -369,6 +408,8 @@ window.addEventListener('resize', function(){
     change_event_size();
     change_inbox_size();
     change_attendees_size();
+    change_message_size();
+
     // Re-draw events to match new scale
     update_events(); 
 });
@@ -435,19 +476,20 @@ inbox_button.addEventListener('click', () => {
     inbox_popup_content.innerHTML = '';
 
     window.socket.emit("get_user");
-    
+
     window.socket.once("return_user", (data) => {
+        console.log(data);
 
         const userMessages = data.messages;
 
         if (userMessages) {
             Object.entries(userMessages).forEach(([message_id, msg]) => {
                 if (msg.type === 0) {
-                    // Pass msg.sender_id so we know WHO to add to the friends list!
                     create_friend_request(msg.sender_username, msg.sender_id, message_id);
-                }
-                else if (msg.type === 1) {
+                } else if (msg.type === 1) {
                     create_event_invite(msg.sender_username, msg.message, msg.event_id, message_id);
+                } else if (msg.type === 2) {
+                    create_message(msg.sender_username, message_id, msg.message, (msg.event_name) ? msg.event_name : "Event Message");
                 }
             });
         }
@@ -464,6 +506,8 @@ inbox_button.addEventListener('click', () => {
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
 })
+
+
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
@@ -552,3 +596,25 @@ save_attendees.addEventListener('click', () => {
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
     attendees_popup.style.display = "none";
 });
+
+close_message.addEventListener('click', () => {
+    message_popup.style.display = "none";
+    message_text.value = null;
+})
+
+send_message.addEventListener('click', () => {
+    if (message_text.value === "") {
+        alert("Please enter a message!");
+    } else {
+        // send message logic
+
+        window.socket.emit("send_message", message_text.value, current_event_id);
+        window.socket.once("message_sent", (status) => {
+            alert(status);
+        });
+        current_event_id = null;
+        console.log(message_text.value);
+        message_popup.style.display = "none";
+        message_text.value = null;
+    }
+})

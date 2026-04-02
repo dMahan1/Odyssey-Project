@@ -3,8 +3,8 @@ let longitude;
 let updated = false;
 let oldLat;
 let oldLon;
-let map;
 let currentRouteLayer = null;
+
 
 function initMap() {
     map = L.map("map").setView([40.4237, -86.9212], 15);

@@ -17,12 +17,16 @@ if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
 import bindings
+import uuid
+from Database import *
 from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from jinja2 import TemplateNotFound
 
 from Database import *
+
+SERVER_INSTANCE_ID = str(uuid.uuid4())
 
 load_dotenv()
 
@@ -51,7 +55,7 @@ def verify_session(user_data):
 
 @socketio.on('connect')
 def handle_connect():
-    # print("Client connected!")
+    emit('server_instance', SERVER_INSTANCE_ID)
     user = session.get('user')
     if user:
         print(f"Connected: {user.get('username')} (Session Active)")
@@ -209,11 +213,11 @@ def event_join(event_id):
     ret = join_event(user, event_id)
     emit("event_joined", ret)
 
-# @socketio.on("send_message")
-# def message_send(receiver, message, message_type):
-#     sender = session.get('user')
-#     send_message(sender, receiver, message, message_type)
-#     emit("message_sent")
+@socketio.on("send_message")
+def message_send(message, event_id):
+     sender = session.get('user')
+     status = send_message_to_attendees(sender, event_id=event_id, message=message)
+     emit("message_sent", status)
 
 @socketio.on("remove_message")
 def message_remove(mid):

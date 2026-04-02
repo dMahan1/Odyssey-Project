@@ -5,11 +5,25 @@ let window_width = window.innerWidth;
 const calendar_button = document.getElementById("calendar_button");
 const map_button = document.getElementById("map_button");
 const settings_button = document.getElementById("settings_button");
+let map;
 
 // Functions
 function change_buttons(button) {
     button.style.height = window_height / 8 + "px";
     button.style.width = window_width / 4 + "px";
+}
+
+// Auth guard — redirect to signin if no stored user, otherwise restore session
+const _storedUser = JSON.parse(sessionStorage.getItem("user") || "null");
+if (!_storedUser) {
+    window.location.href = "Signin.html";
+} else {
+    window.socket.on("connect", () => {
+        socket.emit("verify_session", _storedUser);
+    });
+    if (window.socket.connected) {
+        socket.emit("verify_session", _storedUser);
+    }
 }
 
 // On run
