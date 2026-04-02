@@ -135,7 +135,15 @@ elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
 print(f"Building for {sys.platform}...")
-result = subprocess.run(cmd, stdin=subprocess.DEVNULL)
+
+# Ensure the compiler's bin directory is in PATH so it can find its own DLLs
+# (WebStorm may not include C:\msys64\mingw64\bin in its environment).
+build_env = os.environ.copy()
+compiler_bin = os.path.dirname(os.path.abspath(compiler))
+if compiler_bin not in build_env.get("PATH", "").split(os.pathsep):
+    build_env["PATH"] = compiler_bin + os.pathsep + build_env.get("PATH", "")
+
+result = subprocess.run(cmd, stdin=subprocess.DEVNULL, env=build_env)
 
 if result.returncode == 0:
     print(f"Success! Built: bindings{extension_suffix}")
