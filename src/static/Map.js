@@ -3,7 +3,6 @@ let longitude;
 let updated = false;
 let oldLat;
 let oldLon;
-let map;
 
 function initMap() {
     map = L.map("map").setView([40.4237, -86.9212], 15);
