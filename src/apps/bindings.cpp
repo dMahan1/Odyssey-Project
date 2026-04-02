@@ -1,8 +1,9 @@
-#if defined(_WIN32) && !defined(_MSC_VER) && defined(__STRICT_ANSI__)
-// On MinGW with -std=c++20, __STRICT_ANSI__ hides strdup. Provide it via _strdup,
-// which is always available in the Windows CRT without any feature-test macros.
+#ifdef _WIN32
+// On Windows, strdup is hidden in strict C++ mode. _strdup is always declared
+// in <string.h> by the Windows CRT. Redirect strdup to _strdup so pybind11
+// can find it — this works for both MSVC and MinGW.
 #include <string.h>
-inline char* strdup(const char* s) { return _strdup(s); }
+#define strdup _strdup
 #endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
