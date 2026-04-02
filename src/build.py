@@ -22,14 +22,13 @@ def _patch_pybind11_mingw():
             continue
         with open(header, "r", encoding="utf-8") as f:
             src = f.read()
-        if NEW in src:
+        if OLD not in src:
             print(f"[build] pybind11 already patched: {header}")
             return
-        if OLD in src:
-            with open(header, "w", encoding="utf-8") as f:
-                f.write(src.replace(OLD, NEW))
-            print(f"[build] pybind11 patched: {header}")
-            return
+        with open(header, "w", encoding="utf-8") as f:
+            f.write(src.replace(OLD, NEW))
+        print(f"[build] pybind11 patched: {header}")
+        return
     print("[build] pybind11 patch pattern not found — skipping")
 
 # Run from project root regardless of CWD

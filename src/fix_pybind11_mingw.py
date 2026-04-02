@@ -24,12 +24,8 @@ except FileNotFoundError:
     with open(header, "r", encoding="utf-8") as f:
         src = f.read()
 
-if NEW in src:
-    print(f"[fix_pybind11_mingw] Already patched: {header}", flush=True)
-    sys.exit(0)
-
 if OLD not in src:
-    print(f"[fix_pybind11_mingw] Pattern not found in {header} — skipping", flush=True)
+    print(f"[fix_pybind11_mingw] Already patched or pattern not found in {header} — skipping", flush=True)
     sys.exit(0)
 
 patched = src.replace(OLD, NEW)
