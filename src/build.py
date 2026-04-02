@@ -38,7 +38,12 @@ cmd = [
 ]
 
 cmd += ["-fPIC"]
-if sys.platform == "darwin":
+if sys.platform == "win32":
+    # MinGW + CPython compat: _GNU_SOURCE exposes strdup without triggering
+    # the POSIX header chain that causes the LONG_BIT conflict.
+    # _hypot=hypot fixes a naming mismatch in Python's Windows math headers.
+    cmd += ["-D_GNU_SOURCE", "-D_hypot=hypot"]
+elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
 # 5. Run the build
