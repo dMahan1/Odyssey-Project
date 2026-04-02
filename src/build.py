@@ -38,9 +38,7 @@ cmd = [
 ]
 
 cmd += ["-fPIC"]
-if sys.platform == "win32":
-    cmd += ["-DMS_WIN64"]
-elif sys.platform == "darwin":
+if sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
 # 5. Run the build
