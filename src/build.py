@@ -25,57 +25,21 @@ if not source_files:
     sys.exit(1)
 
 # 4. Construct the Command
-if sys.platform == "win32":
-    # Find cl.exe via vswhere if it's not already on PATH
-    import shutil
-    cl_exe = shutil.which("cl")
-    if cl_exe is None:
-        vswhere = r"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe"
-        if os.path.exists(vswhere):
-            vs_path = subprocess.check_output(
-                [vswhere, "-latest", "-property", "installationPath"], text=True
-            ).strip()
-            # Search for cl.exe under the VS install path
-            for root, dirs, files in os.walk(vs_path):
-                if "cl.exe" in files and "Hostx64" in root and "x64" in root:
-                    cl_exe = os.path.join(root, "cl.exe")
-                    break
-        if cl_exe is None:
-            print(
-                "Error: cl.exe not found. Please run this script from a "
-                "'Developer Command Prompt for VS' or install MSVC build tools."
-            )
-            sys.exit(1)
-    # MSVC (Visual Studio) Logic
-    cmd = [
-        cl_exe,
-        "/O2",
-        "/W3",
-        "/LD",
-        "/std:c++20",
-        "/EHsc",
-        *source_files,
-        *[f"/I{i}" for i in includes],
-        f"/Fe:bindings{extension_suffix}",
-    ]
-else:
-    # Unix-like (Linux/macOS) Logic
-    cmd = [
-        "g++",
-        "-O3",
-        "-Wall",
-        "-shared",
-        "-std=c++20",
-        "-fPIC",
-        *source_files,
-        *[f"-I{i}" for i in includes],
-        "-o",
-        f"src/bindings{extension_suffix}",
-    ]
+cmd = [
+    "g++",
+    "-O3",
+    "-Wall",
+    "-shared",
+    "-std=c++20",
+    *source_files,
+    *[f"-I{i}" for i in includes],
+    "-o",
+    f"src/bindings{extension_suffix}",
+]
 
-    # macOS specific flag
-    if sys.platform == "darwin":
-        cmd += ["-undefined", "dynamic_lookup"]
+cmd += ["-fPIC"]
+if sys.platform == "darwin":
+    cmd += ["-undefined", "dynamic_lookup"]
 
 # 5. Run the build
 print(f"Building for {sys.platform}...")
