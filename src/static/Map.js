@@ -4,6 +4,7 @@ let updated = false;
 let oldLat;
 let oldLon;
 let map;
+let currentRouteLayer = null;
 
 function initMap() {
     map = L.map("map").setView([40.4237, -86.9212], 15);
@@ -230,8 +231,6 @@ window.socket.on("search_result", (data) => {
                 true,
                 mode
             );
-
-
         });
 
         popupBody.appendChild(clone);
@@ -239,8 +238,44 @@ window.socket.on("search_result", (data) => {
 });
 
 window.socket.on("route_result", (data) => {
-    console.log("Route received:", data);
-    if(data.status === "success") {
-        //  TODO: Draw location_ids on the map
+  if (data.status !== "success") {
+      console.log(`Route request failed: ${data.message}`);
+      if (currentRouteLayer) {
+          map.removeLayer(currentRouteLayer);
+      }
+      return;
+  }
+
+  console.log("Route received:", data);
+
+    if (data.status === "success") {
+        const pathIds = data.route.location_ids;
+
+        if (pathIds && pathIds.length > 0) {
+            console.log(`Requesting coordinates for ${pathIds.length} nodes...`);
+            window.socket.emit("get_id_coords", pathIds);
+        }
+    }
+});
+
+socket.on("id_coords_result", (data) => {
+    console.log("ID coords received:", data);
+    if (data.status === "success") {
+        const coords = data.coords;
+
+        if (currentRouteLayer) {
+            map.removeLayer(currentRouteLayer);
+        }
+
+        currentRouteLayer = L.polyline(coords, {
+            color: '#00ace6',
+            weight: 5,
+            opacity: 1.0,
+            smoothFactor: 1
+        }).addTo(map);
+
+        map.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
+    } else {
+        console.error("Failed to get coordinates:", data.message);
     }
 });

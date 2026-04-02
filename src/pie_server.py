@@ -332,12 +332,29 @@ def handle_get_route(src_lat, src_lon, dst_id, bad_weather, traversal_mode):
     true_dst = pathfinder.get_location_by_id(dst_id)
     dst = pathfinder.approximate_location_via(true_dst.get_latitude(), true_dst.get_longitude(), traversal_mode)
 
-    path_raw = pathfinder.route(src, dst, bad_weather, traversal_mode)
+    try:
+        path_raw = pathfinder.route(src, dst, bad_weather, traversal_mode)
+    except Exception as e:
+        return emit("route_result", {"status": "error", "message": str(e)})
     path_result = {
         "location_ids": path_raw.location_ids,
         "total_distance": path_raw.total_distance
         }
     emit("route_result", {"status": "success", "route": path_result})
+
+@socketio.on("get_id_coords")
+def handle_get_id_coords(ids):
+    user = session.get('user')
+    if not user:
+        return emit("id_coords_result", {"status": "error", "message": "Not logged in"})
+    lat_lon = []
+    for loc_id in ids:
+        loc = pathfinder.get_location_by_id(loc_id)
+        if loc:
+            lat_lon.append([loc.get_latitude(), loc.get_longitude()])
+        else:
+            print(f"Warning: Location ID {loc_id} not found in Pathfinder.")
+    emit("id_coords_result", {"status": "success", "coords": lat_lon})
 
 if __name__ == '__main__':
     socketio.run(app, port=8080, allow_unsafe_werkzeug=True)

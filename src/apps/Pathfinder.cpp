@@ -59,6 +59,9 @@ const std::shared_ptr<Location> Pathfinder::approximate_location(double latitude
     Location query("Query", "QueryLoc", latitude, longitude);
     const Location *raw_closest =
         static_cast<const Location*>(location_tree.nearest_neighbor({query.get_x(), query.get_y(), query.get_z()}, &query, dist));
+    if (raw_closest == nullptr) {
+        return nullptr;
+    }
     return locations.at(id_indices.at(raw_closest->get_id()));
 }
 
@@ -94,6 +97,9 @@ const std::shared_ptr<Location> Pathfinder::approximate_location_via(double lati
     Location query("Query", "QueryLoc", latitude, longitude);
     const Location *raw_closest =
         static_cast<const Location*>(location_tree.nearest_neighbor({query.get_x(), query.get_y(), query.get_z()}, &query, dist));
+    if (raw_closest == nullptr) {
+        return nullptr;
+    }
     return locations.at(id_indices.at(raw_closest->get_id()));
 }
 
