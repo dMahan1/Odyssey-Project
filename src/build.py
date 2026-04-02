@@ -131,10 +131,15 @@ cmd = [
 if sys.platform == "win32":
     # -D_hypot=hypot  : fixes naming mismatch in Python's Windows math headers
     # On Windows the linker needs an explicit reference to the Python import
-    # library (python314.lib etc.) — macOS/Linux load it automatically.
+    # library. The official Python installer ships python314.lib (MSVC format);
+    # MinGW's -lpython314 looks for libpython314.a and won't find it, so we
+    # pass the full path to the .lib file directly instead.
     python_lib_dir = os.path.join(sysconfig.get_path("data"), "libs")
-    python_lib = f"python{sys.version_info.major}{sys.version_info.minor}"
-    cmd += ["-D_hypot=hypot", f"-L{python_lib_dir}", f"-l{python_lib}"]
+    python_lib_file = os.path.join(
+        python_lib_dir,
+        f"python{sys.version_info.major}{sys.version_info.minor}.lib"
+    )
+    cmd += ["-D_hypot=hypot", python_lib_file]
 elif sys.platform == "darwin":
     cmd += ["-undefined", "dynamic_lookup"]
 
