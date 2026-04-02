@@ -1,26 +1,37 @@
-const { defineConfig } = require('cypress')
-const { cypressBrowserPermissionsPlugin } = require('cypress-browser-permissions')
+const { defineConfig } = require('cypress');
+const { cypressBrowserPermissionsPlugin } = require('cypress-browser-permissions');
+const admin = require('firebase-admin');
+const serviceAccount = require('./cypress/service-account.json');
+
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
 
 module.exports = defineConfig({
-  defaultCommandTimeout: 10000,
-  env: {
-    browserPermissions: {
-      notifications: "allow",
-      geolocation: "allow",
+    defaultCommandTimeout: 10000,
+    env: {
+        browserPermissions: {
+            notifications: "allow",
+            geolocation: "allow",
+        },
     },
-  },
-  chromeWebSecurity: false,
-  e2e: {
-    baseUrl: 'http://127.0.0.1:8080',
-    setupNodeEvents(on, config) {
-      config = cypressBrowserPermissionsPlugin(on, config)
-      on('task', {
-        log(message) {
-          console.log(message)
-          return null
-        }
-      })
-      return config
+    chromeWebSecurity: false,
+    e2e: {
+        baseUrl: 'http://127.0.0.1:8080',
+        async setupNodeEvents(on, config) {
+            config = cypressBrowserPermissionsPlugin(on, config);
+            on('task', {
+                log(message) {
+                    console.log(message);
+                    return null;
+                },
+                getResetLink(email) {
+                    return admin.auth().generatePasswordResetLink(email);
+                }
+            });
+            return config;
+        },
     },
-  },
 })
