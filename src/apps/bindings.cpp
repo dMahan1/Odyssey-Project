@@ -1,3 +1,8 @@
+#ifdef __MINGW32__
+// strdup is hidden in -std=c++20 mode on MinGW; provide it via _strdup before pybind11.
+#include <string.h>
+inline char* strdup(const char* s) { return _strdup(s); }
+#endif
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <iostream>
