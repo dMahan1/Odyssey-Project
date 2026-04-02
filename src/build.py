@@ -131,12 +131,14 @@ cmd = [
 if sys.platform == "win32":
     # -D_hypot=hypot  : fixes naming mismatch in Python's Windows math headers
     # On Windows the linker needs an explicit reference to the Python import
-    # library. The official Python installer ships python314.lib (MSVC format);
-    # MinGW's -lpython314 looks for libpython314.a and won't find it, so we
-    # pass the full path to the .lib file directly instead.
-    python_lib_dir = os.path.join(sysconfig.get_path("data"), "libs")
+    # library. The official Python installer ships python314.lib (MSVC format)
+    # next to python.exe. sysconfig.get_path("data") returns the venv root
+    # inside a venv, so we use sys._base_executable to reach the real install.
+    base_python_dir = os.path.dirname(
+        getattr(sys, "_base_executable", sys.executable)
+    )
     python_lib_file = os.path.join(
-        python_lib_dir,
+        base_python_dir, "libs",
         f"python{sys.version_info.major}{sys.version_info.minor}.lib"
     )
     cmd += ["-D_hypot=hypot", python_lib_file]
