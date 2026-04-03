@@ -140,15 +140,15 @@ delete_friends.addEventListener('click', () => {
     // Double check before deleting
     if(confirm("Are you sure you want to remove this friend?")) {
         // Tell the server to mutually remove the friendship
-        window.socket.emit("remove_friend", current_user, friend_id);
+        window.socket.emit("remove_friend", friend_id);
 
         window.socket.once("removed_friend", () => {
             alert("Friend removed.");
 
             // Refresh BOTH dropdown lists to keep the UI perfectly synced!
             // (The removed friend should now reappear in the "Add Friend" list)
-            window.socket.emit("get_friends", current_user);
-            window.socket.emit("get_all_users", current_user);
+            window.socket.emit("get_friends");
+            window.socket.emit("get_all_users");
         });
     }
 });
