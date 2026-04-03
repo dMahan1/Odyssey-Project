@@ -283,7 +283,11 @@ body {
 #save_event,
 #close_inbox,
 #close_message,
-#send_message {
+#send_message,
+#send_report_bug,
+#send_report_user,
+#close_report_bug,
+#close_report_user {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;
@@ -435,24 +439,29 @@ body {
     text-align: left;
 }
 
-#message_popup_content, #report_bug_popup_content {
+#message_popup_content, #report_bug_popup_content, #report_user_popup_content {
     display: flex;
     flex-direction: column;
     padding-left: 20px;
     height: 100%;
 }
 
-#message_popup_title, #report_bug_popup_title {
+#message_popup_title, #report_bug_popup_title, #report_user_popup_title {
     font-family: Rockwell, monaco, monospace;
     background-color: #7A7A7A;
     border: 1px solid black;
     width:90%;
 }
 
-#message_text, #report_bug_text {
+#message_text, #report_bug_text, #report_user_text {
     font-family: Rockwell, monaco, monospace;
     width: 90%;
     height: 75%;
+}
+
+#user_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 92.5%;
 }
 
 /* Calendar specific things */

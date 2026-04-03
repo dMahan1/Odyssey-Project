@@ -10,10 +10,18 @@ const add_friends = document.getElementById('add_friends');
 const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
+
 const report_bug_background = document.getElementById('report_bug_background');
 const report_bug_button = document.getElementById('report_bug');
 const close_report_bug = document.getElementById('close_report_bug');
 const report_bug_text = document.getElementById('report_bug_text');
+const send_report_bug = document.getElementById('send_report_bug');
+
+const report_user_background = document.getElementById('report_user_background');
+const report_user_button = document.getElementById('report_user');
+const close_report_user = document.getElementById('close_report_user');
+const report_user_text = document.getElementById('report_user_text');
+const send_report_user = document.getElementById('send_report_user');
 
 const socket = io({
     withCredentials: true,
@@ -181,11 +189,23 @@ close_report_bug.addEventListener('click', () => {
     report_bug_text.value = null;
 })
 
-let report_user_button =
-
 close_report_user.addEventListener('click', () => {
     report_user_background.style.display = "none";
     report_user_text.value = null;
+})
+
+send_report_bug.addEventListener('click', () => {
+    report_bug_background.style.display = "none";
+    report_bug_text.value = null;
+
+    // stuff to send us the email
+})
+
+send_report_user.addEventListener('click', () => {
+    report_user_background.style.display = "none";
+    report_user_text.value = null;
+
+    //stuff to send us the email
 })
 
 // Close the popup if the user clicks the dark background outside the input box
