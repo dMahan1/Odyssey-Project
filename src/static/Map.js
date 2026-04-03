@@ -316,6 +316,9 @@ window.socket.on("search_result", (data) => {
             const mode = getSelectedMode();
             console.log(`Routing to: ${location.name} at ${location.latitude}, ${location.longitude} as ${mode}`);
 
+            const weatherCheckbox = document.getElementById('weather');
+            const isPoorWeather = weatherCheckbox ? weatherCheckbox.checked : false;
+
             map.setView([location.latitude, location.longitude], 17);
 
             document.getElementById('loc_search_popup_background').style.display = 'none';
@@ -324,7 +327,7 @@ window.socket.on("search_result", (data) => {
                 latitude,
                 longitude,
                 location.id,
-                true,
+                isPoorWeather,
                 mode
             );
         });
