@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
@@ -41,7 +42,7 @@ def auth_user(email, password, latitude, longitude):
             return {"status": "Bad_Pass"}
         else:
             return {"status": "Error"}
-          
+
     else:
         # Verify the user has data in the database
         user_data = get_user_data(user)
@@ -49,6 +50,15 @@ def auth_user(email, password, latitude, longitude):
             return {"status": "NoAccount"}
         # Update the user's location
         update_user_location(user, latitude, longitude)
+        if user_data.get("banned_until") is not None:
+            banned_until = datetime.fromisoformat(user_data["banned_until"])
+            if datetime.now(timezone.utc) < banned_until:
+                return {"status": "Banned", "banned_until": user_data["banned_until"]}
+            else:
+                db = firebase.database()
+                db.child("Users").child(user["localId"]).update(
+                    {"banned_until": None}, token=user["idToken"]
+                )
         if user_data.get("banned_until") is not None:
             banned_until = datetime.fromisoformat(user_data["banned_until"])
             if datetime.now(timezone.utc) < banned_until:
@@ -139,12 +149,27 @@ def create_user(email, username, password, latitude, longitude):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
+def report_user(user, subject_username):
+    db = firebase.database()
+    subject_user = (
+        db.child("Users")
+        .order_by_child("username")
+        .equal_to(subject_username)
+        .get(token=user["idToken"])
+        .val()
+    )
+    if not subject_user:
+        return "User not found"
+    subject_user_id = list(subject_user.keys())[0]
+    store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})")
+    return "Report submitted"
 
-def store_report(user, subject_id):
+
+def store_report(user, message):
     db = firebase.database()
     data = {
         "reporter": user["localId"],
-        "subject": subject_id,
+        "message": message,
         "date_time": datetime.now(timezone.utc).isoformat()
     }
     db.child("Reports").push(data, token=user["idToken"])
@@ -210,6 +235,10 @@ def delete_user(user):
 
     # Delete the user's data
     db = firebase.database()
+    friends = db.child("Users").child(user["localId"]).child("friend_ids").get(token=user["idToken"]).val()
+    if friends:
+        for friend_id in friends:
+            remove_friend(user, friend_id)
     db.child("Users").child(user["localId"]).remove(token=user["idToken"])
 
     # Delete the user
@@ -257,7 +286,7 @@ def get_all_users(user):
     return users_list
 
 
-def drop_pin(user, latitude, longitude):
+def drop_pin(user, name, latitude, longitude):
     db = firebase.database()
     dropped_pins = (
         db.child("Users")
@@ -266,19 +295,18 @@ def drop_pin(user, latitude, longitude):
         .val()
         .get("dropped_pins")
     )
-    pin_name = f"Pin: {latitude}, {longitude}"
+    if dropped_pins is None:
+        dropped_pins = []
     key = firebase.database().generate_key()
     db.child("Locations").child(key).set(
         {
-            "name": pin_name,
+            "name": name,
             "coordinates": {"latitude": latitude, "longitude": longitude},
             "permanent": False,
             "usedInEvent": False,
         },
         token=user["idToken"],
     )
-    if dropped_pins is None:
-        dropped_pins = []
     dropped_pins.append(key)
     db.child("Users").child(user["localId"]).update(
         {"dropped_pins": dropped_pins}, token=user["idToken"]
@@ -335,17 +363,8 @@ def get_permanent_locations(user):
 
 
 def get_locations_from_name(user, loc_name):
-    db = firebase.database()
-    all_locations = db.child("Locations").get(token=user["idToken"]).val()
-    matches = []
-    if all_locations:
-        for loc_id, loc_data in all_locations.items():
-            try:
-                if loc_data.get("name") == loc_name:
-                    matches.append({"id": loc_id, "name": loc_name})
-            except Exception as e:
-                print(f"Error processing location {loc_id}: {e}")
-                continue
+    all_locations = get_permanent_locations(user)
+    matches = [loc for loc in all_locations if loc_name.lower() in loc["name"].lower()]
     return matches
 
 
@@ -491,18 +510,32 @@ def send_message(user, recipient_id, message, message_type, event_id=None):
         "message": message,
         "type": message_type,
         "event_id": event_id,  # Added so frontend knows which event to join
+        "event_name": db.child("Events").child(event_id).child("name").get(token=user["idToken"]).val() if event_id else None,  # Optional: Include event name for better UX
     }
     db.child("Users").child(recipient_id).child("messages").push(
         message_data, token=user["idToken"]
     )
 
+def send_message_to_attendees(user, event_id, message):
+    db = firebase.database()
+    event = db.child("Events").child(event_id).get(token=user["idToken"]).val()
+    if event is None:
+        return "Event not found"
+
+    if event["creator_id"] != user["localId"]:
+        return "Only the event creator can send messages to attendees."
+
+    attendee_ids = event.get("attendee_ids", [])
+    for attendee_id in attendee_ids:
+        if attendee_id != user["localId"]:
+            send_message(user, attendee_id, message, 2, event_id=event_id)
+    return "Messages sent to attendees."
 
 def remove_message(user, message_id):
     db = firebase.database()
     db.child("Users").child(user["localId"]).child("messages").child(message_id).remove(
         token=user["idToken"]
     )
-
 
 def add_friend(user, friend_id):
     if friend_id == user["localId"]:

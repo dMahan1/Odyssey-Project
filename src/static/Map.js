@@ -3,13 +3,28 @@ let longitude;
 let updated = false;
 let oldLat;
 let oldLon;
+let currentRouteLayer = null;
+let isPlacingPin = false;
+let pins = [];
+let pinLayerGroup;
 
 function initMap() {
-    map = L.map("map").setView([40.4237, -86.9212], 15);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap",
-    }).addTo(map);
+  let southWest = L.latLng(40.405, -86.955);
+  let northEast = L.latLng(40.445, -86.895);
+  let purdueBounds = L.latLngBounds(southWest, northEast);
+
+  map = L.map("map", {
+      maxBounds: purdueBounds,
+      maxBoundsViscosity: 1,
+      minZoom: 14
+  }).setView([40.4237, -86.9212], 15);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+  }).addTo(map);
+
+  pinLayerGroup = L.layerGroup().addTo(map);
 }
 
 let locationSuccess = false;
@@ -121,6 +136,83 @@ async function updateMarker() {
     setTimeout(updateLoc, 10000);
 }
 
+function getSelectedMode() {
+    const activeBtn = document.querySelector('.side-btn.active');
+
+    if (activeBtn) {
+        switch (activeBtn.id) {
+            case 'walk_btn':
+                return 'WALKING';
+            case 'bike_btn':
+                return 'BIKING';
+            case 'car_btn':
+                return 'DRIVING';
+            case 'bus_btn':
+                return 'BUS';
+            default:
+                console.log("Unknown mode button, defaulting to WALK");
+                return 'WALKING';
+        }
+    }
+    console.log("No active mode button found, defaulting to WALK");
+    return 'WALKING';
+}
+
+function placeDraftPin(latlng) {
+    const tempMarker = L.marker(latlng, { draggable: false }).addTo(map);
+
+    const popupContent = `
+      <div class="pin-popup">
+        <strong style="color: black; display: block; margin-bottom: 8px;">Save this location?</strong>
+        <input type="text" id="temp-pin-name" placeholder="Name (e.g. My Lab)"
+               style="width: 100%; margin-bottom: 12px; box-sizing: border-box;">
+        <div class="pin-popup-btns">
+          <button id="save-temp-pin" style="background-color: #4CAF50; color: white; border: 2px solid black; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: inherit;">Save</button>
+          <button id="cancel-temp-pin" style="background-color: var(--ui-reddish); color: white; border: 2px solid black; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: inherit;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    tempMarker.bindPopup(popupContent, {
+        closeButton: false,
+        closeOnClick: false,
+        keepInView: true
+    }).openPopup();
+
+    // Use a polling interval to wait for the DOM elements to exist
+    const checkExist = setInterval(() => {
+        const saveBtn = document.getElementById('save-temp-pin');
+        const cancelBtn = document.getElementById('cancel-temp-pin');
+        const nameInput = document.getElementById('temp-pin-name');
+
+        if (saveBtn && cancelBtn && nameInput) {
+            console.log("Buttons found and bound!");
+
+            saveBtn.onclick = (e) => {
+                e.preventDefault();
+                const name = nameInput.value.trim() || "Untitled Pin";
+
+                // ONLY emit the drop. Do NOT emit get_user_pins here.
+                window.socket.emit("drop_pin", name, latlng.lat, latlng.lng);
+                map.removeLayer(tempMarker);
+            };
+
+            cancelBtn.onclick = (e) => {
+                e.preventDefault();
+                map.removeLayer(tempMarker);
+            };
+
+            nameInput.focus();
+
+            // CRITICAL: Stop looking once we found them
+            clearInterval(checkExist);
+        }
+    }, 50); // Check every 50ms
+
+    // Safety: Clear interval if the popup is closed some other way
+    tempMarker.on('popupclose', () => clearInterval(checkExist));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     if (navigator.geolocation) {
@@ -128,4 +220,219 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         locFail();
     }
+
+    const searchBtn = document.getElementById('loc_search_btn');
+    const searchPopup = document.getElementById('loc_search_popup_background');
+    const searchPopupClose = document.getElementById('search_popup_close');
+    const searchBar = document.getElementById('loc_search_bar');
+
+    searchBtn.addEventListener('click', () => {
+        const popupBody = document.getElementById('loc_search_popup');
+        const loadingLabel = document.getElementById('loading_label');
+        const existingResults = popupBody.querySelectorAll('.loc_search_result');
+        existingResults.forEach(res => res.remove());
+        loadingLabel.textContent = 'Searching...';
+
+        searchPopup.style.display = 'flex';
+        const query = searchBar.value.trim();
+        if (query) {
+          socket.emit("search_locations", query);
+        } else {
+            const existingResults = popupBody.querySelectorAll('.loc_search_result');
+            existingResults.forEach(res => res.remove());
+            const empty = document.createElement('div');
+            empty.className = 'loc_search_result';
+            empty.innerHTML = '<label class="loc_name">Empty Search Phrase</label>';
+            popupBody.appendChild(empty);
+            return;
+        }
+    });
+
+    searchPopup.addEventListener('click', (event) => {
+      if (event.target === searchPopup) {
+        searchPopup.style.display = 'none';
+      }
+    });
+
+    searchPopupClose.addEventListener('click', () => {
+      searchPopup.style.display = 'none';
+    });
+
+    searchBar.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchBtn.click();
+    });
+
+    const modeButtons = document.querySelectorAll('.side-btn');
+    let currentMode = getSelectedMode();
+
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentMode = getSelectedMode();
+            console.log("Traversal mode changed to:", currentMode);
+        });
+    });
+
+    // Pin setting
+    const pinBtn = document.getElementById('make-pin-btn');
+
+        pinBtn.addEventListener('click', () => {
+            isPlacingPin = !isPlacingPin;
+            pinBtn.classList.toggle('active', isPlacingPin);
+
+            document.getElementById('map').style.cursor = isPlacingPin ? 'crosshair' : '';
+        });
+
+        map.on('click', function(e) {
+            if (isPlacingPin) {
+                placeDraftPin(e.latlng);
+
+                isPlacingPin = false;
+                pinBtn.classList.remove('active');
+                document.getElementById('map').style.cursor = '';
+            }
+        });
+    console.log("fetching pins");
+    window.socket.emit("get_user_pins");
+});
+
+window.socket.on("search_result", (data) => {
+    console.log("Search result received:", JSON.stringify(data, null, 2));
+    const popupBody = document.getElementById('loc_search_popup');
+    const template = document.getElementById('loc_results_template');
+    const loadingLabel = document.getElementById('loading_label');
+    loadingLabel.textContent = '';
+
+    const existingResults = popupBody.querySelectorAll('.loc_search_result');
+    existingResults.forEach(res => res.remove());
+
+    if (data.status !== "success" || !data.results || data.results.length === 0) {
+            const noResult = document.createElement('div');
+            noResult.className = 'loc_search_result';
+            noResult.innerHTML = '<label class="loc_name">No locations found.</label>';
+            popupBody.appendChild(noResult);
+            return;
+    }
+    data.results.forEach(location => {
+        const clone = template.content.cloneNode(true);
+
+        const nameLabel = clone.querySelector('.loc_name');
+        nameLabel.textContent = location.name || "Unknown Location";
+
+        const routeBtn = clone.querySelector('.loc_result_route');
+        routeBtn.dataset.id = location.id;
+        routeBtn.addEventListener('click', () => {
+            const mode = getSelectedMode();
+            console.log(`Routing to: ${location.name} at ${location.latitude}, ${location.longitude} as ${mode}`);
+
+            const weatherCheckbox = document.getElementById('weather');
+            const isPoorWeather = weatherCheckbox ? weatherCheckbox.checked : false;
+
+            map.setView([location.latitude, location.longitude], 17);
+
+            document.getElementById('loc_search_popup_background').style.display = 'none';
+
+            window.socket.emit("get_route",
+                latitude,
+                longitude,
+                location.id,
+                isPoorWeather,
+                mode
+            );
+        });
+
+        popupBody.appendChild(clone);
+    });
+});
+
+window.socket.on("route_result", (data) => {
+  if (data.status !== "success") {
+      console.log(`Route request failed: ${data.message}`);
+      alert("Could not find a route.")
+      if (currentRouteLayer) {
+          map.removeLayer(currentRouteLayer);
+      }
+      return;
+  }
+
+  console.log("Route received:", data);
+
+    if (data.status === "success") {
+        const pathIds = data.route.location_ids;
+
+        if (pathIds && pathIds.length > 0) {
+            console.log(`Requesting coordinates for ${pathIds.length} nodes...`);
+            window.socket.emit("get_id_coords", pathIds);
+        }
+    }
+});
+
+socket.on("id_coords_result", (data) => {
+    console.log("ID coords received:", data);
+    if (data.status === "success") {
+        const coords = data.coords;
+
+        if (currentRouteLayer) {
+            map.removeLayer(currentRouteLayer);
+        }
+
+        currentRouteLayer = L.polyline(coords, {
+            color: '#00ace6',
+            weight: 5,
+            opacity: 1.0,
+            smoothFactor: 1
+        }).addTo(map);
+
+        map.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
+    } else {
+        console.error("Failed to get coordinates:", data.message);
+    }
+});
+
+window.socket.on("user_pins_got", (data) => {
+    console.log("Updating pins on map...", data);
+
+    // Ensure pinLayerGroup exists before trying to clear it
+    if (pinLayerGroup) {
+        pinLayerGroup.clearLayers();
+    } else {
+        return; // Map isn't ready yet
+    }
+
+    pins = [];
+
+    data.forEach(pin => {
+        const lat = pin.coordinates?.latitude;
+        const lon = pin.coordinates?.longitude;
+        const pinId = pin.id;
+
+        if (lat !== undefined && lon !== undefined) {
+            pins.push(pin);
+            const marker = L.marker([lat, lon]);
+
+            const pinPopupContent = `
+                <div style="font-family: Rockwell, monaco, monospace; padding: 5px; text-align: center;">
+                    <strong style="color: black; display: block; margin-bottom: 5px;">${pin.name}</strong>
+                    <button class="pull-pin-btn"
+                            style="background-color: var(--ui-reddish); color: white; border: 2px solid black; border-radius: 4px; cursor: pointer; padding: 2px 8px;"
+                            onclick="window.socket.emit('pulled_pin', '${pinId}')">
+                        Pull this pin
+                    </button>
+                </div>
+            `;
+
+            marker.bindPopup(pinPopupContent, {
+                closeButton: false,
+                offset: L.point(0, -5)
+            });
+            pinLayerGroup.addLayer(marker);
+        }
+    });
+});
+
+// Confirmation handlers to trigger the refresh
+window.socket.on("pin_dropped", () => window.socket.emit("get_user_pins"));
+window.socket.on("pin_pulled", () => {
+    window.socket.emit("get_user_pins");
 });

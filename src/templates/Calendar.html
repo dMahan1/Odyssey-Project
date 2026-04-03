@@ -114,6 +114,37 @@
                     </div>
                 </div>
             </template>
+            <template id="message_template">
+                <div class="message">
+                    <div class="message_details">
+                        <label class="event_name"> Event Message </label>
+                        <label class="sender_username"> @username </label>
+                        <label class="message_text"> Message Text </label>
+                    </div>
+                    <div id="message_actions">
+                        <button id="more_message_info">
+                            &#xFF1E
+                        </button>
+                        <button id="remove_message">
+                            &#x2717
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div id="message_popup_background">
+        <div id="message_popup" class="popup">
+            <div id="message_popup_bar">
+                <button id="close_message">&#x2717;</button>
+                <button id="send_message">&#x2713</button>
+            </div>
+
+            <div id = "message_popup_content">
+                <h2 id="message_popup_title">Create Message</h2>
+                <label for="message_text"></label><textarea id="message_text" placeholder="Put your message for your attendees here!" ></textarea>
+            </div>
         </div>
     </div>
 
@@ -181,7 +212,10 @@
             </div>
             <template id="event_template">
                 <div class="event" id="e">
-                    <button class="delete_event_btn" title="Delete Event">&times;</button>
+                    <div class="event_button_container">
+                        <button class="message_button" title="Message">&#x270E</button>
+                        <button class="delete_event_btn" title="Delete Event">&#x2717</button>
+                    </div>
                     <label class="event_name"> Event Name </label>
                     <label class="event_creator"> Event Creator </label>
                     <label class="event_location"> Event Location </label>
