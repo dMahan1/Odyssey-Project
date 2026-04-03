@@ -1,5 +1,6 @@
 const { defineConfig } = require('cypress');
 const { cypressBrowserPermissionsPlugin } = require('cypress-browser-permissions');
+const dotenvPlugin = require('cypress-dotenv');
 const admin = require('firebase-admin');
 const serviceAccount = require('./cypress/service-account.json');
 
@@ -21,6 +22,7 @@ module.exports = defineConfig({
     e2e: {
         baseUrl: 'http://127.0.0.1:8080',
         async setupNodeEvents(on, config) {
+            config = dotenvPlugin(config, { path: './.env' }, true);
             config = cypressBrowserPermissionsPlugin(on, config);
             on('task', {
                 log(message) {
