@@ -440,7 +440,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: auto;
-    align_items: flex-start;
+    align-items: flex-start;
     text-align: left;
 }
 
