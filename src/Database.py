@@ -166,7 +166,7 @@ def store_report(user, message):
 
     sender_email = os.getenv("ADMIN_EMAIL")
     receiver_email = os.getenv("ADMIN_EMAIL")
-    password = os.getenv("ADMIN_PASSWORD")
+    password = os.getenv("EMAIL_PASSWORD")
 
     msg = EmailMessage()
     msg.set_content(f"Reporter ID: {user['localId']}\n\n{message}")
