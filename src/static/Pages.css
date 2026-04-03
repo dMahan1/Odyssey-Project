@@ -270,11 +270,17 @@ body {
 
 #decline_event,
 #decline_friend,
-#delete_friends,
+#delete_friends {
+    border-radius: 50%;
+    background-color: #ff000d;
+    cursor: pointer;
+}
+
 #ban_user {
     border-radius: 50%;
     background-color: #ff000d;
     cursor: pointer;
+    display: none;
 }
 
 #more_event_info {
@@ -479,10 +485,15 @@ body {
     align-self: flex-end;
 }
 
-#friends_search,
+#friends_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 80%;
+}
+
 #ban_search {
     font-family: Rockwell, monaco, monospace;
     width: 80%;
+    display: none;
 }
 
 .change {
