@@ -2,12 +2,25 @@ import os
 import subprocess
 import sys
 
-# Build bindings before importing — build.py expects to run from the project root
+# Normalise CWD to the project root regardless of how WebStorm launches the script
 _src_dir = os.path.dirname(os.path.abspath(__file__))
 _project_root = os.path.dirname(_src_dir)
+os.chdir(_project_root)
 
-if os.path.exists(os.path.join(_project_root, "Makefile")):
-    subprocess.check_call(["make", "all", f"PYTHON={sys.executable}"], cwd=_project_root)
+# Build bindings before importing
+# Windows: use build.py (make is not reliably available)
+# macOS/Linux: use Makefile
+if sys.platform == "win32":
+    _build_script = os.path.join(_src_dir, "build.py")
+    subprocess.check_call(
+        [sys.executable, _build_script],
+        stdin=subprocess.DEVNULL,
+    )
+else:
+    subprocess.check_call(
+        ["make", "all", f"PYTHON={sys.executable}"],
+        stdin=subprocess.DEVNULL,
+    )
 
 # Ensure src/ is on the path so the built bindings module can be found
 if _src_dir not in sys.path:
