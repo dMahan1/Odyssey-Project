@@ -3,7 +3,7 @@
 *.so
 *:Zone.Identifier
 __pycache__/
-*.pyc
+**.pyc
 .idea/
 logs/cypress/service-account.json
 cypress/service-account.json
