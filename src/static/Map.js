@@ -9,12 +9,22 @@ let pins = [];
 let pinLayerGroup;
 
 function initMap() {
-    map = L.map("map").setView([40.4237, -86.9212], 15);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "© OpenStreetMap",
-    }).addTo(map);
-    pinLayerGroup = L.layerGroup().addTo(map);
+  let southWest = L.latLng(40.405, -86.955);
+  let northEast = L.latLng(40.445, -86.895);
+  let purdueBounds = L.latLngBounds(southWest, northEast);
+
+  map = L.map("map", {
+      maxBounds: purdueBounds,
+      maxBoundsViscosity: 1,
+      minZoom: 14
+  }).setView([40.4237, -86.9212], 15);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+  }).addTo(map);
+
+  pinLayerGroup = L.layerGroup().addTo(map);
 }
 
 let locationSuccess = false;
