@@ -1,11 +1,40 @@
 import os
+import subprocess
+import sys
+
+# Normalise CWD to the project root regardless of how WebStorm launches the script
+_src_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.dirname(_src_dir)
+os.chdir(_project_root)
+
+# Build bindings before importing
+# Windows: use build.py (make is not reliably available)
+# macOS/Linux: use Makefile
+if sys.platform == "win32":
+    _build_script = os.path.join(_src_dir, "build.py")
+    subprocess.check_call(
+        [sys.executable, _build_script],
+        stdin=subprocess.DEVNULL,
+    )
+else:
+    subprocess.check_call(
+        ["make", "all", f"PYTHON={sys.executable}"],
+        stdin=subprocess.DEVNULL,
+    )
+
+# Ensure src/ is on the path so the built bindings module can be found
+if _src_dir not in sys.path:
+    sys.path.insert(0, _src_dir)
+
+import bindings
 import uuid
 from Database import *
 from dotenv import load_dotenv
-import json
-from flask import Flask, render_template, request, abort, jsonify, session
+from flask import Flask, abort, jsonify, render_template, request, session
+from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from jinja2 import TemplateNotFound
-from flask_socketio import SocketIO, send, emit, join_room, leave_room
+
+from Database import *
 
 SERVER_INSTANCE_ID = str(uuid.uuid4())
 
@@ -23,6 +52,8 @@ app.config.update(
 )
 
 socketio = SocketIO(app, manage_session=True)
+
+pathfinder = bindings.Pathfinder.get_instance()
 
 # added
 @socketio.on("verify_session")
@@ -292,6 +323,67 @@ def handle_update_username(new_username):
         emit("username_updated", {"status": "Success", "user": user})
     else:
         emit("username_updated", {"status": result})
+
+@socketio.on("search_locations")
+def handle_search_locations(loc_name):
+    user = session.get('user')
+    if not user:
+        return emit("search_result", {"status": "error", "message": "Not logged in"})
+
+    matches = get_locations_from_name(user, loc_name)
+
+    if matches:
+        all_results = []
+        for match in matches:
+            full_data = get_location_data(user, match['id'])
+            if full_data and 'coordinates' in full_data:
+                all_results.append({
+                    "id": match['id'],
+                    "name": full_data.get("name", "Unnamed Location"),
+                    "latitude": full_data['coordinates']['latitude'],
+                    "longitude": full_data['coordinates']['longitude']
+                })
+
+        emit("search_result", {"status": "success", "results": all_results})
+    else:
+        emit("search_result", {"status": "error", "message": "No matches found"})
+
+@socketio.on("get_route")
+def handle_get_route(src_lat, src_lon, dst_id, bad_weather, traversal_mode):
+    user = session.get('user')
+    if not user:
+        return emit("route_result", {"status": "error", "message": "Not logged in"})
+    try:
+        traversal_mode = getattr(bindings.TraversalMode, traversal_mode)
+    except AttributeError:
+        traversal_mode = bindings.TraversalMode.WALKING
+    src = pathfinder.approximate_location_via(src_lat, src_lon, traversal_mode)
+    true_dst = pathfinder.get_location_by_id(dst_id)
+    dst = pathfinder.approximate_location_via(true_dst.get_latitude(), true_dst.get_longitude(), traversal_mode)
+
+    try:
+        path_raw = pathfinder.route(src, dst, bad_weather, traversal_mode)
+    except Exception as e:
+        return emit("route_result", {"status": "error", "message": str(e)})
+    path_result = {
+        "location_ids": path_raw.location_ids,
+        "total_distance": path_raw.total_distance
+        }
+    emit("route_result", {"status": "success", "route": path_result})
+
+@socketio.on("get_id_coords")
+def handle_get_id_coords(ids):
+    user = session.get('user')
+    if not user:
+        return emit("id_coords_result", {"status": "error", "message": "Not logged in"})
+    lat_lon = []
+    for loc_id in ids:
+        loc = pathfinder.get_location_by_id(loc_id)
+        if loc:
+            lat_lon.append([loc.get_latitude(), loc.get_longitude()])
+        else:
+            print(f"Warning: Location ID {loc_id} not found in Pathfinder.")
+    emit("id_coords_result", {"status": "success", "coords": lat_lon})
 
 if __name__ == '__main__':
     socketio.run(app, port=8080, allow_unsafe_werkzeug=True)

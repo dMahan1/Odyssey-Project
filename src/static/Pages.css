@@ -139,7 +139,6 @@ body {
     z-index: 0;
     height: 100%;
 }
-
 #side_controls {
     width: 60px;
     flex-shrink: 0;
@@ -283,7 +282,7 @@ body {
 #scrap_event,
 #save_event,
 #close_inbox,
-#close_message, 
+#close_message,
 #send_message {
     background-color: #E8A2A7;
     border: none;
