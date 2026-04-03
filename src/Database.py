@@ -78,7 +78,7 @@ def ban_user(user, username, banned_until):
     if result:
         target_id = list(result.keys())[0]
         print(target_id)
-        db.child("Users").child(target_id).set({"banned_until": banned_until}, token=user["idToken"])
+        db.child("Users").child(target_id).update({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
     # Get a reference to the database service
