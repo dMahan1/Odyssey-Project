@@ -7,3 +7,5 @@ __pycache__/
 .idea/
 logs/cypress/service-account.json
 cypress/service-account.json
+/logs
+/node_modules
