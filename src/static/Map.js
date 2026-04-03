@@ -3,6 +3,8 @@ let longitude;
 let updated = false;
 let oldLat;
 let oldLon;
+let currentRouteLayer = null;
+
 
 function initMap() {
     map = L.map("map").setView([40.4237, -86.9212], 15);
@@ -121,11 +123,175 @@ async function updateMarker() {
     setTimeout(updateLoc, 10000);
 }
 
+function getSelectedMode() {
+    const activeBtn = document.querySelector('.side-btn.active');
+
+    if (activeBtn) {
+        switch (activeBtn.id) {
+            case 'walk_btn':
+                return 'WALKING';
+            case 'bike_btn':
+                return 'BIKING';
+            case 'car_btn':
+                return 'DRIVING';
+            case 'bus_btn':
+                return 'BUS';
+            default:
+                console.log("Unknown mode button, defaulting to WALK");
+                return 'WALKING';
+        }
+    }
+    console.log("No active mode button found, defaulting to WALK");
+    return 'WALKING';
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(locSuccess, locFail, {enableHighAccuracy: true});
     } else {
         locFail();
+    }
+
+    const searchBtn = document.getElementById('loc_search_btn');
+    const searchPopup = document.getElementById('loc_search_popup_background');
+    const searchPopupClose = document.getElementById('search_popup_close');
+    const searchBar = document.getElementById('loc_search_bar');
+
+    searchBtn.addEventListener('click', () => {
+        const popupBody = document.getElementById('loc_search_popup');
+        const loadingLabel = document.getElementById('loading_label');
+        const existingResults = popupBody.querySelectorAll('.loc_search_result');
+        existingResults.forEach(res => res.remove());
+        loadingLabel.textContent = 'Searching...';
+
+        searchPopup.style.display = 'flex';
+        const query = searchBar.value.trim();
+        if (query) {
+          socket.emit("search_locations", query);
+        } else {
+            const existingResults = popupBody.querySelectorAll('.loc_search_result');
+            existingResults.forEach(res => res.remove());
+            const empty = document.createElement('div');
+            empty.className = 'loc_search_result';
+            empty.innerHTML = '<label class="loc_name">Empty Search Phrase</label>';
+            popupBody.appendChild(empty);
+            return;
+        }
+    });
+
+    searchPopup.addEventListener('click', (event) => {
+      if (event.target === searchPopup) {
+        searchPopup.style.display = 'none';
+      }
+    });
+
+    searchPopupClose.addEventListener('click', () => {
+      searchPopup.style.display = 'none';
+    });
+
+    searchBar.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchBtn.click();
+    });
+
+    const modeButtons = document.querySelectorAll('.side-btn');
+    let currentMode = getSelectedMode();
+
+    modeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentMode = getSelectedMode();
+            console.log("Traversal mode changed to:", currentMode);
+        });
+    });
+});
+
+window.socket.on("search_result", (data) => {
+    console.log("Search result received:", JSON.stringify(data, null, 2));
+    const popupBody = document.getElementById('loc_search_popup');
+    const template = document.getElementById('loc_results_template');
+    const loadingLabel = document.getElementById('loading_label');
+    loadingLabel.textContent = '';
+
+    const existingResults = popupBody.querySelectorAll('.loc_search_result');
+    existingResults.forEach(res => res.remove());
+
+    if (data.status !== "success" || !data.results || data.results.length === 0) {
+            const noResult = document.createElement('div');
+            noResult.className = 'loc_search_result';
+            noResult.innerHTML = '<label class="loc_name">No locations found.</label>';
+            popupBody.appendChild(noResult);
+            return;
+    }
+    data.results.forEach(location => {
+        const clone = template.content.cloneNode(true);
+
+        const nameLabel = clone.querySelector('.loc_name');
+        nameLabel.textContent = location.name || "Unknown Location";
+
+        const routeBtn = clone.querySelector('.loc_result_route');
+        routeBtn.dataset.id = location.id;
+        routeBtn.addEventListener('click', () => {
+            const mode = getSelectedMode();
+            console.log(`Routing to: ${location.name} at ${location.latitude}, ${location.longitude} as ${mode}`);
+
+            map.setView([location.latitude, location.longitude], 17);
+
+            document.getElementById('loc_search_popup_background').style.display = 'none';
+
+            window.socket.emit("get_route",
+                latitude,
+                longitude,
+                location.id,
+                true,
+                mode
+            );
+        });
+
+        popupBody.appendChild(clone);
+    });
+});
+
+window.socket.on("route_result", (data) => {
+  if (data.status !== "success") {
+      console.log(`Route request failed: ${data.message}`);
+      if (currentRouteLayer) {
+          map.removeLayer(currentRouteLayer);
+      }
+      return;
+  }
+
+  console.log("Route received:", data);
+
+    if (data.status === "success") {
+        const pathIds = data.route.location_ids;
+
+        if (pathIds && pathIds.length > 0) {
+            console.log(`Requesting coordinates for ${pathIds.length} nodes...`);
+            window.socket.emit("get_id_coords", pathIds);
+        }
+    }
+});
+
+socket.on("id_coords_result", (data) => {
+    console.log("ID coords received:", data);
+    if (data.status === "success") {
+        const coords = data.coords;
+
+        if (currentRouteLayer) {
+            map.removeLayer(currentRouteLayer);
+        }
+
+        currentRouteLayer = L.polyline(coords, {
+            color: '#00ace6',
+            weight: 5,
+            opacity: 1.0,
+            smoothFactor: 1
+        }).addTo(map);
+
+        map.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
+    } else {
+        console.error("Failed to get coordinates:", data.message);
     }
 });
