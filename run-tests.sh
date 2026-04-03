@@ -14,7 +14,7 @@ echo "server open"
 # Run specs — exit code reflects test results
 FAILED_SPECS=()
 set +e  # allow cypress to fail without immediately exiting
-for spec in "$path/Testing/"*.cy.js; do
+for spec in "$path/cypress/e2e/"*.cy.js; do
   npx cypress run --spec "$spec"
   if [ $? -ne 0 ]; then
     FAILED_SPECS+=("$spec")
