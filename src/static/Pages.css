@@ -348,7 +348,7 @@ body {
     border: 1px solid black;
 }
 
-.event_invite, .friend_invite {
+.event_invite, .friend_invite, .message {
     font-family: Rockwell, monaco, monospace;
     background-color: #7A7A7A;
     border: 1px solid black;
@@ -359,10 +359,25 @@ body {
     width: 90%;
 }
 
+.message_text {
+    margin-top: 10px;
+    word-break: break-word;
+    text-align: left;
+    width: 100%;
+}
+
 .event_details, .request_details {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    overflow: auto;
+}
+
+.message_details {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    align_items: flex-start;
+    text-align: left;
 }
 
 #accept_event, #accept_friend, #add_friends {
@@ -371,7 +386,7 @@ body {
     cursor: pointer;
 }
 
-#decline_event, #decline_friend, #delete_friends {
+#decline_event, #decline_friend, #delete_friends , #remove_message{
     border-radius: 50%;
     background-color: #FF000D;
     cursor: pointer;
