@@ -1,8 +1,13 @@
+from multiprocessing import context
 import os
 from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
+
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -63,7 +68,7 @@ def auth_user(email, password, latitude, longitude):
 
 def ban_user(user, banned_until):
     db = firebase.database()
-    db.child("Users").child(user["localId"]).set({"banned_until": banned_until}, token=user["idToken"])
+    db.child("Users").child(user["localId"]).update({"banned_until": banned_until}, token=user["idToken"])
 
 
 def get_user_data(user):
@@ -135,22 +140,6 @@ def create_user(email, username, password, latitude, longitude):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
-def report_user(user, subject_username):
-    db = firebase.database()
-    subject_user = (
-        db.child("Users")
-        .order_by_child("username")
-        .equal_to(subject_username)
-        .get(token=user["idToken"])
-        .val()
-    )
-    if not subject_user:
-        return "User not found"
-    subject_user_id = list(subject_user.keys())[0]
-    store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})")
-    return "Report submitted"
-
-
 def store_report(user, message):
     db = firebase.database()
     data = {
@@ -160,6 +149,39 @@ def store_report(user, message):
     }
     db.child("Reports").push(data, token=user["idToken"])
 
+    sender_email = "OdysseyAdmin307@gmail.com"
+    receiver_email = "OdysseyAdmin307@gmail.com"
+    password = os.getenv("EMAIL_PASSWORD")
+
+    msg = EmailMessage()
+    msg.set_content(f"Reporter ID: {user['localId']}\n\n{message}")
+    msg['Subject'] = "New Odyssey Report"
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.send_message(msg)
+
+    return "Success"
+
+def report_user(user, subject_username, message):
+    db = firebase.database()
+    subject_user = (
+        db.child("Users")
+        .order_by_child("username")
+        .equal_to(subject_username)
+        .get(token=user["idToken"])
+        .val()
+    )
+    if not subject_user:
+        return "Not Found"
+    subject_user_id = list(subject_user.keys())[0]
+    if (store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})\n{message}") == "Success"):
+        return "Success"
+    return "Error"
 
 def update_username(user, new_username):
     db = firebase.database()

@@ -13,17 +13,17 @@ os.chdir(_project_root)
 
 #ONLY FOR TESTING
 
-# if sys.platform == "win32":
-#     _build_script = os.path.join(_src_dir, "build.py")
-#     subprocess.check_call(
-#         [sys.executable, _build_script],
-#         stdin=subprocess.DEVNULL,
-#     )
-# else:
-#     subprocess.check_call(
-#         ["make", "all", f"PYTHON={sys.executable}"],
-#         stdin=subprocess.DEVNULL,
-#     )
+if sys.platform == "win32":
+     _build_script = os.path.join(_src_dir, "build.py")
+     subprocess.check_call(
+         [sys.executable, _build_script],
+         stdin=subprocess.DEVNULL,
+     )
+else:
+     subprocess.check_call(
+         ["make", "all", f"PYTHON={sys.executable}"],
+         stdin=subprocess.DEVNULL,
+     )
 
 # Ensure src/ is on the path so the built bindings module can be found
 if _src_dir not in sys.path:
@@ -211,12 +211,12 @@ def report_issue(message):
     emit("issue_reported", result)
 
 @socketio.on("report_user")
-def report_user(subject_username):
+def handle_report_user(subject_username, message):
     user = session.get('user')
     if not user:
         emit("error", "Not logged in")
         return
-    result = report_user(user, subject_username)
+    result = report_user(user, subject_username, message)
     emit("user_reported", result)
 
 @socketio.on("create_event")
