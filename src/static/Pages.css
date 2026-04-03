@@ -270,7 +270,8 @@ body {
 
 #decline_event,
 #decline_friend,
-#delete_friends {
+#delete_friends,
+#ban_user {
     border-radius: 50%;
     background-color: #ff000d;
     cursor: pointer;
@@ -478,7 +479,8 @@ body {
     align-self: flex-end;
 }
 
-#friends_search {
+#friends_search,
+#ban_search {
     font-family: Rockwell, monaco, monospace;
     width: 80%;
 }

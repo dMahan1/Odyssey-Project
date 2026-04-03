@@ -10,6 +10,7 @@ const add_friends = document.getElementById('add_friends');
 const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
+const ban_search = document.getElementById('ban_search');
 
 const socket = io({
     withCredentials: true,
@@ -132,13 +133,25 @@ delete_friends.addEventListener('click', () => {
 
         window.socket.once("removed_friend", () => {
             alert("Friend removed.");
-
             // Refresh BOTH dropdown lists to keep the UI perfectly synced!
             // (The removed friend should now reappear in the "Add Friend" list)
             window.socket.emit("get_friends", current_user);
             window.socket.emit("get_all_users", current_user);
         });
     }
+});
+
+ban_user.addEventListener('click', () => {
+    window.socket.emit("ban_user", ban_search.value);
+    window.socket.once("ban_response", (success) => {
+        console.log(success);
+        if (success === "Success") {
+            alert("The user has banned for one week, SO SAYS THE BAN HAMMER!!!");
+        }
+        else {
+            alert("There has been an error");
+        }  
+    });
 });
 
 password_change.addEventListener('click', () => {

@@ -2,7 +2,7 @@ import os
 
 import empyrebase
 from dotenv import load_dotenv
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -49,9 +49,26 @@ def auth_user(email, password, latitude, longitude):
             return {"status": "NoAccount"}
         # Update the user's location
         update_user_location(user, latitude, longitude)
+        if user_data.get("banned_until") is not None:
+            banned_until = datetime.fromisoformat(user_data["banned_until"])
+            if datetime.now(timezone.utc) < banned_until:
+                return {"status": "Banned", "banned_until": user_data["banned_until"]}
+            else:
+                db = firebase.database()
+                db.child("Users").child(user["localId"]).update(
+                    {"banned_until": None}, token=user["idToken"]
+                )
         user["status"] = "Success"
         return user
 
+def ban_user(user, username, banned_until):
+    db = firebase.database()
+    result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
+    print(username)
+    if result:
+        target_id = list(result.keys())[0]
+        print(target_id)
+        db.child("Users").child(target_id).set({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
     # Get a reference to the database service

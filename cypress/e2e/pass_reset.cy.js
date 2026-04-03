@@ -8,7 +8,7 @@ describe('Pass Reset', () => {
     cy.get('#signin_email').type('robb6@ethereal.email');
     cy.get('#forgot_button').click();
     cy.get('@alert').should('have.been.called');
-    cy.wait(2000); // wait for button's oobCode to be generated
+    cy.wait(2000);
     cy.task('getResetLink', 'robb6@ethereal.email').then((resetLink) => {
       cy.visit(resetLink);
       cy.get('.firebaseui-id-new-password').should('be.visible').type('password123');

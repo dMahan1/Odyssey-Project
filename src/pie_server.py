@@ -5,6 +5,7 @@ import json
 from flask import Flask, render_template, request, abort, jsonify, session
 from jinja2 import TemplateNotFound
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
+from datetime import datetime
 
 load_dotenv()
 
@@ -227,6 +228,18 @@ def friend_get():
     ret = get_friends(user)
 
     emit("friends_got", ret)
+
+@socketio.on("ban_user")
+def user_ban(username):
+    user = session.get('user')
+    user_data = get_user_data(user)
+    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
+    print("PREPARING TO BAN USER: `{user_data}`")
+    if user_data.get("admin"):
+        ban_user(user, username, now_time)
+        emit("ban_response", "Success")
+    else:
+        emit("ban_response", "Failed")
 
 @socketio.on("get_all_users")
 def handle_get_all_users():
