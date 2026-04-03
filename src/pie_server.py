@@ -29,9 +29,9 @@ os.chdir(_project_root)
 if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
-import bindings
 import uuid
-from Database import *
+
+import bindings
 from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
@@ -166,9 +166,9 @@ def update_toucoins(amount):
     emit("toucoins_update")
 
 @socketio.on("drop_pin")
-def drop_pins(latitude, longitude):
+def drop_pins(name, latitude, longitude):
     user = session.get('user') #added
-    key = drop_pin(user, latitude, longitude)
+    key = drop_pin(user, name, latitude, longitude)
     emit("pin_dropped", key)
 
 @socketio.on("pulled_pin")
@@ -176,6 +176,24 @@ def pulled_pins(key):
     user = session.get('user')
     ret = pull_pin(user, key)
     emit("pin_pulled", ret)
+
+@socketio.on("get_user_pins")
+def handle_get_user_pins():
+    user = session.get('user')
+    if not user:
+        return
+
+    pins = []
+    user_data = get_user_data(user)
+
+    for pin_id in user_data.get("dropped_pins", []):
+        pin_info = get_location_data(user, pin_id)
+        if pin_info:
+            pin_info['id'] = pin_id
+            pins.append(pin_info)
+
+    emit("user_pins_got", pins)
+
 
 @socketio.on("get_permanent_locations")
 def handle_get_perm_locs():
