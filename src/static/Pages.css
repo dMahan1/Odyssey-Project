@@ -17,19 +17,128 @@ body {
     width: 100%;
     height: calc(100vh - 120px);
 }
+
+
+/* Map css */
 #map_top_bar {
     height: 50px;
+    background-color: #e8a2a7;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     font-family: Rockwell, monaco, monospace;
+    border-bottom: thick solid black;
+}
+#loc_search {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+#loc_search_popup {
+    background-color: #ababab;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 75%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    border: 3px solid black;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+#loc_search_popup_bar {
+    background-color: #e8a2a7;
+    display: flex;
+    justify-content: space-between;
+    border-block: thin solid black;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.loc_search_result {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    margin: 10px;
+    background-color: #eddeab;
+    border: 2px solid black;
+    border-radius: 8px;
+    font-family: Rockwell, monaco, monospace;
+    transition: background-color 0.2s ease;
+}
+
+.loc_details {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    overflow: hidden;
+}
+
+.loc_name {
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.loc_result_route {
+    width: 34px;
+    height: 34px;
+    background-color: #e8a2a7;
+    border: 1px solid black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.loc_result_route:hover {
+    background-color: #b41923;
+    color: black;
+}
+#loc_search_bar {
+    border-radius: 5px;
+    width: 300px;
+    padding: 5px 10px;
+    border: 1px solid black;
+    font-family: Rockwell, monaco, monospace;
+}
+#loc_search_btn {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #e8a2a7;
+    border: 0px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+#loc_search_btn img {
+    max-width: 65%;
+    max-height: 65%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
 }
 #map {
     flex-grow: 1;
+    z-index: 0;
     height: 100%;
 }
-
 #side_controls {
     width: 60px;
     flex-shrink: 0;
@@ -39,10 +148,8 @@ body {
     gap: 15px;
     padding-top: 20px;
     background-color: #eddeab;
-    border: 3px solid black;
-    border-bottom: none;
+    border-right: thick solid black;
 }
-
 .side-btn {
     width: 44px !important;
     height: 44px !important;
@@ -56,7 +163,6 @@ body {
     cursor: pointer;
     border-radius: 8px;
 }
-
 .side-btn img {
     max-width: 65%;
     max-height: 65%;
@@ -65,10 +171,12 @@ body {
     object-fit: contain;
     pointer-events: none;
 }
-
 .side-btn:hover {
     background-color: #b41923;
     border-color: black;
+}
+.side-btn.active {
+    background-color: #ce666d;
 }
 
 #nav_bar {
@@ -79,7 +187,7 @@ body {
     margin-top: auto;
     display: flex;
     justify-content: center;
-    border-block: thick solid black;
+    border-top: thick solid black;
 }
 
 #settings_button.On, #calendar_button.On, #map_button.On {
@@ -137,7 +245,12 @@ body {
 }
 
 /* Popup specific things */
-#event_popup_background, #inbox_popup_background, #user_div_background {
+
+#loc_search_popup_background,
+#event_popup_background,
+#inbox_popup_background,
+#user_div_background {
+
     display: none;
     z-index: 1;
     width: 100%;
@@ -168,7 +281,13 @@ body {
     border: 3px solid black;
 }
 
-#scrap_event, #save_event, #close_inbox, #close_message, #send_message {
+
+#search_popup_close,
+#scrap_event,
+#save_event,
+#close_inbox,
+#close_message, 
+#send_message {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;

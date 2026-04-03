@@ -1,8 +1,8 @@
 import os
+from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
-from datetime import datetime, timezone
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -331,17 +331,8 @@ def get_permanent_locations(user):
 
 
 def get_locations_from_name(user, loc_name):
-    db = firebase.database()
-    all_locations = db.child("Locations").get(token=user["idToken"]).val()
-    matches = []
-    if all_locations:
-        for loc_id, loc_data in all_locations.items():
-            try:
-                if loc_data.get("name") == loc_name:
-                    matches.append({"id": loc_id, "name": loc_name})
-            except Exception as e:
-                print(f"Error processing location {loc_id}: {e}")
-                continue
+    all_locations = get_permanent_locations(user)
+    matches = [loc for loc in all_locations if loc_name.lower() in loc["name"].lower()]
     return matches
 
 
