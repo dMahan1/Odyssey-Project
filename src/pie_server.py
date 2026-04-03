@@ -198,6 +198,24 @@ def handle_get_perm_locs():
     locations = get_permanent_locations(user)
     emit("permanent_locations_got", locations)
 
+@socketio.on("report_issue")
+def report_issue(message):
+    user = session.get('user')
+    if not user:
+        emit("error", "Not logged in")
+        return
+    result = store_report(user, message)
+    emit("issue_reported", result)
+
+@socketio.on("report_user")
+def report_user(subject_username):
+    user = session.get('user')
+    if not user:
+        emit("error", "Not logged in")
+        return
+    result = report_user(user, subject_username)
+    emit("user_reported", result)
+
 @socketio.on("create_event")
 def event_create(name, start_time, end_time, locationid, attendee_ids):
     user = session.get('user')

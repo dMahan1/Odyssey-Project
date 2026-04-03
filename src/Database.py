@@ -135,12 +135,27 @@ def create_user(email, username, password, latitude, longitude):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
+def report_user(user, subject_username):
+    db = firebase.database()
+    subject_user = (
+        db.child("Users")
+        .order_by_child("username")
+        .equal_to(subject_username)
+        .get(token=user["idToken"])
+        .val()
+    )
+    if not subject_user:
+        return "User not found"
+    subject_user_id = list(subject_user.keys())[0]
+    store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})")
+    return "Report submitted"
 
-def store_report(user, subject_id):
+
+def store_report(user, message):
     db = firebase.database()
     data = {
         "reporter": user["localId"],
-        "subject": subject_id,
+        "message": message,
         "date_time": datetime.now(timezone.utc).isoformat()
     }
     db.child("Reports").push(data, token=user["idToken"])
@@ -206,6 +221,10 @@ def delete_user(user):
 
     # Delete the user's data
     db = firebase.database()
+    friends = db.child("Users").child(user["localId"]).child("friend_ids").get(token=user["idToken"]).val()
+    if friends:
+        for friend_id in friends:
+            remove_friend(user, friend_id)
     db.child("Users").child(user["localId"]).remove(token=user["idToken"])
 
     # Delete the user
