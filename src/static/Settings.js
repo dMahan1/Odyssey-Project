@@ -11,6 +11,18 @@ const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
 
+const report_bug_background = document.getElementById('report_bug_background');
+const report_bug_button = document.getElementById('report_bug');
+const close_report_bug = document.getElementById('close_report_bug');
+const report_bug_text = document.getElementById('report_bug_text');
+const send_report_bug = document.getElementById('send_report_bug');
+
+const report_user_background = document.getElementById('report_user_background');
+const report_user_button = document.getElementById('report_user');
+const close_report_user = document.getElementById('close_report_user');
+const report_user_text = document.getElementById('report_user_text');
+const send_report_user = document.getElementById('send_report_user');
+
 const socket = io({
     withCredentials: true,
     transports: ['websocket', 'polling'] // Force websocket to keep the session stable
@@ -162,6 +174,62 @@ password_change.addEventListener('click', () => {
 
 username_change.addEventListener('click', () => {
     user_div_background.style.display = "block";
+})
+
+report_bug_button.addEventListener('click', () => {
+    report_bug_background.style.display = "block";
+})
+
+report_user_button.addEventListener('click', () => {
+    report_user_background.style.display = "block";
+})
+
+close_report_bug.addEventListener('click', () => {
+    report_bug_background.style.display = "none";
+    report_bug_text.value = null;
+})
+
+close_report_user.addEventListener('click', () => {
+    report_user_background.style.display = "none";
+    report_user_text.value = null;
+})
+
+send_report_bug.addEventListener('click', () => {
+
+    window.socket.emit("report_issue", report_bug_text.value);
+    window.socket.once("issue_reported", (success) => {
+        if (success) {
+            alert("Thank you for your feedback! The issue has been reported.");
+        } else {
+            alert("Failed to submit your report. Please try again later.");
+        }
+    });
+
+    report_bug_background.style.display = "none";
+    report_bug_text.value = null;
+})
+
+send_report_user.addEventListener('click', () => {
+
+    const reportedUsername = report_user_username.value.trim();
+    if (reportedUsername === "") {
+        alert("Please enter a username to report.");
+        return;
+    }
+
+    window.socket.emit("report_user", reportedUsername, report_user_text.value);
+    window.socket.once("user_reported", (result) => {
+        if (result === "Success") {
+            alert(`Thank you for your report. If the user "${reportedUsername}" is violating our guidelines, appropriate action will be taken.`);
+        } else if (result === "Not Found") {
+            alert(`The username "${reportedUsername}" was not found. Please check the spelling and try again.`);
+        } else {
+            alert("Failed to submit your report. Please try again later.");
+        }
+    });
+
+    report_user_background.style.display = "none";
+    report_user_text.value = null;
 })
 
 // Close the popup if the user clicks the dark background outside the input box
