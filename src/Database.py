@@ -174,7 +174,6 @@ def store_report(user, message):
     }
     db.child("Reports").push(data, token=user["idToken"])
 
-
 def update_username(user, new_username):
     db = firebase.database()
     duplicate_username = (
