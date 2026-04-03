@@ -56,6 +56,11 @@
                 </div>
             </template>
         </div>
+
+        <div class="reports">
+            <button id="report_bug">Report Bug</button>
+            <button id="report_user">Report User</button>
+        </div>
     </div>
     <div id="user_div_background">
         <div id="user_div">
@@ -75,6 +80,36 @@
             <img class="Settings" src="../static/images/Person_icon.png" id="Settings_icon" alt="Settings icon">
         </button>
     </div>
+
+    <div id="report_bug_background">
+        <div id="report_bug_popup" class="popup">
+            <div id="report_bug_popup_bar">
+                <button id="close_report_bug">&#x2717;</button>
+                <button id="send_report_bug">&#x2713</button>
+            </div>
+
+            <div id = "report_bug_popup_content">
+                <h2 id="report_bug_popup_title">Bug Report</h2>
+                <label for="report_bug_text"></label><textarea id="report_bug_text" placeholder="Explain your bug here!" ></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div id="report_user_background">
+        <div id="report_user_popup" class="popup">
+            <div id="report_user_popup_bar">
+                <button id="close_report_user">&#x2717;</button>
+                <button id="send_report_user">&#x2713</button>
+            </div>
+
+            <div id = "report_user_popup_content">
+                <h2 id="report_user_popup_title">Bug Report</h2>
+                <label for="report_user_text"></label><textarea id="report_user_text" placeholder="Explain your bug here!" ></textarea>
+            </div>
+        </div>
+    </div>
+
+
 </div>
 
 </body>
