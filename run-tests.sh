@@ -22,6 +22,8 @@ for spec in "$path/cypress/e2e/"*.cy.js; do
 done
 set -e
 
+"$path/.venv/bin/python" "$path/delete_test_users.py"
+
 if [ ${#FAILED_SPECS[@]} -eq 0 ]; then
   echo "All tests passed"
 else

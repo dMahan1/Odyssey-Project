@@ -63,7 +63,11 @@ signin_button.addEventListener('click', () =>{
                 alert("Incorrect Password for provided email")
             } else if (status === "NoAccount") {
                 alert("No account found for this email. Please sign up.");
-            } else {
+            } else if (status === "Banned") {
+                console.log(status, status.banned_until)
+                alert(`You have been struck with the BAN HAMMER, you have been banned until ${new Date(result.banned_until).toLocaleString()}. We appreciate your understanding.`)
+            }
+            else {
                 alert("Incorrect Email or Password");
             }
         });

@@ -11,6 +11,9 @@ const delete_friends = document.getElementById('delete_friends');
 const friends_search = document.getElementById('friends_search');
 const current_friends_search = document.getElementById('current_friends_search');
 
+const ban_search = document.getElementById('ban_search');
+const ban_user = document.getElementById('ban_user');
+
 const report_bug_background = document.getElementById('report_bug_background');
 const report_bug_button = document.getElementById('report_bug');
 const close_report_bug = document.getElementById('close_report_bug');
@@ -45,6 +48,7 @@ socket.on("auth", (user) => {
 });
 
 // On run
+
 logout.addEventListener('click', () => {
     current_user = null;
     sessionStorage.removeItem('user');
@@ -62,6 +66,16 @@ window.addEventListener('resize', () => {
 // 1. Load users into the dropdown when the page loads
 document.addEventListener("DOMContentLoaded", () => {
     if (current_user) {
+        window.socket.emit("get_user");
+
+        window.socket.once("return_user", (user_data) => {
+            console.log(user_data);
+            if (user_data && user_data.admin) {
+                ban_search.style.display = "inline";
+                ban_user.style.display = "inline";
+            }
+        });
+
         // (Your existing profile display code here...)
         document.getElementById('username_display').innerText = current_user.displayName || "Unknown User";
         document.getElementById('email_display').innerText = current_user.email || "Unknown Email";
@@ -144,13 +158,25 @@ delete_friends.addEventListener('click', () => {
 
         window.socket.once("removed_friend", () => {
             alert("Friend removed.");
-
             // Refresh BOTH dropdown lists to keep the UI perfectly synced!
             // (The removed friend should now reappear in the "Add Friend" list)
             window.socket.emit("get_friends");
             window.socket.emit("get_all_users");
         });
     }
+});
+
+ban_user.addEventListener('click', () => {
+    window.socket.emit("ban_user", ban_search.value);
+    window.socket.once("ban_response", (success) => {
+        console.log(success);
+        if (success === "Success") {
+            alert("The user has banned for one week, SO SAYS THE BAN HAMMER!!!");
+        }
+        else {
+            alert("There has been an error");
+        }  
+    });
 });
 
 password_change.addEventListener('click', () => {
