@@ -41,7 +41,7 @@ def auth_user(email, password, latitude, longitude):
             return {"status": "Bad_Pass"}
         else:
             return {"status": "Error"}
-          
+
     else:
         # Verify the user has data in the database
         user_data = get_user_data(user)
@@ -60,7 +60,7 @@ def auth_user(email, password, latitude, longitude):
                 )
         user["status"] = "Success"
         return user
-    
+
 def ban_user(user, banned_until):
     db = firebase.database()
     db.child("Users").child(user["localId"]).set({"banned_until": banned_until}, token=user["idToken"])
@@ -253,7 +253,7 @@ def get_all_users(user):
     return users_list
 
 
-def drop_pin(user, latitude, longitude):
+def drop_pin(user, name, latitude, longitude):
     db = firebase.database()
     dropped_pins = (
         db.child("Users")
@@ -262,19 +262,18 @@ def drop_pin(user, latitude, longitude):
         .val()
         .get("dropped_pins")
     )
-    pin_name = f"Pin: {latitude}, {longitude}"
+    if dropped_pins is None:
+        dropped_pins = []
     key = firebase.database().generate_key()
     db.child("Locations").child(key).set(
         {
-            "name": pin_name,
+            "name": name,
             "coordinates": {"latitude": latitude, "longitude": longitude},
             "permanent": False,
             "usedInEvent": False,
         },
         token=user["idToken"],
     )
-    if dropped_pins is None:
-        dropped_pins = []
     dropped_pins.append(key)
     db.child("Users").child(user["localId"]).update(
         {"dropped_pins": dropped_pins}, token=user["idToken"]
@@ -489,7 +488,7 @@ def send_message_to_attendees(user, event_id, message):
     event = db.child("Events").child(event_id).get(token=user["idToken"]).val()
     if event is None:
         return "Event not found"
-    
+
     if event["creator_id"] != user["localId"]:
         return "Only the event creator can send messages to attendees."
 

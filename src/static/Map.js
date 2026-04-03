@@ -4,7 +4,9 @@ let updated = false;
 let oldLat;
 let oldLon;
 let currentRouteLayer = null;
-
+let isPlacingPin = false;
+let pins = [];
+let pinLayerGroup;
 
 function initMap() {
     map = L.map("map").setView([40.4237, -86.9212], 15);
@@ -12,6 +14,7 @@ function initMap() {
         maxZoom: 19,
         attribution: "© OpenStreetMap",
     }).addTo(map);
+    pinLayerGroup = L.layerGroup().addTo(map);
 }
 
 let locationSuccess = false;
@@ -145,6 +148,61 @@ function getSelectedMode() {
     return 'WALKING';
 }
 
+function placeDraftPin(latlng) {
+    const tempMarker = L.marker(latlng, { draggable: false }).addTo(map);
+
+    const popupContent = `
+      <div class="pin-popup">
+        <strong style="color: black; display: block; margin-bottom: 8px;">Save this location?</strong>
+        <input type="text" id="temp-pin-name" placeholder="Name (e.g. My Lab)"
+               style="width: 100%; margin-bottom: 12px; box-sizing: border-box;">
+        <div class="pin-popup-btns">
+          <button id="save-temp-pin" style="background-color: #4CAF50; color: white; border: 2px solid black; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: inherit;">Save</button>
+          <button id="cancel-temp-pin" style="background-color: var(--ui-reddish); color: white; border: 2px solid black; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-family: inherit;">Cancel</button>
+        </div>
+      </div>
+    `;
+
+    tempMarker.bindPopup(popupContent, {
+        closeButton: false,
+        closeOnClick: false,
+        keepInView: true
+    }).openPopup();
+
+    // Use a polling interval to wait for the DOM elements to exist
+    const checkExist = setInterval(() => {
+        const saveBtn = document.getElementById('save-temp-pin');
+        const cancelBtn = document.getElementById('cancel-temp-pin');
+        const nameInput = document.getElementById('temp-pin-name');
+
+        if (saveBtn && cancelBtn && nameInput) {
+            console.log("Buttons found and bound!");
+
+            saveBtn.onclick = (e) => {
+                e.preventDefault();
+                const name = nameInput.value.trim() || "Untitled Pin";
+
+                // ONLY emit the drop. Do NOT emit get_user_pins here.
+                window.socket.emit("drop_pin", name, latlng.lat, latlng.lng);
+                map.removeLayer(tempMarker);
+            };
+
+            cancelBtn.onclick = (e) => {
+                e.preventDefault();
+                map.removeLayer(tempMarker);
+            };
+
+            nameInput.focus();
+
+            // CRITICAL: Stop looking once we found them
+            clearInterval(checkExist);
+        }
+    }, 50); // Check every 50ms
+
+    // Safety: Clear interval if the popup is closed some other way
+    tempMarker.on('popupclose', () => clearInterval(checkExist));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initMap();
     if (navigator.geolocation) {
@@ -205,6 +263,28 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("Traversal mode changed to:", currentMode);
         });
     });
+
+    // Pin setting
+    const pinBtn = document.getElementById('make-pin-btn');
+
+        pinBtn.addEventListener('click', () => {
+            isPlacingPin = !isPlacingPin;
+            pinBtn.classList.toggle('active', isPlacingPin);
+
+            document.getElementById('map').style.cursor = isPlacingPin ? 'crosshair' : '';
+        });
+
+        map.on('click', function(e) {
+            if (isPlacingPin) {
+                placeDraftPin(e.latlng);
+
+                isPlacingPin = false;
+                pinBtn.classList.remove('active');
+                document.getElementById('map').style.cursor = '';
+            }
+        });
+    console.log("fetching pins");
+    window.socket.emit("get_user_pins");
 });
 
 window.socket.on("search_result", (data) => {
@@ -256,6 +336,7 @@ window.socket.on("search_result", (data) => {
 window.socket.on("route_result", (data) => {
   if (data.status !== "success") {
       console.log(`Route request failed: ${data.message}`);
+      alert("Could not find a route.")
       if (currentRouteLayer) {
           map.removeLayer(currentRouteLayer);
       }
@@ -294,4 +375,51 @@ socket.on("id_coords_result", (data) => {
     } else {
         console.error("Failed to get coordinates:", data.message);
     }
+});
+
+window.socket.on("user_pins_got", (data) => {
+    console.log("Updating pins on map...", data);
+
+    // Ensure pinLayerGroup exists before trying to clear it
+    if (pinLayerGroup) {
+        pinLayerGroup.clearLayers();
+    } else {
+        return; // Map isn't ready yet
+    }
+
+    pins = [];
+
+    data.forEach(pin => {
+        const lat = pin.coordinates?.latitude;
+        const lon = pin.coordinates?.longitude;
+        const pinId = pin.id;
+
+        if (lat !== undefined && lon !== undefined) {
+            pins.push(pin);
+            const marker = L.marker([lat, lon]);
+
+            const pinPopupContent = `
+                <div style="font-family: Rockwell, monaco, monospace; padding: 5px; text-align: center;">
+                    <strong style="color: black; display: block; margin-bottom: 5px;">${pin.name}</strong>
+                    <button class="pull-pin-btn"
+                            style="background-color: var(--ui-reddish); color: white; border: 2px solid black; border-radius: 4px; cursor: pointer; padding: 2px 8px;"
+                            onclick="window.socket.emit('pulled_pin', '${pinId}')">
+                        Pull this pin
+                    </button>
+                </div>
+            `;
+
+            marker.bindPopup(pinPopupContent, {
+                closeButton: false,
+                offset: L.point(0, -5)
+            });
+            pinLayerGroup.addLayer(marker);
+        }
+    });
+});
+
+// Confirmation handlers to trigger the refresh
+window.socket.on("pin_dropped", () => window.socket.emit("get_user_pins"));
+window.socket.on("pin_pulled", () => {
+    window.socket.emit("get_user_pins");
 });
