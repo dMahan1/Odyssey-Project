@@ -1,9 +1,14 @@
+from multiprocessing import context
 import os
 from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
+
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -73,6 +78,7 @@ def auth_user(email, password, latitude, longitude):
 
 def ban_user(user, username, banned_until):
     db = firebase.database()
+
     result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
     print(username)
     if result:
@@ -149,7 +155,34 @@ def create_user(email, username, password, latitude, longitude):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
-def report_user(user, subject_username):
+def store_report(user, message):
+    db = firebase.database()
+    data = {
+        "reporter": user["localId"],
+        "message": message,
+        "date_time": datetime.now(timezone.utc).isoformat()
+    }
+    db.child("Reports").push(data, token=user["idToken"])
+
+    sender_email = os.getenv("ADMIN_EMAIL")
+    receiver_email = os.getenv("ADMIN_EMAIL")
+    password = os.getenv("ADMIN_PASSWORD")
+
+    msg = EmailMessage()
+    msg.set_content(f"Reporter ID: {user['localId']}\n\n{message}")
+    msg['Subject'] = "New Odyssey Report"
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.send_message(msg)
+
+    return "Success"
+
+def report_user(user, subject_username, message):
     db = firebase.database()
     subject_user = (
         db.child("Users")
@@ -159,20 +192,12 @@ def report_user(user, subject_username):
         .val()
     )
     if not subject_user:
-        return "User not found"
+        return "Not Found"
     subject_user_id = list(subject_user.keys())[0]
-    store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})")
-    return "Report submitted"
 
-
-def store_report(user, message):
-    db = firebase.database()
-    data = {
-        "reporter": user["localId"],
-        "message": message,
-        "date_time": datetime.now(timezone.utc).isoformat()
-    }
-    db.child("Reports").push(data, token=user["idToken"])
+    if (store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})\n{message}") == "Success"):
+        return "Success"
+    return "Error"
 
 def update_username(user, new_username):
     db = firebase.database()

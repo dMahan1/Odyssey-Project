@@ -262,6 +262,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === 'Enter') searchBtn.click();
     });
 
+    document.getElementById('snap_btn').addEventListener('click', () => {
+        map.setView([latitude, longitude]);
+    });
+
     const modeButtons = document.querySelectorAll('.side-btn');
     let currentMode = getSelectedMode();
 
