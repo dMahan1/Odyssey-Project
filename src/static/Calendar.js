@@ -68,8 +68,6 @@ window.socket = socket;
 // added
 const backupUser = JSON.parse(localStorage.getItem('user_backup'));
 if (backupUser) {
-    // Manually tell the server "Hey, remember me?"
-    // This helps the server re-fill the session['user'] if it got wiped
     socket.emit("verify_session", backupUser);
 }
 
@@ -124,7 +122,6 @@ function load_permanent_locations() {
     window.socket.emit("get_permanent_locations");
     
     window.socket.once("permanent_locations_got", (locations) => {
-        // Clear existing options (keeping the default placeholder)
         permanent_locations = locations;
         update_permanent_locations();
     });
@@ -135,7 +132,6 @@ function update_permanent_locations() {
 
     if (permanent_locations) {
         permanent_locations.forEach(loc => {
-            // Uses your existing add_location function
             add_location(loc.name, loc.id);
         });
     }
@@ -145,7 +141,6 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     const event_template = document.getElementById("event_invite_template");
     let new_invite = event_template.content.cloneNode(true);
     
-    // Grab the actual wrapper div so we can delete it later
     let invite_element = new_invite.querySelector('.event_invite');
 
     invite_element.querySelector('.event_name').innerText = event_name;
@@ -156,8 +151,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     acceptBtn.addEventListener('click', () => {
         window.socket.emit("accept_event_invite", event_id, message_id);
         
-        // Instantly remove it from the screen for the user
-        invite_element.remove(); 
+        invite_element.remove();
     });
 
     // --- DECLINE BUTTON ---
@@ -165,8 +159,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     declineBtn.addEventListener('click', () => {
         window.socket.emit("remove_message", message_id);
         
-        // Instantly remove it from the screen for the user
-        invite_element.remove(); 
+        invite_element.remove();
     });
 
     inbox_popup_content.appendChild(new_invite);
@@ -182,23 +175,18 @@ function create_friend_request(friend_username, sender_id, message_id) {
     // --- ACCEPT BUTTON ---
     const acceptBtn = request_element.querySelector('#accept_friend');
     acceptBtn.addEventListener('click', () => {
-        // 1. Tell the server to add this user to your friends list
         window.socket.emit("add_friend", sender_id);
         
-        // 2. Tell the server to delete the request notification
         window.socket.emit("remove_message", message_id);
         
-        // 3. Remove it from the popup instantly
         request_element.remove();
     });
 
     // --- DECLINE BUTTON ---
     const declineBtn = request_element.querySelector('#decline_friend');
     declineBtn.addEventListener('click', () => {
-        // Just delete the notification
         window.socket.emit("remove_message", message_id);
         
-        // Remove it from the popup instantly
         request_element.remove();
     });
 
@@ -216,10 +204,8 @@ function create_message(sender_username, message_id, message_text, event_name) {
 
     const declineBtn = message_element.querySelector('#remove_message');
     declineBtn.addEventListener('click', () => {
-        // Just delete the notification
         window.socket.emit("remove_message", message_id);
         
-        // Remove it from the popup instantly
         message_element.remove();
     });
 
@@ -237,9 +223,8 @@ function add_attendee_list(attendee_name, attendee_id) {
     const label = new_attendee.querySelector('label');
 
     checkbox.id = attendee_id;
-    checkbox.value = attendee_name; // Store name in value for easy access later
+    checkbox.value = attendee_name;
     
-    // Add the name text next to the checkbox
     label.appendChild(document.createTextNode(" " + attendee_name));
 
     container.appendChild(new_attendee);
@@ -266,14 +251,11 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     // --- NEW DELETE LOGIC ---
     const deleteBtn = new_event.querySelector('.delete_event_btn');
     deleteBtn.addEventListener('click', (e) => {
-        // Prevent clicking the button from triggering other event clicks
-        e.stopPropagation(); 
+        e.stopPropagation();
 
         if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
-            // Tell the server to delete it from the database
             window.socket.emit("delete_event", event_id);
             
-            // Remove it from the UI immediately
             remove_event(event_id);
             window.socket.once("event_deleted", (success) => {
                 if (!success) {
@@ -287,7 +269,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     const message_button = new_event.querySelector('.message_button');
     message_button.addEventListener('click', (e) => {
         e.stopPropagation();
-        current_event_id = event_id; // Set the global variable to know which event we're messaging about
+        current_event_id = event_id;
         message_popup.style.display = "block";
     })
 
@@ -357,16 +339,13 @@ function update_events() {
             const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
 
             if (calendarDate >= startDay && calendarDate <= endDay) {
-                // Default to a full 24-hour block
                 let displayStart = 0;
                 let displayEnd = 24;
 
-                // If viewing the actual start day, use the actual start hour
                 if (calendarDate.getTime() === startDay.getTime()) {
                     displayStart = startVal.getHours() + (startVal.getMinutes() / 60);
                 }
 
-                // If viewing the actual end day, use the actual end hour
                 if (calendarDate.getTime() === endDay.getTime()) {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
@@ -416,8 +395,7 @@ window.addEventListener('resize', function(){
     change_attendees_size();
     change_message_size();
 
-    // Re-draw events to match new scale
-    update_events(); 
+    update_events();
 });
 
 scrap_event.addEventListener('click', () => {
@@ -426,28 +404,23 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
-    // 1. Create Date objects from the inputs
+
+    if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
+        alert("No empty fields!")
+        return;
+    }
+
     const startVal = new Date(start_time.value);
     const endVal = new Date(end_time.value);
 
-    // 2. Create a Date object representing the CURRENTLY VIEWED calendar day
-    // We set time to 00:00:00 to compare just the date range effectively
     const calendarDate = new Date(current_year, current_month, current_day);
 
-    // 3. Normalize the range dates to "start of day" for a pure date-inclusion check
-    // If you want the event to show up if the calendar day matches ANY part of the event duration:
     const startDay = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate());
     const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
 
-    // 4. Logic check: Is the calendar date within the start and end day?
     if (calendarDate >= startDay && calendarDate <= endDay) {
         
-        // Prepare the data to send (including our selected attendee IDs)
         const attendeeIdsArray = Array.from(selectedAttendeeIds);
-        if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
-            alert("No empty fields!")
-            return;
-        }
         window.socket.emit("create_event", 
             title.value,
             start_time.value, 
@@ -517,7 +490,6 @@ close_inbox.addEventListener('click', () => {
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
-        // Redraw the calendar now that the server has officially added us
         update_events();
     }
 });
@@ -565,20 +537,14 @@ next_day.addEventListener('click', () => {
 })
 
 more_attendees_button.addEventListener('click', () => {
-    // 1. CLEAR the popup content so friends don't duplicate on every click
-    attendees_content.innerHTML = ''; 
-    // Re-insert the template so it's available for the next call (optional, but safer to keep template outside content div)
-    // Note: In your HTML, the template is INSIDE attendees_popup_content. 
-    // It's better to move the template OUTSIDE that div so it doesn't get deleted.
+    attendees_content.innerHTML = '';
 
     window.socket.emit("get_friends");
     
-    // 2. Use .once so we don't stack up multiple listeners
     window.socket.once("friends_got", (ret) => {
         ret.forEach(friend => {
             add_attendee_list(friend.username, friend.id);
             
-            // 3. Persist checkmarks: if they were saved before, check them again
             const cb = document.getElementById(friend.id);
             if (cb && selectedAttendeeIds.has(String(friend.id))) {
                 cb.checked = true;
@@ -598,7 +564,6 @@ save_attendees.addEventListener('click', () => {
         }
     });
 
-    // Update the UI text so the user sees how many are invited
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
     attendees_popup.style.display = "none";
 });
