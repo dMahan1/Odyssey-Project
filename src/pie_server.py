@@ -36,7 +36,8 @@ from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from jinja2 import TemplateNotFound
-
+from flask_socketio import SocketIO, send, emit, join_room, leave_room
+from datetime import datetime
 from Database import *
 
 SERVER_INSTANCE_ID = str(uuid.uuid4())
@@ -70,8 +71,21 @@ def verify_session(user_data):
 def handle_connect():
     emit('server_instance', SERVER_INSTANCE_ID)
     user = session.get('user')
-    if user:
-        print(f"Connected: {user.get('username')} (Session Active)")
+
+    user_data = get_user_data(user) if user else None
+
+    if user_data:
+        if 'banned_until' in user_data:
+            banned_until = datetime.fromisoformat(user_data['banned_until'])
+            if datetime.now() < banned_until:
+                emit("banned", {"until": user_data['banned_until']})
+                return
+            else:
+                # Ban expired, remove ban info
+                db = firebase.database()
+                db.child("users").child(user['localId']).child("banned_until").remove(token=user['idToken'])
+                print(f"Ban expired for user: {user_data.get('username')}")
+        print(f"Connected: {user_data.get('username')} (Session Active)")
     else:
         print("Connected: Anonymous (Session Empty)")
 
@@ -300,6 +314,18 @@ def friend_get():
     ret = get_friends(user)
 
     emit("friends_got", ret)
+
+@socketio.on("ban_user")
+def user_ban(username):
+    user = session.get('user')
+    user_data = get_user_data(user)
+    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
+    print("PREPARING TO BAN USER: `{user_data}`")
+    if user_data.get("admin"):
+        ban_user(user, username, now_time)
+        emit("ban_response", "Success")
+    else:
+        emit("ban_response", "Failed")
 
 @socketio.on("get_all_users")
 def handle_get_all_users():

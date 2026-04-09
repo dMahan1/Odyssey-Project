@@ -173,6 +173,20 @@ body {
     border-radius: 8px;
 }
 
+.side-btn-snap {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #e8a2a7;
+    border: 1px solid black;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
 .side-btn img {
     max-width: 65%;
     max-height: 65%;
@@ -232,7 +246,6 @@ body {
     border-radius: 4px;
     cursor: pointer;
 }
-
 
 #nav_bar {
     flex-shrink: 0;
@@ -442,6 +455,13 @@ body {
     border-radius: 50%;
     background-color: #FF000D;
     cursor: pointer;
+}
+
+#ban_user {
+    border-radius: 50%;
+    background-color: #ff000d;
+    cursor: pointer;
+    display: none;
 }
 
 #more_event_info {
@@ -695,6 +715,12 @@ body {
 #friends_search {
     font-family: Rockwell, monaco, monospace;
     width: 80%;
+}
+
+#ban_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 80%;
+    display: none;
 }
 
 .change {

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
+from datetime import datetime, timezone, timedelta
 
 import smtplib
 import ssl
@@ -63,13 +64,27 @@ def auth_user(email, password, latitude, longitude):
                 db.child("Users").child(user["localId"]).update(
                     {"banned_until": None}, token=user["idToken"]
                 )
+        if user_data.get("banned_until") is not None:
+            banned_until = datetime.fromisoformat(user_data["banned_until"])
+            if datetime.now(timezone.utc) < banned_until:
+                return {"status": "Banned", "banned_until": user_data["banned_until"]}
+            else:
+                db = firebase.database()
+                db.child("Users").child(user["localId"]).update(
+                    {"banned_until": None}, token=user["idToken"]
+                )
         user["status"] = "Success"
         return user
 
-def ban_user(user, banned_until):
+def ban_user(user, username, banned_until):
     db = firebase.database()
-    db.child("Users").child(user["localId"]).update({"banned_until": banned_until}, token=user["idToken"])
 
+    result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
+    print(username)
+    if result:
+        target_id = list(result.keys())[0]
+        print(target_id)
+        db.child("Users").child(target_id).update({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
     # Get a reference to the database service
@@ -149,8 +164,8 @@ def store_report(user, message):
     }
     db.child("Reports").push(data, token=user["idToken"])
 
-    sender_email = "OdysseyAdmin307@gmail.com"
-    receiver_email = "OdysseyAdmin307@gmail.com"
+    sender_email = os.getenv("ADMIN_EMAIL")
+    receiver_email = os.getenv("ADMIN_EMAIL")
     password = os.getenv("EMAIL_PASSWORD")
 
     msg = EmailMessage()
@@ -179,6 +194,7 @@ def report_user(user, subject_username, message):
     if not subject_user:
         return "Not Found"
     subject_user_id = list(subject_user.keys())[0]
+
     if (store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})\n{message}") == "Success"):
         return "Success"
     return "Error"
