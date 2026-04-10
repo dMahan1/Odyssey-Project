@@ -30,14 +30,14 @@ if _src_dir not in sys.path:
     sys.path.insert(0, _src_dir)
 
 import uuid
+from datetime import datetime
 
 import bindings
 from dotenv import load_dotenv
 from flask import Flask, abort, jsonify, render_template, request, session
 from flask_socketio import SocketIO, emit, join_room, leave_room, send
 from jinja2 import TemplateNotFound
-from flask_socketio import SocketIO, send, emit, join_room, leave_room
-from datetime import datetime
+
 from Database import *
 
 SERVER_INSTANCE_ID = str(uuid.uuid4())
@@ -438,4 +438,4 @@ def handle_get_id_coords(ids):
     emit("id_coords_result", {"status": "success", "coords": lat_lon})
 
 if __name__ == '__main__':
-    socketio.run(app, port=8080, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

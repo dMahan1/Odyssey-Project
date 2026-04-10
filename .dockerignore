@@ -1,0 +1,32 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Cache & Artifacts
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# C++ Build Artifacts (Crucial for your Odyssey project)
+*.o
+*.so
+*.a
+build/
+src/bindings.cpython-312-x86_64-linux-gnu.so
+
+# Node / Testing Artifacts
+node_modules/
+npm-debug.log*
+
+# OS specific files
+.DS_Store
+*.Zone.Identifier
+
+# Version Control
+.git/
+.gitignore
+
+# Documentation
+docs/
