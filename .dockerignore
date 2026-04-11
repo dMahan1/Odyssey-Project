@@ -9,12 +9,12 @@ env/
 *$py.class
 .pytest_cache/
 
-# C++ Build Artifacts (Crucial for your Odyssey project)
+# C++ Build Artifacts
 *.o
 *.so
 *.a
 build/
-src/bindings.cpython-312-x86_64-linux-gnu.so
+src/bindings.*.so
 
 # Node / Testing Artifacts
 node_modules/
