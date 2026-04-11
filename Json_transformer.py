@@ -25,7 +25,7 @@ config = {
 
 firebase = empyrebase.initialize_app(config)
 auth = firebase.auth()
-admin = auth.sign_in_with_email_and_password(os.getenv("EMAIL"), os.getenv("PASSWORD"))
+admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
 
 def transform_graph_data(input_filepath):
     # 1. Read the exported JSON from the Graph Builder

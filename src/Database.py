@@ -1,8 +1,14 @@
+from multiprocessing import context
 import os
 from datetime import datetime, timezone
 
 import empyrebase
 from dotenv import load_dotenv
+from datetime import datetime, timezone, timedelta
+
+import smtplib
+import ssl
+from email.message import EmailMessage
 
 import cloudinary
 import cloudinary.uploader
@@ -68,13 +74,27 @@ def auth_user(email, password, latitude, longitude):
                 db.child("Users").child(user["localId"]).update(
                     {"banned_until": None}, token=user["idToken"]
                 )
+        if user_data.get("banned_until") is not None:
+            banned_until = datetime.fromisoformat(user_data["banned_until"])
+            if datetime.now(timezone.utc) < banned_until:
+                return {"status": "Banned", "banned_until": user_data["banned_until"]}
+            else:
+                db = firebase.database()
+                db.child("Users").child(user["localId"]).update(
+                    {"banned_until": None}, token=user["idToken"]
+                )
         user["status"] = "Success"
         return user
 
-def ban_user(user, banned_until):
+def ban_user(user, username, banned_until):
     db = firebase.database()
-    db.child("Users").child(user["localId"]).set({"banned_until": banned_until}, token=user["idToken"])
 
+    result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
+    print(username)
+    if result:
+        target_id = list(result.keys())[0]
+        print(target_id)
+        db.child("Users").child(target_id).update({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
     # Get a reference to the database service
@@ -156,22 +176,6 @@ def set_user_icon_image(user, image):
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
 
-def report_user(user, subject_username):
-    db = firebase.database()
-    subject_user = (
-        db.child("Users")
-        .order_by_child("username")
-        .equal_to(subject_username)
-        .get(token=user["idToken"])
-        .val()
-    )
-    if not subject_user:
-        return "User not found"
-    subject_user_id = list(subject_user.keys())[0]
-    store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})")
-    return "Report submitted"
-
-
 def store_report(user, message):
     db = firebase.database()
     data = {
@@ -181,6 +185,40 @@ def store_report(user, message):
     }
     db.child("Reports").push(data, token=user["idToken"])
 
+    sender_email = os.getenv("ADMIN_EMAIL")
+    receiver_email = os.getenv("ADMIN_EMAIL")
+    password = os.getenv("EMAIL_PASSWORD")
+
+    msg = EmailMessage()
+    msg.set_content(f"Reporter ID: {user['localId']}\n\n{message}")
+    msg['Subject'] = "New Odyssey Report"
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.send_message(msg)
+
+    return "Success"
+
+def report_user(user, subject_username, message):
+    db = firebase.database()
+    subject_user = (
+        db.child("Users")
+        .order_by_child("username")
+        .equal_to(subject_username)
+        .get(token=user["idToken"])
+        .val()
+    )
+    if not subject_user:
+        return "Not Found"
+    subject_user_id = list(subject_user.keys())[0]
+
+    if (store_report(user, f"Report against user: {subject_username} (ID: {subject_user_id})\n{message}") == "Success"):
+        return "Success"
+    return "Error"
 
 def update_username(user, new_username):
     db = firebase.database()

@@ -221,6 +221,8 @@ document.addEventListener("DOMContentLoaded", () => {
         locFail();
     }
 
+    window.socket.emit("get_user_pins");
+
     const searchBtn = document.getElementById('loc_search_btn');
     const searchPopup = document.getElementById('loc_search_popup_background');
     const searchPopupClose = document.getElementById('search_popup_close');
@@ -277,6 +279,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchBar.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchBtn.click();
+    });
+
+    document.getElementById('snap_btn').addEventListener('click', () => {
+        map.setView([latitude, longitude]);
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');

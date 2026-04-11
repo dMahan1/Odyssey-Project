@@ -3,8 +3,12 @@
 *.so
 *:Zone.Identifier
 __pycache__/
-*.pyc
+**.pyc
 .idea/
 logs/
 /node_modules/
 /cypress/fixtures/service-account.json
+logs/cypress/service-account.json
+cypress/service-account.json
+/logs
+/node_modules

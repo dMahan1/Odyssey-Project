@@ -77,12 +77,14 @@ body {
     font-family: Rockwell, monaco, monospace;
     transition: background-color 0.2s ease;
 }
+
 .loc_details {
     display: flex;
     flex-direction: column;
     text-align: left;
     overflow: hidden;
 }
+
 .loc_name {
     font-size: 16px;
     font-weight: bold;
@@ -91,6 +93,7 @@ body {
     text-overflow: ellipsis;
     overflow: hidden;
 }
+
 .loc_result_route {
     width: 34px;
     height: 34px;
@@ -105,6 +108,7 @@ body {
     flex-shrink: 0;
     margin-left: 10px;
 }
+
 .loc_result_route:hover {
     background-color: #b41923;
     color: black;
@@ -153,6 +157,7 @@ body {
     background-color: #eddeab;
     border-right: thick solid black;
 }
+
 .side-btn {
     width: 44px !important;
     height: 44px !important;
@@ -166,6 +171,21 @@ body {
     cursor: pointer;
     border-radius: 8px;
 }
+
+.side-btn-snap {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #e8a2a7;
+    border: 1px solid black;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
 .side-btn img {
     max-width: 65%;
     max-height: 65%;
@@ -174,6 +194,7 @@ body {
     object-fit: contain;
     pointer-events: none;
 }
+
 .side-btn:hover {
     background-color: #b41923;
     border-color: black;
@@ -224,7 +245,6 @@ body {
     border-radius: 4px;
     cursor: pointer;
 }
-
 
 #nav_bar {
     flex-shrink: 0;
@@ -296,8 +316,10 @@ body {
 #loc_search_popup_background,
 #event_popup_background,
 #inbox_popup_background,
-#user_div_background {
-
+#user_div_background,
+#message_popup_background,
+#report_bug_background,
+#report_user_background {
     display: none;
     z-index: 1;
     width: 100%;
@@ -306,16 +328,7 @@ body {
     position: fixed;
 }
 
-#message_popup_background {
-    display: none;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
-    position: fixed;
-}
-
-#event_popup, #inbox_popup, #message_popup {
+#event_popup, #inbox_popup, #message_popup, #report_bug_popup, #report_user_popup {
     background-color: #ABABAB;
     position: absolute;
     left: 50%;
@@ -334,14 +347,18 @@ body {
 #save_event,
 #close_inbox,
 #close_message,
-#send_message {
+#send_message,
+#send_report_bug,
+#send_report_user,
+#close_report_bug,
+#close_report_user {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;
     z-index: 2;
 }
 
-#event_popup_bar, #inbox_popup_bar, #attendees_popup_bar, #message_popup_bar {
+#event_popup_bar, #inbox_popup_bar, #attendees_popup_bar, #message_popup_bar, #report_bug_popup_bar, #report_user_popup_bar {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
@@ -395,7 +412,7 @@ body {
     border: 1px solid black;
 }
 
-.event_invite, .friend_invite {
+.event_invite, .friend_invite, .message {
     font-family: Rockwell, monaco, monospace;
     background-color: #7A7A7A;
     border: 1px solid black;
@@ -406,10 +423,25 @@ body {
     width: 90%;
 }
 
+.message_text {
+    margin-top: 10px;
+    word-break: break-word;
+    text-align: left;
+    width: 100%;
+}
+
 .event_details, .request_details {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    overflow: auto;
+}
+
+.message_details {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    align-items: flex-start;
+    text-align: left;
 }
 
 #accept_event, #accept_friend, #add_friends {
@@ -418,10 +450,17 @@ body {
     cursor: pointer;
 }
 
-#decline_event, #decline_friend, #delete_friends {
+#decline_event, #decline_friend, #delete_friends , #remove_message{
     border-radius: 50%;
     background-color: #FF000D;
     cursor: pointer;
+}
+
+#ban_user {
+    border-radius: 50%;
+    background-color: #ff000d;
+    cursor: pointer;
+    display: none;
 }
 
 #more_event_info {
@@ -486,24 +525,29 @@ body {
     text-align: left;
 }
 
-#message_popup_content {
+#message_popup_content, #report_bug_popup_content, #report_user_popup_content {
     display: flex;
     flex-direction: column;
-    padding-left: 20px;
+    align-items: center;
     height: 100%;
 }
 
-#message_popup_title {
+#message_popup_title, #report_bug_popup_title, #report_user_popup_title {
     font-family: Rockwell, monaco, monospace;
     background-color: #7A7A7A;
     border: 1px solid black;
-    width:90%;
+    width: 90%;
 }
 
-#message_text {
+#message_text, #report_bug_text, #report_user_text {
     font-family: Rockwell, monaco, monospace;
     width: 90%;
     height: 75%;
+}
+
+#user_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 92.5%;
 }
 
 /* Calendar specific things */
@@ -625,7 +669,7 @@ body {
     align-items: end;
 }
 
-#logout, #delete {
+#logout, #delete, #report_bug, #report_user {
     font-size: 20px;
     font-family: Rockwell, monaco, monospace;
     background-color: black;
@@ -672,6 +716,12 @@ body {
     width: 80%;
 }
 
+#ban_search {
+    font-family: Rockwell, monaco, monospace;
+    width: 80%;
+    display: none;
+}
+
 .change {
     background-color: #EDDEAB;
     color: #584813;
@@ -704,4 +754,19 @@ body {
     width: 75%;
     align-self: center;
     border: 1px solid black;
+}
+
+.reports {
+    display: flex;
+    justify-content: space-between;
+    align-self: center;
+    width: 75%;
+}
+
+#checkboxes {
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    font-family: Rockwell, monaco, monospace;
+    justify-content: flex-start;
 }
