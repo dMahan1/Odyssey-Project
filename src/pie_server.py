@@ -71,8 +71,21 @@ def verify_session(user_data):
 def handle_connect():
     emit('server_instance', SERVER_INSTANCE_ID)
     user = session.get('user')
-    if user:
-        print(f"Connected: {user.get('username')} (Session Active)")
+
+    user_data = get_user_data(user) if user else None
+
+    if user_data:
+        if 'banned_until' in user_data:
+            banned_until = datetime.fromisoformat(user_data['banned_until'])
+            if datetime.now() < banned_until:
+                emit("banned", {"until": user_data['banned_until']})
+                return
+            else:
+                # Ban expired, remove ban info
+                db = firebase.database()
+                db.child("users").child(user['localId']).child("banned_until").remove(token=user['idToken'])
+                print(f"Ban expired for user: {user_data.get('username')}")
+        print(f"Connected: {user_data.get('username')} (Session Active)")
     else:
         print("Connected: Anonymous (Session Empty)")
 

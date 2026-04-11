@@ -51,7 +51,8 @@ def _find_mingw_compiler():
             print(f"[build] Skipping {exe} (target: {m} — not a Windows-native toolchain)")
 
     # Second pass: look inside the detected MSYS2 installation for mingw64/ucrt64
-    for root in msys2_roots:
+    # Also always check the default MSYS2 install location in case it wasn't in PATH
+    for root in msys2_roots | {r"C:\msys64", r"C:\msys2"}:
         for subenv in ["mingw64", "ucrt64", "clang64", "mingw32"]:
             cxx = os.path.join(root, subenv, "bin", "g++.exe")
             if not os.path.isfile(cxx):
