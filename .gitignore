@@ -6,3 +6,5 @@ __pycache__/
 *.pyc
 .idea/
 logs/
+/node_modules/
+/cypress/fixtures/service-account.json

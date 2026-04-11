@@ -4,6 +4,14 @@ from datetime import datetime, timezone
 import empyrebase
 from dotenv import load_dotenv
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
+from cloudinary import CloudinaryImage
+from cloudinary import CloudinaryVideo
+
 # Get the user's home directory path
 # home_dir = Path.home()
 
