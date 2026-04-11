@@ -29,9 +29,9 @@ function initMap() {
 
 let locationSuccess = false;
 var userIcon = L.icon({
-    iconUrl: '../static/images/walking_icon.png', //Default to walking guy, will change later
+    iconUrl: '../static/images/Default.png',
 
-    iconSize:     [38, 38], // size of the icon
+    iconSize:     [25, 30], // size of the icon
     iconAnchor:   [19, 19], // point of the icon which will correspond to marker's location
     shadowAnchor: [4, 62],  // the same for the shadow
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
@@ -225,6 +225,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchPopup = document.getElementById('loc_search_popup_background');
     const searchPopupClose = document.getElementById('search_popup_close');
     const searchBar = document.getElementById('loc_search_bar');
+
+    socket.emit("get_user");
+    window.socket.once("return_user", (user) => {
+        if (user) {
+            icon_path = user.icon_image_path || '../static/images/Default.png';
+            userIcon = L.icon({
+                iconSize:     [25, 30], // size of the icon
+                iconAnchor:   [19, 19], // point of the icon which will correspond to marker's location
+                shadowAnchor: [4, 62],  // the same for the shadow
+                popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+            });
+            if (userMarker) {
+                userMarker.setIcon(userIcon);
+                userMarker.update();
+            }
+        }
+    });
 
     searchBtn.addEventListener('click', () => {
         const popupBody = document.getElementById('loc_search_popup');

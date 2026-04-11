@@ -12,6 +12,8 @@ import cloudinary.api
 from cloudinary import CloudinaryImage
 from cloudinary import CloudinaryVideo
 
+cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
+
 # Get the user's home directory path
 # home_dir = Path.home()
 
@@ -128,7 +130,7 @@ def create_user(email, username, password, latitude, longitude):
             "dropped_pins": [],
             "curr_location": {"latitude": latitude, "longitude": longitude},
             "location_public": True,
-            "icon_image_path": "../images/Person_icon.png",
+            "icon_image_path": "../images/Default.png",
             "toucoins": 0,
             "new_messages": [],
         }
@@ -138,7 +140,18 @@ def create_user(email, username, password, latitude, longitude):
         user["displayName"] = username
         user["status"] = "Success"
         return user
-
+    
+def set_user_icon_image(user, image):
+    db = firebase.database()
+    if image is None:
+        db.child("Users").child(user["localId"]).update(
+            {"icon_image_path": "../images/Default.png"}, token=user["idToken"]
+        )
+    else:
+        db.child("Users").child(user["localId"]).update(
+            {"icon_image_path": user["localId"]}, token=user["idToken"]
+        )
+        cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
@@ -209,14 +222,6 @@ def update_user_location_public(user, status):
     db.child("Users").child(user["localId"]).update(
         {"location_public": status}, token=user["idToken"]
     )
-
-
-def update_user_icon_image_path(user, path):
-    db = firebase.database()
-    db.child("Users").child(user["localId"]).update(
-        {"icon_image_path": path}, token=user["idToken"]
-    )
-
 
 def update_user_toucoins(user, amount):
     db = firebase.database()
