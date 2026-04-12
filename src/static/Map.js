@@ -224,25 +224,43 @@ document.addEventListener("DOMContentLoaded", () => {
     window.socket.emit("get_user_pins");
 
     const otherUserMarkers = {};
-    window.socket.emit("get_public_users");
-    window.socket.once("public_users_got", (users) => {
-        users.forEach(u => {
-            if (u.latitude == null || u.longitude == null) return;
-            const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
-                ? u.icon_image_path
-                : '../static/images/Default.png';
-            const otherIcon = L.icon({
-                iconUrl: iconUrl,
-                iconSize:   [20, 24],
-                iconAnchor: [10, 12],
-                popupAnchor: [0, -12]
+
+    function refreshPublicUsers() {
+        window.socket.once("public_users_got", (users) => {
+            const seenIds = new Set();
+            users.forEach(u => {
+                if (u.latitude == null || u.longitude == null) return;
+                seenIds.add(u.id);
+                const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                    ? u.icon_image_path
+                    : '../static/images/Default.png';
+                if (otherUserMarkers[u.id]) {
+                    otherUserMarkers[u.id].setLatLng([u.latitude, u.longitude]);
+                } else {
+                    const otherIcon = L.icon({
+                        iconUrl: iconUrl,
+                        iconSize:   [20, 24],
+                        iconAnchor: [10, 12],
+                        popupAnchor: [0, -12]
+                    });
+                    otherUserMarkers[u.id] = L.marker([u.latitude, u.longitude], { icon: otherIcon })
+                        .addTo(map)
+                        .bindPopup(u.username || 'User');
+                }
             });
-            const marker = L.marker([u.latitude, u.longitude], { icon: otherIcon })
-                .addTo(map)
-                .bindPopup(u.username || 'User');
-            otherUserMarkers[u.id] = marker;
+            // Remove markers for users no longer public
+            Object.keys(otherUserMarkers).forEach(id => {
+                if (!seenIds.has(id)) {
+                    otherUserMarkers[id].remove();
+                    delete otherUserMarkers[id];
+                }
+            });
+            setTimeout(refreshPublicUsers, 60000);
         });
-    });
+        window.socket.emit("get_public_users");
+    }
+
+    refreshPublicUsers();
 
     const searchBtn = document.getElementById('loc_search_btn');
     const searchPopup = document.getElementById('loc_search_popup_background');
