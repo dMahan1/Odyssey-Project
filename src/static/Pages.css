@@ -593,7 +593,7 @@ body {
 }
 
 /* Calendar specific things */
-.day_calendar_header {
+.day_calendar_header, .month_calendar_header {
     background-color: #EDDEAB;
     display: flex;
     justify-content: space-between;
@@ -647,7 +647,25 @@ body {
     flex: 1;
 }
 
+.month_calendar_body {
+    background-color: #ABABAB;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 .day_calendar {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #ABABAB;
+    justify-content: flex-start;
+    width: 100%;
+    overflow: auto;
+    display: none; /* PUT BACK TO FLEX AT END!!! */
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.month_calendar {
     font-family: Rockwell, monaco, monospace;
     background-color: #ABABAB;
     justify-content: flex-start;
@@ -658,10 +676,42 @@ body {
     flex-grow: 1;
 }
 
-#prev_day, #next_day {
+#prev_day, #next_day, #prev_month, #next_month {
     background-color: transparent;
     border: none;
     cursor: pointer;
+}
+
+.month_calendar_weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr;
+    text-align: center;
+    border: 1px solid black;
+    background: white;
+}
+
+.month_calendar_dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr;
+    text-align: center;
+    border: 1px solid black;
+    background: white;
+    flex-grow: 1;
+}
+
+.weekday {
+}
+
+.calendar_day {
+    border: 1px solid black;
+    cursor: pointer;
+
+}
+
+.calendar_day:hover{
+    background-color: grey;
 }
 
 .event {

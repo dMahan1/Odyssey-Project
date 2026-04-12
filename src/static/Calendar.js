@@ -41,6 +41,8 @@ const calendar_popup = document.getElementById('calendar_popup_background');
 const day_textfield = document.getElementById('day');
 const previous_day = document.getElementById('prev_day');
 const next_day = document.getElementById('next_day');
+const previous_month = document.getElementById('prev_month');
+const next_month = document.getElementById('next_month');
 
 let current_date = new Date();
 let current_day = current_date.getDate();
@@ -51,6 +53,13 @@ let current_event_id = null; // To track which event we're messaging about, if a
 
 const cancel_calendar_change = document.getElementById('cancel_calendar_change');
 const change_mode_button = document.getElementById('change_mode_button');
+const day_change = document.getElementById('day_change');
+const week_change = document.getElementById('week_change');
+const month_change = document.getElementById('month_change');
+const year_change = document.getElementById('year_change');
+const day_calendar = document.querySelector('.day_calendar');
+const month_calendar = document.querySelector('.month_calendar');
+
 
 // Message specific variables
 const message_popup_bar = document.getElementById('message_popup_bar');
@@ -234,10 +243,6 @@ function add_attendee_list(attendee_name, attendee_id) {
     container.appendChild(new_attendee);
 }
 
-function make_calendar(day, dow, month, year) {
-    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
-}
-
 function add_location(location_name, location_id) {
     const newLoc = new Option(location_name, location_id);
     loc.appendChild(newLoc);
@@ -369,6 +374,42 @@ function update_events() {
     });
 }
 
+const month_label = document.getElementById('month_label');
+const month_calendar_dates =  document.querySelector('.month_calendar_dates');
+
+/* Calendar Specific functions */
+function make_calendar(day, dow, month, year) {
+    make_day_calendar(day, dow, month, year);
+    make_month_calendar(month, year);
+
+}
+
+function make_day_calendar(day, dow, month, year) {
+    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+}
+
+function make_month_calendar(month, year) {
+    month_calendar_dates.innerHTML = '';
+    month_label.textContent = `${months[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+        const blank_element = document.createElement('div');
+        blank_element.classList.add('calendar_day');
+        month_calendar_dates.appendChild(blank_element);
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const day_element = document.createElement('div');
+        day_element.classList.add('calendar_day');
+        day_element.textContent = i;
+        month_calendar_dates.appendChild(day_element);
+    }
+}
+
 function clear_event_window() {
     title.value = null;
     start_time.value = null;
@@ -498,48 +539,6 @@ window.socket.on("event_accepted", (success) => {
     }
 });
 
-previous_day.addEventListener('click', () => {
-    current_day--;
-    current_dow--;
-    if (current_day < 1) {
-        current_month--;
-        current_day =  new Date(current_year, current_month + 1, 0).getDate();
-    }
-
-    if (current_dow < 0) {
-      current_dow = 6;
-    }
-
-    if (current_month < 0) {
-        current_year--;
-        current_month = 11;
-        current_day =  new Date(current_year, current_month + 1, 0).getDate();
-    }
-    make_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
-})
-
-next_day.addEventListener('click', () => {
-    current_day++;
-    current_dow++;
-    if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
-        current_day = 1;
-        current_month++;
-    }
-
-    if (current_dow > 6) {
-        current_dow = 0;
-    }
-
-    if (current_month > 11) {
-        current_year++;
-        current_month = 0;
-    }
-
-    make_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
-})
-
 more_attendees_button.addEventListener('click', () => {
     attendees_content.innerHTML = '';
 
@@ -594,9 +593,97 @@ send_message.addEventListener('click', () => {
     }
 })
 
+/* Calendar specific things */
 cancel_calendar_change.addEventListener('click', () => {
     calendar_popup.style.display = "none";
 })
 change_mode_button.addEventListener('click', () => {
     calendar_popup.style.display = "block";
 })
+
+previous_day.addEventListener('click', () => {
+    current_day--;
+    current_dow--;
+    if (current_day < 1) {
+        current_month--;
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
+    }
+
+    if (current_dow < 0) {
+        current_dow = 6;
+    }
+
+    if (current_month < 0) {
+        current_year--;
+        current_month = 11;
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
+    }
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_events();
+})
+
+next_day.addEventListener('click', () => {
+    current_day++;
+    current_dow++;
+    if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
+        current_day = 1;
+        current_month++;
+    }
+
+    if (current_dow > 6) {
+        current_dow = 0;
+    }
+
+    if (current_month > 11) {
+        current_year++;
+        current_month = 0;
+    }
+
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_events();
+})
+
+previous_month.addEventListener('click', () => {
+    current_month--;
+    if (current_month < 0) {
+        current_month = 11;
+        current_year--;
+    }
+
+    make_month_calendar(current_month, current_year);
+})
+
+next_month.addEventListener('click', () => {
+    current_month++;
+    if (current_month > 11) {
+        current_month = 0;
+        current_year++;
+    }
+
+    make_month_calendar(current_month, current_year);
+})
+
+
+day_change.addEventListener('click', () => {
+    month_calendar.style.display = "none";
+    day_calendar.style.display = "block";
+    calendar_popup.style.display = "none";
+})
+
+week_change.addEventListener('click', () => {
+    day_calendar.style.display = "none";
+    month_calendar.style.display = "none";
+    calendar_popup.style.display = "none";
+})
+
+month_change.addEventListener('click', () => {
+    day_calendar.style.display = "none";
+    month_calendar.style.display = "flex";
+    calendar_popup.style.display = "none";
+})
+
+year_change.addEventListener('click', () => {
+    day_calendar.style.display = "none";
+    calendar_popup.style.display = "none";
+})
+
