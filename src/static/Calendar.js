@@ -35,6 +35,7 @@ const inbox_popup = document.getElementById('inbox_popup_background');
 const close_inbox = document.getElementById('close_inbox');
 const inbox_popup_top_bar = document.getElementById('inbox_popup_bar');
 const inbox_popup_content = document.getElementById('inbox_popup_content');
+const calendar_popup = document.getElementById('calendar_popup_background');
 
 // Calendar specific variables
 const day_textfield = document.getElementById('day');
@@ -47,6 +48,9 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
+
+const cancel_calendar_change = document.getElementById('cancel_calendar_change');
+const change_mode_button = document.getElementById('change_mode_button');
 
 // Message specific variables
 const message_popup_bar = document.getElementById('message_popup_bar');
@@ -588,4 +592,11 @@ send_message.addEventListener('click', () => {
         message_popup.style.display = "none";
         message_text.value = null;
     }
+})
+
+cancel_calendar_change.addEventListener('click', () => {
+    calendar_popup.style.display = "none";
+})
+change_mode_button.addEventListener('click', () => {
+    calendar_popup.style.display = "block";
 })

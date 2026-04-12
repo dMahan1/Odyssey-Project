@@ -320,7 +320,8 @@ body {
 #user_div_background,
 #message_popup_background,
 #report_bug_background,
-#report_user_background {
+#report_user_background,
+#calendar_popup_background {
     display: none;
     z-index: 1;
     width: 100%;
@@ -342,6 +343,44 @@ body {
     border: 3px solid black;
 }
 
+#calendar_popup {
+    background-color: #ABABAB;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 25%;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    border: 3px solid black;
+
+    padding: 0;
+    gap: 0;
+}
+
+#calendar_popup_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: auto;
+    margin-top: 20px;
+    margin-bottom:20px;
+}
+
+#day_change, #month_change, #year_change, #week_change {
+    width: 100%;
+    height: 50px;
+    background-color: #EDDEAB;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    cursor: pointer;
+}
+
+#day_change {
+    border-top: 2px black solid;
+}
 
 #search_popup_close,
 #scrap_event,
@@ -352,14 +391,16 @@ body {
 #send_report_bug,
 #send_report_user,
 #close_report_bug,
-#close_report_user {
+#close_report_user,
+#cancel_calendar_change {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;
     z-index: 2;
 }
 
-#event_popup_bar, #inbox_popup_bar, #attendees_popup_bar, #message_popup_bar, #report_bug_popup_bar, #report_user_popup_bar {
+#event_popup_bar, #inbox_popup_bar, #attendees_popup_bar, #message_popup_bar, #report_bug_popup_bar, #report_user_popup_bar,
+#calendar_popup_bar {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;

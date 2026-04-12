@@ -13,17 +13,17 @@ os.chdir(_project_root)
 
 #ONLY FOR TESTING
 
-if sys.platform == "win32":
-     _build_script = os.path.join(_src_dir, "build.py")
-     subprocess.check_call(
-         [sys.executable, _build_script],
-         stdin=subprocess.DEVNULL,
-     )
-else:
-     subprocess.check_call(
-         ["make", "all", f"PYTHON={sys.executable}"],
-         stdin=subprocess.DEVNULL,
-     )
+# if sys.platform == "win32":
+#      _build_script = os.path.join(_src_dir, "build.py")
+#      subprocess.check_call(
+#          [sys.executable, _build_script],
+#          stdin=subprocess.DEVNULL,
+#      )
+# else:
+#      subprocess.check_call(
+#          ["make", "all", f"PYTHON={sys.executable}"],
+#          stdin=subprocess.DEVNULL,
+#      )
 
 # Ensure src/ is on the path so the built bindings module can be found
 if _src_dir not in sys.path:
