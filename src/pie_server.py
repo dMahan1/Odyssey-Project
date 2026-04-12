@@ -209,6 +209,16 @@ def handle_get_user_pins():
     emit("user_pins_got", pins)
 
 
+@socketio.on("get_public_users")
+def handle_get_public_users():
+    user = session.get('user')
+    if not user:
+        return
+    users_data = get_public_user_location_and_icon(user)
+    # Exclude the requesting user's own marker
+    users_data = [u for u in users_data if u['id'] != user['localId']]
+    emit("public_users_got", users_data)
+
 @socketio.on("get_permanent_locations")
 def handle_get_perm_locs():
     user = session.get('user')

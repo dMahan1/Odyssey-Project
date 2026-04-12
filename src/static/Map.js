@@ -29,9 +29,9 @@ function initMap() {
 
 let locationSuccess = false;
 var userIcon = L.icon({
-    iconUrl: '../static/images/walking_icon.png', //Default to walking guy, will change later
+    iconUrl: '../static/images/Default.png',
 
-    iconSize:     [38, 38], // size of the icon
+    iconSize:     [25, 30], // size of the icon
     iconAnchor:   [19, 19], // point of the icon which will correspond to marker's location
     shadowAnchor: [4, 62],  // the same for the shadow
     popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
@@ -223,10 +223,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.socket.emit("get_user_pins");
 
+    const otherUserMarkers = {};
+
+    function refreshPublicUsers() {
+        window.socket.once("public_users_got", (users) => {
+            const seenIds = new Set();
+            users.forEach(u => {
+                if (u.latitude == null || u.longitude == null) return;
+                seenIds.add(u.id);
+                const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                    ? u.icon_image_path
+                    : '../static/images/Default.png';
+                if (otherUserMarkers[u.id]) {
+                    otherUserMarkers[u.id].setLatLng([u.latitude, u.longitude]);
+                } else {
+                    const otherIcon = L.icon({
+                        iconUrl: iconUrl,
+                        iconSize:   [20, 24],
+                        iconAnchor: [10, 12],
+                        popupAnchor: [0, -12]
+                    });
+                    otherUserMarkers[u.id] = L.marker([u.latitude, u.longitude], { icon: otherIcon })
+                        .addTo(map)
+                        .bindPopup(u.username || 'User');
+                }
+            });
+            // Remove markers for users no longer public
+            Object.keys(otherUserMarkers).forEach(id => {
+                if (!seenIds.has(id)) {
+                    otherUserMarkers[id].remove();
+                    delete otherUserMarkers[id];
+                }
+            });
+            setTimeout(refreshPublicUsers, 60000);
+        });
+        window.socket.emit("get_public_users");
+    }
+
+    refreshPublicUsers();
+
     const searchBtn = document.getElementById('loc_search_btn');
     const searchPopup = document.getElementById('loc_search_popup_background');
     const searchPopupClose = document.getElementById('search_popup_close');
     const searchBar = document.getElementById('loc_search_bar');
+
+    socket.emit("get_user");
+    window.socket.once("return_user", (user) => {
+        if (user) {
+            const iconUrl = (user.icon_image_path && user.icon_image_path.startsWith('http'))
+                ? user.icon_image_path
+                : '../static/images/Default.png';
+            userIcon = L.icon({
+                iconUrl: iconUrl,
+                iconSize:   [25, 30],
+                iconAnchor: [19, 19],
+                shadowAnchor: [4, 62],
+                popupAnchor: [-3, -76]
+            });
+            if (userMarker) {
+                userMarker.setIcon(userIcon);
+                userMarker.update();
+            }
+        }
+    });
 
     searchBtn.addEventListener('click', () => {
         const popupBody = document.getElementById('loc_search_popup');
