@@ -18,6 +18,8 @@ import cloudinary.api
 from cloudinary import CloudinaryImage
 from cloudinary import CloudinaryVideo
 
+from pathlib import Path
+
 cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
@@ -108,6 +110,36 @@ def get_user_data(user):
     print(user_data)
     return user_data
 
+def get_public_user_location_and_icon(user):
+    db = firebase.database()
+    user_data = db.child("Users").get(token=user["idToken"]).val()
+
+    user_locations = []
+
+    if not user_data:
+        return user_locations
+
+    for user_id, data in user_data.items():
+        if not isinstance(data, dict):
+            continue
+        if not data.get("location_public"):
+            continue
+        location = data.get("curr_location")
+        if not location:
+            continue
+        icon_path = data.get("icon_image_path")
+        # Only pass icon_image_path if it's a valid external URL (e.g. Cloudinary)
+        if not icon_path or not Path(icon_path).exists():
+            icon_path = "../images/Default.png"
+        user_locations.append({
+            "id": user_id,
+            "username": data.get("username"),
+            "latitude": location.get("latitude"),
+            "longitude": location.get("longitude"),
+            "icon_image_path": icon_path
+        })
+
+    return user_locations
 
 def create_user(email, username, password, latitude, longitude):
 

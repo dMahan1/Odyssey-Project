@@ -223,6 +223,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.socket.emit("get_user_pins");
 
+    const otherUserMarkers = {};
+    window.socket.emit("get_public_users");
+    window.socket.once("public_users_got", (users) => {
+        users.forEach(u => {
+            if (u.latitude == null || u.longitude == null) return;
+            const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                ? u.icon_image_path
+                : '../static/images/Default.png';
+            const otherIcon = L.icon({
+                iconUrl: iconUrl,
+                iconSize:   [20, 24],
+                iconAnchor: [10, 12],
+                popupAnchor: [0, -12]
+            });
+            const marker = L.marker([u.latitude, u.longitude], { icon: otherIcon })
+                .addTo(map)
+                .bindPopup(u.username || 'User');
+            otherUserMarkers[u.id] = marker;
+        });
+    });
+
     const searchBtn = document.getElementById('loc_search_btn');
     const searchPopup = document.getElementById('loc_search_popup_background');
     const searchPopupClose = document.getElementById('search_popup_close');
@@ -231,12 +252,15 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.emit("get_user");
     window.socket.once("return_user", (user) => {
         if (user) {
-            icon_path = user.icon_image_path || '../static/images/Default.png';
+            const iconUrl = (user.icon_image_path && user.icon_image_path.startsWith('http'))
+                ? user.icon_image_path
+                : '../static/images/Default.png';
             userIcon = L.icon({
-                iconSize:     [25, 30], // size of the icon
-                iconAnchor:   [19, 19], // point of the icon which will correspond to marker's location
-                shadowAnchor: [4, 62],  // the same for the shadow
-                popupAnchor:  [-3, -76] // point from which the popup should open relative to the iconAnchor
+                iconUrl: iconUrl,
+                iconSize:   [25, 30],
+                iconAnchor: [19, 19],
+                shadowAnchor: [4, 62],
+                popupAnchor: [-3, -76]
             });
             if (userMarker) {
                 userMarker.setIcon(userIcon);
