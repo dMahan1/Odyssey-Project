@@ -407,24 +407,41 @@ def handle_search_locations(loc_name):
 
     matches = get_locations_from_name(user, loc_name)
 
-    if matches:
-        all_results = []
-        for match in matches:
-            full_data = get_location_data(user, match['id'])
-            if full_data and 'coordinates' in full_data:
-                all_results.append({
-                    "id": match['id'],
-                    "name": full_data.get("name", "Unnamed Location"),
-                    "latitude": full_data['coordinates']['latitude'],
-                    "longitude": full_data['coordinates']['longitude']
-                })
+    if not matches:
+        return emit("search_result", {"status": "error", "message": "No matches found"})
 
-        emit("search_result", {"status": "success", "results": all_results})
-    else:
-        emit("search_result", {"status": "error", "message": "No matches found"})
+    groups = {}
+
+    for match in matches:
+        full_data = get_location_data(user, match['id'])
+
+        if full_data and 'coordinates' in full_data:
+            name = full_data.get("name", "Unnamed Location")
+            lat = full_data['coordinates']['latitude']
+            lng = full_data['coordinates']['longitude']
+
+            if name not in groups:
+                groups[name] = {"lat_sum": 0, "lng_sum": 0, "count": 0, "ids": []}
+
+            groups[name]["lat_sum"] += lat
+            groups[name]["lng_sum"] += lng
+            groups[name]["count"] += 1
+            groups[name]["ids"].append(match['id'])
+
+    averaged_results = []
+    for name, data in groups.items():
+        averaged_results.append({
+            "name": name,
+            "latitude": data["lat_sum"] / data["count"],
+            "longitude": data["lng_sum"] / data["count"],
+            "count": data["count"],
+            "source_ids": data["ids"]
+        })
+
+    emit("search_result", {"status": "success", "results": averaged_results})
 
 @socketio.on("get_route")
-def handle_get_route(src_lat, src_lon, dst_id, bad_weather, traversal_mode):
+def handle_get_route(src_lat, src_lon, dst_lat, dst_lon, bad_weather, traversal_mode):
     user = session.get('user')
     if not user:
         return emit("route_result", {"status": "error", "message": "Not logged in"})
@@ -433,8 +450,7 @@ def handle_get_route(src_lat, src_lon, dst_id, bad_weather, traversal_mode):
     except AttributeError:
         traversal_mode = bindings.TraversalMode.WALKING
     src = pathfinder.approximate_location_via(src_lat, src_lon, traversal_mode)
-    true_dst = pathfinder.get_location_by_id(dst_id)
-    dst = pathfinder.approximate_location_via(true_dst.get_latitude(), true_dst.get_longitude(), traversal_mode)
+    dst = pathfinder.approximate_location_via(dst_lat, dst_lon, traversal_mode)
 
     try:
         path_raw = pathfinder.route(src, dst, bad_weather, traversal_mode)

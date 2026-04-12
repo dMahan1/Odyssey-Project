@@ -6,6 +6,7 @@ let oldLon;
 let currentRouteLayer = null;
 let isPlacingPin = false;
 let pins = [];
+let hotspots = [];
 let pinLayerGroup;
 
 function initMap() {
@@ -410,7 +411,8 @@ window.socket.on("search_result", (data) => {
             window.socket.emit("get_route",
                 latitude,
                 longitude,
-                location.id,
+                location.latitude,
+                location.longitude,
                 isPoorWeather,
                 mode
             );
