@@ -1,3 +1,5 @@
+# How to use: run 'docker compose up --build'. You'll have to install Docker and Docker Compose first.
+# After running, you'll have an active container running the Odyssey project. -Q
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y \
