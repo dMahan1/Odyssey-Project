@@ -327,6 +327,15 @@ document.addEventListener("DOMContentLoaded", () => {
         map.setView([latitude, longitude]);
     });
 
+    document.getElementById('busy_report_btn').addEventListener('click', () => {
+      var circle = L.circle([latitude, longitude], {
+          color: 'red',
+          fillColor: '#f03',
+          fillOpacity: 0.5,
+          radius: 25
+      }).addTo(map);
+    });
+
     const modeButtons = document.querySelectorAll('.side-btn');
     let currentMode = getSelectedMode();
 

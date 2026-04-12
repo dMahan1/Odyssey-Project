@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir \
     flask-socketio \
     pybind11 \
     python-dotenv \
-    empyrebase
+    empyrebase \
+    cloudinary
 
 COPY . .
 
