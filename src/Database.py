@@ -814,13 +814,10 @@ def create_hotspot(user, latitude, longitude):
     db = firebase.database()
     end_time = datetime.now(timezone.utc) + timedelta(minutes=5)
     hotspot = {
-            "creator_id": user["localId"],
-            "coords": {
-                "latitude": latitude,
-                "longitude": longitude
-            },
-            "end_time": end_time.isoformat()
-        }
+        "latitude": latitude,
+        "longitude": longitude,
+        "end_time": end_time.isoformat()
+    }
     new_hotspot = db.child("Hotspots").push(hotspot, token=user["idToken"])
     return new_hotspot["name"]
 

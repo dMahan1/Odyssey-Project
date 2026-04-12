@@ -482,7 +482,7 @@ def handle_create_hotspot(data):
     if not user:
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
 
-    ret = create_hotspot(user["idToken"], data["latitude"], data["longitude"])
+    ret = create_hotspot(user, data["latitude"], data["longitude"])
     emit("hotspot_result", {"status": "success", "id": ret})
 
 if __name__ == '__main__':

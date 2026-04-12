@@ -328,13 +328,8 @@ document.addEventListener("DOMContentLoaded", () => {
         map.setView([latitude, longitude]);
     });
 
-    document.getElementById('busy_report_btn').addEventListener('click', () => {
-      var circle = L.circle([latitude, longitude], {
-          color: 'red',
-          fillColor: '#f03',
-          fillOpacity: 0.5,
-          radius: 25
-      }).addTo(map);
+    document.getElementById('hotspot_btn').addEventListener('click', () => {
+        window.socket.emit('create_hotspot', {"latitude": latitude, "longitude": longitude});
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');
@@ -505,6 +500,18 @@ window.socket.on("user_pins_got", (data) => {
             });
             pinLayerGroup.addLayer(marker);
         }
+    });
+});
+
+window.socket.on("hotspot_result", (data) => {
+    hotspots.forEach(hotspot => {
+        map.removeLayer(hotspot.marker);
+    });
+    hotspots = [];
+    data.hotspots.forEach(hotspot => {
+        console.log(hotspot);
+        //map.addLayer(marker);
+        //hotspots.push({ marker, ...hotspot });
     });
 });
 
