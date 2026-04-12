@@ -476,5 +476,14 @@ def handle_get_id_coords(ids):
             print(f"Warning: Location ID {loc_id} not found in Pathfinder.")
     emit("id_coords_result", {"status": "success", "coords": lat_lon})
 
+@socketio.on("create_hotspot")
+def handle_create_hotspot(data):
+    user = session.get('user')
+    if not user:
+        return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
+
+    ret = create_hotspot(user["idToken"], data["latitude"], data["longitude"])
+    emit("hotspot_result", {"status": "success", "id": ret})
+
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

@@ -389,6 +389,7 @@ window.socket.on("search_result", (data) => {
             popupBody.appendChild(noResult);
             return;
     }
+    data.results.sort((a, b) => a.name.localeCompare(b.name));
     data.results.forEach(location => {
         const clone = template.content.cloneNode(true);
 

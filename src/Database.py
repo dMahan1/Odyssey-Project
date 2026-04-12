@@ -1,24 +1,19 @@
-from multiprocessing import context
 import os
-from datetime import datetime, timezone
-
-import empyrebase
-from dotenv import load_dotenv
-from datetime import datetime, timezone, timedelta
-
 import smtplib
 import ssl
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from multiprocessing import context
+from pathlib import Path
 
 import cloudinary
-import cloudinary.uploader
 import cloudinary.api
+import cloudinary.uploader
+import empyrebase
 
 # Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-from cloudinary import CloudinaryImage
-from cloudinary import CloudinaryVideo
-
-from pathlib import Path
+from cloudinary import CloudinaryImage, CloudinaryVideo
+from dotenv import load_dotenv
 
 cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
@@ -192,7 +187,7 @@ def create_user(email, username, password, latitude, longitude):
         user["displayName"] = username
         user["status"] = "Success"
         return user
-    
+
 def set_user_icon_image(user, image):
     db = firebase.database()
     if image is None:
@@ -815,6 +810,40 @@ def get_user_events(user):
                 )
     return events
 
+def create_hotspot(user, latitude, longitude):
+    db = firebase.database()
+    end_time = datetime.now(timezone.utc) + timedelta(minutes=5)
+    hotspot = {
+            "creator_id": user["localId"],
+            "coords": {
+                "latitude": latitude,
+                "longitude": longitude
+            },
+            "end_time": end_time.isoformat()
+        }
+    new_hotspot = db.child("Hotspots").push(hotspot, token=user["idToken"])
+    return new_hotspot["name"]
+
+def get_hotspots(user):
+    db = firebase.database()
+    now = datetime.now(timezone.utc)
+    hotspots = db.child("Hotspots").get(token=user["idToken"]).val()
+
+    active_hotspots = {}
+
+    if hotspots:
+        for id, data in hotspots.items():
+            try:
+                expiry = datetime.fromisoformat(data["end_time"])
+                if now < expiry:
+                    active_hotspots[id] = data
+                else:
+                    db.child("Hotspots").child(id).remove(token=user["idToken"])
+            except Exception as e:
+                print(f"Error processing hotspot {id}: {e}")
+                continue
+
+    return active_hotspots
 
 def test():
     firebase = empyrebase.initialize_app(config)
