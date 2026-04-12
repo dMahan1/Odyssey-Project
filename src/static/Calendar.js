@@ -333,6 +333,11 @@ function clear_events() {
 }
 
 function update_events() {
+    update_day_events();
+    update_month_events();
+}
+
+function update_day_events() {
     window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
         clear_events();
@@ -374,6 +379,28 @@ function update_events() {
     });
 }
 
+function update_month_events() {
+    window.socket.emit("get_events");
+    window.socket.once("events_got", (events) => {
+        clear_events();
+
+        const calendarDate = new Date(current_year, current_month, current_day);
+        calendarDate.setHours(0, 0, 0, 0);
+
+        events.forEach(event => {
+            const startVal = new Date(event.start_time);
+            if (startVal.getMonth() === current_month && startVal.getFullYear() === current_year) {
+                add_month_event(
+                    event.name,
+                    startVal.getFullYear(),
+                    startVal.getMonth(),
+                    startVal.getDate()
+                );
+            }
+        });
+    });
+}
+
 const month_label = document.getElementById('month_label');
 const month_calendar_dates =  document.querySelector('.month_calendar_dates');
 
@@ -405,8 +432,41 @@ function make_month_calendar(month, year) {
     for (let i = 1; i <= daysInMonth; i++) {
         const day_element = document.createElement('div');
         day_element.classList.add('calendar_day');
-        day_element.textContent = i;
+
+        const day_number = document.createElement('div');
+        day_number.classList.add('day_number');
+        day_number.textContent = i;
+
+        const event_space = document.createElement('div');
+        event_space.classList.add('event_space');
+        event_space.id = `month_space-${year}-${month}-${i}`;
+
+        day_element.appendChild(day_number);
+        day_element.appendChild(event_space);
         month_calendar_dates.appendChild(day_element);
+    }
+
+    const occupied_slots = firstDay + daysInMonth;
+
+    if ((occupied_slots % 7) !== 0) {
+        for (let i = 0; i < (7 - (occupied_slots % 7)); i++) {
+            const blank_element = document.createElement('div');
+            blank_element.classList.add('calendar_day');
+            month_calendar_dates.appendChild(blank_element);
+        }
+    }
+}
+
+function add_month_event(event_name, year, month, day) {
+    const target_id = `month_space-${year}-${month}-${day}`;
+    const target_event_space = document.getElementById(target_id);
+
+    if (target_event_space) {
+        const month_event = document.getElementById('month_event_template');
+        let new_month_event = month_event.content.cloneNode(true);
+        let month_element = new_month_event.querySelector('.month_event');
+        month_element.querySelector('.month_event_name').innerText = event_name;
+        target_event_space.appendChild(new_month_event);
     }
 }
 
@@ -619,7 +679,7 @@ previous_day.addEventListener('click', () => {
         current_day =  new Date(current_year, current_month + 1, 0).getDate();
     }
     make_day_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
+    update_day_events();
 })
 
 next_day.addEventListener('click', () => {
@@ -640,7 +700,7 @@ next_day.addEventListener('click', () => {
     }
 
     make_day_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
+    update_day_events();
 })
 
 previous_month.addEventListener('click', () => {
@@ -651,6 +711,7 @@ previous_month.addEventListener('click', () => {
     }
 
     make_month_calendar(current_month, current_year);
+    update_month_events();
 })
 
 next_month.addEventListener('click', () => {
@@ -661,10 +722,13 @@ next_month.addEventListener('click', () => {
     }
 
     make_month_calendar(current_month, current_year);
+    update_month_events();
 })
 
 
 day_change.addEventListener('click', () => {
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_day_events();
     month_calendar.style.display = "none";
     day_calendar.style.display = "block";
     calendar_popup.style.display = "none";
@@ -677,6 +741,9 @@ week_change.addEventListener('click', () => {
 })
 
 month_change.addEventListener('click', () => {
+    make_month_calendar(current_month, current_year);
+    update_month_events();
+
     day_calendar.style.display = "none";
     month_calendar.style.display = "flex";
     calendar_popup.style.display = "none";
@@ -684,6 +751,7 @@ month_change.addEventListener('click', () => {
 
 year_change.addEventListener('click', () => {
     day_calendar.style.display = "none";
+    month_calendar.style.display = "none";
     calendar_popup.style.display = "none";
 })
 
