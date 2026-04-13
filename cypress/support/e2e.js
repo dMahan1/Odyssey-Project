@@ -36,9 +36,24 @@ Cypress.on('window:before:load', (win) => {
           timestamp: new Date().getTime(),
         });
       },
+      watchPosition: (successCb, errorCb, options) => {
+        successCb({
+          coords: {
+            latitude,
+            longitude,
+            accuracy: 100,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+        return 1;
+      },
+      clearWatch: () => {}
     },
-    writable: true,
+    writable: false,
+    configurable: false
   });
-
-  win.alert = () => {};
 });

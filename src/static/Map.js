@@ -18,6 +18,12 @@ function initMap() {
       maxBoundsViscosity: 1,
       minZoom: 14
   }).setView([40.4237, -86.9212], 15);
+  window.leafletMap = map;
+  window.leafletMap = map;
+  window.appLatitude = () => latitude;
+  window.appLongitude = () => longitude;
+  window.setAppLocation = (lat, lng) => { latitude = lat; longitude = lng; };
+  
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
