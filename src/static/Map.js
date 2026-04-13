@@ -68,7 +68,8 @@ function updateLoc() {
         oldLat = latitude;
         updated = false;
         navigator.geolocation.getCurrentPosition(locSuccess, locFail, {enableHighAccuracy: true});
-        console.log(locationSuccess+", "+latitude+", "+longitude+", "+updated);
+        console.log(locationSuccess + ", " + latitude + ", " + longitude + ", " + updated);
+        window.socket.emit("get_hotspots");
     } else {
         locFail();
     }
@@ -505,14 +506,39 @@ window.socket.on("user_pins_got", (data) => {
 
 window.socket.on("hotspot_result", (data) => {
     hotspots.forEach(hotspot => {
-        map.removeLayer(hotspot.marker);
+        if (hotspot.circle) {
+            map.removeLayer(hotspot.circle);
+        }
     });
     hotspots = [];
-    data.hotspots.forEach(hotspot => {
-        console.log(hotspot);
-        //map.addLayer(marker);
-        //hotspots.push({ marker, ...hotspot });
-    });
+
+    if (data.status === "success" && data.hotspots) {
+      Object.values(data.hotspots).forEach(hotspot => {
+          if (hotspot.latitude && hotspot.longitude) {
+              const endTime = new Date(hotspot.end_time).getTime();
+              const now = Date.now();
+
+              const maxLife = 1000 * 60 * 5;
+              const timeLeft = Math.max(0, endTime - now);
+              const ratio = Math.min(1, timeLeft / maxLife);
+
+              const dynamicRadius = 10 + (50 * ratio);
+
+              const dynamicOpacity = 0.1 + (0.6 * ratio);
+
+              const dynamicColor = ratio > 0.2 ? '#f03' : '#888';
+
+              const circle = L.circle([hotspot.latitude, hotspot.longitude], {
+                  color: ratio > 0.2 ? 'red' : 'gray',
+                  fillColor: dynamicColor,
+                  fillOpacity: dynamicOpacity,
+                  radius: dynamicRadius
+              }).addTo(map);
+
+              hotspots.push({ circle: circle, ...hotspot });
+          }
+      });
+    }
 });
 
 // Confirmation handlers to trigger the refresh

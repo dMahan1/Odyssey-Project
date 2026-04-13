@@ -483,7 +483,15 @@ def handle_create_hotspot(data):
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
 
     ret = create_hotspot(user, data["latitude"], data["longitude"])
-    emit("hotspot_result", {"status": "success", "id": ret})
+    emit("create_hotspot_result", {"status": "success", "id": ret})
+
+@socketio.on("get_hotspots")
+def handle_get_hotspots():
+    user = session.get('user')
+    if not user:
+        return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
+    hotspots = get_hotspots(user)
+    emit("hotspot_result", {"status": "success", "hotspots": hotspots})
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
