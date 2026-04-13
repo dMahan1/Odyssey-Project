@@ -224,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.socket.emit("get_user_pins");
+    window.socket.emit("get_hotspots");
 
     const otherUserMarkers = {};
 
@@ -330,7 +331,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById('hotspot_btn').addEventListener('click', () => {
-        window.socket.emit('create_hotspot', {"latitude": latitude, "longitude": longitude});
+        window.socket.emit('create_hotspot', { "latitude": latitude, "longitude": longitude });
+        window.socket.emit('get_hotspots');
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');
@@ -522,9 +524,9 @@ window.socket.on("hotspot_result", (data) => {
               const timeLeft = Math.max(0, endTime - now);
               const ratio = Math.min(1, timeLeft / maxLife);
 
-              const dynamicRadius = 10 + (50 * ratio);
+              const dynamicRadius = 10 + (40 * ratio);
 
-              const dynamicOpacity = 0.1 + (0.6 * ratio);
+              const dynamicOpacity = 0.1 + (0.4 * ratio);
 
               const dynamicColor = ratio > 0.2 ? '#f03' : '#888';
 
