@@ -364,8 +364,6 @@ function update_day_events() {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
 
-                console.log(event);
-
                 add_event(
                     event.name, 
                     event.creator_username,
@@ -382,20 +380,27 @@ function update_day_events() {
 function update_month_events() {
     window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
-        clear_events();
-
-        const calendarDate = new Date(current_year, current_month, current_day);
-        calendarDate.setHours(0, 0, 0, 0);
+        document.querySelectorAll('.month_event').forEach(el => el.remove());
 
         events.forEach(event => {
-            const startVal = new Date(event.start_time);
-            if (startVal.getMonth() === current_month && startVal.getFullYear() === current_year) {
-                add_month_event(
-                    event.name,
-                    startVal.getFullYear(),
-                    startVal.getMonth(),
-                    startVal.getDate()
-                );
+            const startDate = new Date(event.start_time);
+            const endDate = new Date(event.end_time);
+
+            let iterator = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const finalDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+            while (iterator <= finalDate) {
+                // Only render if the runner date is in the currently viewed month/year
+                if (iterator.getMonth() === current_month && iterator.getFullYear() === current_year) {
+                    add_month_event(
+                        event.name,
+                        iterator.getFullYear(),
+                        iterator.getMonth(),
+                        iterator.getDate()
+                    );
+                }
+
+                iterator.setDate(iterator.getDate() + 1);
             }
         });
     });
@@ -429,9 +434,25 @@ function make_month_calendar(month, year) {
         month_calendar_dates.appendChild(blank_element);
     }
 
+    //fills out dates
     for (let i = 1; i <= daysInMonth; i++) {
         const day_element = document.createElement('div');
         day_element.classList.add('calendar_day');
+
+        day_element.addEventListener('click', () => {
+           current_day = i;
+           current_month = month;
+           current_year = year;
+
+           const new_day = new Date(year, month, i);
+           current_dow = new_day.getDay();
+
+           make_day_calendar(current_day, current_dow, current_month, current_year);
+           update_day_events();
+
+           month_calendar.style.display = "none";
+           day_calendar.style.display = "block";
+        });
 
         const day_number = document.createElement('div');
         day_number.classList.add('day_number');
@@ -468,6 +489,13 @@ function add_month_event(event_name, year, month, day) {
         month_element.querySelector('.month_event_name').innerText = event_name;
         target_event_space.appendChild(new_month_event);
     }
+}
+
+function reset_current_day() {
+    current_day = current_date.getDate();
+    current_dow = current_date.getDay();
+    current_month = current_date.getMonth();
+    current_year = current_date.getFullYear();
 }
 
 function clear_event_window() {
@@ -727,20 +755,25 @@ next_month.addEventListener('click', () => {
 
 
 day_change.addEventListener('click', () => {
+    reset_current_day();
     make_day_calendar(current_day, current_dow, current_month, current_year);
     update_day_events();
+
     month_calendar.style.display = "none";
     day_calendar.style.display = "block";
     calendar_popup.style.display = "none";
 })
 
 week_change.addEventListener('click', () => {
+    reset_current_day();
+
     day_calendar.style.display = "none";
     month_calendar.style.display = "none";
     calendar_popup.style.display = "none";
 })
 
 month_change.addEventListener('click', () => {
+    reset_current_day();
     make_month_calendar(current_month, current_year);
     update_month_events();
 
@@ -750,8 +783,14 @@ month_change.addEventListener('click', () => {
 })
 
 year_change.addEventListener('click', () => {
+    reset_current_day();
+
     day_calendar.style.display = "none";
     month_calendar.style.display = "none";
     calendar_popup.style.display = "none";
 })
+
+
+
+
 

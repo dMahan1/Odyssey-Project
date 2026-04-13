@@ -10,17 +10,17 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
-# Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-from cloudinary import CloudinaryImage
-from cloudinary import CloudinaryVideo
+# import cloudinary
+# import cloudinary.uploader
+# import cloudinary.api
+#
+# # Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
+# from cloudinary import CloudinaryImage
+# from cloudinary import CloudinaryVideo
 
 from pathlib import Path
 
-cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
+# cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
 # home_dir = Path.home()
