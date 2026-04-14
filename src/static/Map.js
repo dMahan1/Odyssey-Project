@@ -6,6 +6,7 @@ let oldLon;
 let currentRouteLayer = null;
 let isPlacingPin = false;
 let pins = [];
+let hotspots = [];
 let pinLayerGroup;
 
 function initMap() {
@@ -73,7 +74,8 @@ function updateLoc() {
         oldLat = latitude;
         updated = false;
         navigator.geolocation.getCurrentPosition(locSuccess, locFail, {enableHighAccuracy: true});
-        console.log(locationSuccess+", "+latitude+", "+longitude+", "+updated);
+        console.log(locationSuccess + ", " + latitude + ", " + longitude + ", " + updated);
+        window.socket.emit("get_hotspots");
     } else {
         locFail();
     }
@@ -228,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.socket.emit("get_user_pins");
+    window.socket.emit("get_hotspots");
 
     const otherUserMarkers = {};
 
@@ -333,6 +336,11 @@ document.addEventListener("DOMContentLoaded", () => {
         map.setView([latitude, longitude]);
     });
 
+    document.getElementById('hotspot_btn').addEventListener('click', () => {
+        window.socket.emit('create_hotspot', { "latitude": latitude, "longitude": longitude });
+        window.socket.emit('get_hotspots');
+    });
+
     const modeButtons = document.querySelectorAll('.side-btn');
     let currentMode = getSelectedMode();
 
@@ -385,6 +393,7 @@ window.socket.on("search_result", (data) => {
             popupBody.appendChild(noResult);
             return;
     }
+    data.results.sort((a, b) => a.name.localeCompare(b.name));
     data.results.forEach(location => {
         const clone = template.content.cloneNode(true);
 
@@ -407,7 +416,8 @@ window.socket.on("search_result", (data) => {
             window.socket.emit("get_route",
                 latitude,
                 longitude,
-                location.id,
+                location.latitude,
+                location.longitude,
                 isPoorWeather,
                 mode
             );
@@ -500,6 +510,43 @@ window.socket.on("user_pins_got", (data) => {
             pinLayerGroup.addLayer(marker);
         }
     });
+});
+
+window.socket.on("hotspot_result", (data) => {
+    hotspots.forEach(hotspot => {
+        if (hotspot.circle) {
+            map.removeLayer(hotspot.circle);
+        }
+    });
+    hotspots = [];
+
+    if (data.status === "success" && data.hotspots) {
+      Object.values(data.hotspots).forEach(hotspot => {
+          if (hotspot.latitude && hotspot.longitude) {
+              const endTime = new Date(hotspot.end_time).getTime();
+              const now = Date.now();
+
+              const maxLife = 1000 * 60 * 5;
+              const timeLeft = Math.max(0, endTime - now);
+              const ratio = Math.min(1, timeLeft / maxLife);
+
+              const dynamicRadius = 10 + (40 * ratio);
+
+              const dynamicOpacity = 0.1 + (0.4 * ratio);
+
+              const dynamicColor = ratio > 0.2 ? '#f03' : '#888';
+
+              const circle = L.circle([hotspot.latitude, hotspot.longitude], {
+                  color: ratio > 0.2 ? 'red' : 'gray',
+                  fillColor: dynamicColor,
+                  fillOpacity: dynamicOpacity,
+                  radius: dynamicRadius
+              }).addTo(map);
+
+              hotspots.push({ circle: circle, ...hotspot });
+          }
+      });
+    }
 });
 
 // Confirmation handlers to trigger the refresh

@@ -195,10 +195,12 @@ body {
     pointer-events: none;
 }
 
+.side-btn-snap:hover ,
 .side-btn:hover {
     background-color: #b41923;
     border-color: black;
 }
+
 .side-btn.active {
     background-color: #ce666d;
 }
