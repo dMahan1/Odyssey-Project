@@ -595,7 +595,7 @@ body {
 }
 
 /* Calendar specific things */
-.day_calendar_header, .month_calendar_header {
+.day_calendar_header, .month_calendar_header, .year_calendar_header {
     background-color: #EDDEAB;
     display: flex;
     justify-content: space-between;
@@ -673,15 +673,50 @@ body {
     justify-content: flex-start;
     width: 100%;
     overflow: auto;
+    display: none;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.year_calendar {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #ababab;
+    justify-content: flex-start;
+    width: 100%;
+    overflow: auto;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
 }
 
-#prev_day, #next_day, #prev_month, #next_month {
+#prev_day, #next_day, #prev_month, #next_month, #prev_year, #next_year {
     background-color: transparent;
     border: none;
     cursor: pointer;
+}
+
+.year_calendar_months {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 1fr;
+    text-align: center;
+    flex-grow: 1;
+    align-items: center;
+    padding: 20px;
+    gap: 10%;
+}
+
+.month {
+    font-family: Rockwell, monaco, monospace;
+    background-color: #EDDEAB;
+    height: 75%;
+    cursor: pointer;
+    font-size: 100%;
+}
+
+.year_calendar_body {
+    display: flex;
+    height: 100%;
 }
 
 .month_calendar_weekdays {
@@ -707,6 +742,8 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    border: 1px solid black;
+    cursor: pointer;
 }
 
 .day_number {
@@ -721,12 +758,6 @@ body {
 .event_space {
     flex-grow: 1;
     overflow: auto;
-}
-
-.calendar_day {
-    border: 1px solid black;
-    cursor: pointer;
-
 }
 
 .event {

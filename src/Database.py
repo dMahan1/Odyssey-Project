@@ -6,16 +6,16 @@ from email.message import EmailMessage
 from multiprocessing import context
 from pathlib import Path
 
-import cloudinary
-import cloudinary.api
-import cloudinary.uploader
+# import cloudinary
+# import cloudinary.api
+# import cloudinary.uploader
 import empyrebase
 
 # Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-from cloudinary import CloudinaryImage, CloudinaryVideo
+# from cloudinary import CloudinaryImage, CloudinaryVideo
 from dotenv import load_dotenv
 
-cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
+# cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -198,7 +198,7 @@ def set_user_icon_image(user, image):
         db.child("Users").child(user["localId"]).update(
             {"icon_image_path": user["localId"]}, token=user["idToken"]
         )
-        cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
+        # cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)

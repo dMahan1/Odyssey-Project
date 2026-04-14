@@ -38,11 +38,15 @@ const inbox_popup_content = document.getElementById('inbox_popup_content');
 const calendar_popup = document.getElementById('calendar_popup_background');
 
 // Calendar specific variables
-const day_textfield = document.getElementById('day');
+const day_label = document.getElementById('day_label');
+const month_label = document.getElementById('month_label');
+const year_label = document.getElementById('year_label');
 const previous_day = document.getElementById('prev_day');
 const next_day = document.getElementById('next_day');
 const previous_month = document.getElementById('prev_month');
 const next_month = document.getElementById('next_month');
+const previous_year = document.getElementById('prev_year');
+const next_year = document.getElementById('next_year');
 
 let current_date = new Date();
 let current_day = current_date.getDate();
@@ -50,6 +54,8 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
+
+const month_calendar_dates =  document.querySelector('.month_calendar_dates');
 
 const cancel_calendar_change = document.getElementById('cancel_calendar_change');
 const change_mode_button = document.getElementById('change_mode_button');
@@ -59,6 +65,7 @@ const month_change = document.getElementById('month_change');
 const year_change = document.getElementById('year_change');
 const day_calendar = document.querySelector('.day_calendar');
 const month_calendar = document.querySelector('.month_calendar');
+const year_calendar = document.querySelector('.year_calendar');
 
 
 // Message specific variables
@@ -406,18 +413,16 @@ function update_month_events() {
     });
 }
 
-const month_label = document.getElementById('month_label');
-const month_calendar_dates =  document.querySelector('.month_calendar_dates');
-
 /* Calendar Specific functions */
 function make_calendar(day, dow, month, year) {
     make_day_calendar(day, dow, month, year);
     make_month_calendar(month, year);
+    make_year_calendar(year);
 
 }
 
 function make_day_calendar(day, dow, month, year) {
-    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+    day_label.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
 }
 
 function make_month_calendar(month, year) {
@@ -476,6 +481,11 @@ function make_month_calendar(month, year) {
             month_calendar_dates.appendChild(blank_element);
         }
     }
+}
+
+function make_year_calendar(year) {
+    year_label.textContent = `${year}`;
+
 }
 
 function add_month_event(event_name, year, month, day) {
@@ -751,6 +761,16 @@ next_month.addEventListener('click', () => {
 
     make_month_calendar(current_month, current_year);
     update_month_events();
+})
+
+previous_year.addEventListener('click', () => {
+    current_year--;
+    make_year_calendar(current_year);
+})
+
+next_year.addEventListener('click', () => {
+    current_year++;
+    make_year_calendar(current_year);
 })
 
 
