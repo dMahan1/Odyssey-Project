@@ -1,0 +1,32 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Cache & Artifacts
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# C++ Build Artifacts
+*.o
+*.so
+*.a
+build/
+src/bindings.*.so
+
+# Node / Testing Artifacts
+node_modules/
+npm-debug.log*
+
+# OS specific files
+.DS_Store
+*.Zone.Identifier
+
+# Version Control
+.git/
+.gitignore
+
+# Documentation
+docs/
