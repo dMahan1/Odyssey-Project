@@ -35,11 +35,14 @@ const inbox_popup = document.getElementById('inbox_popup_background');
 const close_inbox = document.getElementById('close_inbox');
 const inbox_popup_top_bar = document.getElementById('inbox_popup_bar');
 const inbox_popup_content = document.getElementById('inbox_popup_content');
+const calendar_popup = document.getElementById('calendar_popup_background');
 
 // Calendar specific variables
 const day_textfield = document.getElementById('day');
 const previous_day = document.getElementById('prev_day');
 const next_day = document.getElementById('next_day');
+const previous_month = document.getElementById('prev_month');
+const next_month = document.getElementById('next_month');
 
 let current_date = new Date();
 let current_day = current_date.getDate();
@@ -47,6 +50,16 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
+
+const cancel_calendar_change = document.getElementById('cancel_calendar_change');
+const change_mode_button = document.getElementById('change_mode_button');
+const day_change = document.getElementById('day_change');
+const week_change = document.getElementById('week_change');
+const month_change = document.getElementById('month_change');
+const year_change = document.getElementById('year_change');
+const day_calendar = document.querySelector('.day_calendar');
+const month_calendar = document.querySelector('.month_calendar');
+
 
 // Message specific variables
 const message_popup_bar = document.getElementById('message_popup_bar');
@@ -68,8 +81,6 @@ window.socket = socket;
 // added
 const backupUser = JSON.parse(localStorage.getItem('user_backup'));
 if (backupUser) {
-    // Manually tell the server "Hey, remember me?"
-    // This helps the server re-fill the session['user'] if it got wiped
     socket.emit("verify_session", backupUser);
 }
 
@@ -124,7 +135,6 @@ function load_permanent_locations() {
     window.socket.emit("get_permanent_locations");
     
     window.socket.once("permanent_locations_got", (locations) => {
-        // Clear existing options (keeping the default placeholder)
         permanent_locations = locations;
         update_permanent_locations();
     });
@@ -135,7 +145,6 @@ function update_permanent_locations() {
 
     if (permanent_locations) {
         permanent_locations.forEach(loc => {
-            // Uses your existing add_location function
             add_location(loc.name, loc.id);
         });
     }
@@ -145,7 +154,6 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     const event_template = document.getElementById("event_invite_template");
     let new_invite = event_template.content.cloneNode(true);
     
-    // Grab the actual wrapper div so we can delete it later
     let invite_element = new_invite.querySelector('.event_invite');
 
     invite_element.querySelector('.event_name').innerText = event_name;
@@ -156,8 +164,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     acceptBtn.addEventListener('click', () => {
         window.socket.emit("accept_event_invite", event_id, message_id);
         
-        // Instantly remove it from the screen for the user
-        invite_element.remove(); 
+        invite_element.remove();
     });
 
     // --- DECLINE BUTTON ---
@@ -165,8 +172,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     declineBtn.addEventListener('click', () => {
         window.socket.emit("remove_message", message_id);
         
-        // Instantly remove it from the screen for the user
-        invite_element.remove(); 
+        invite_element.remove();
     });
 
     inbox_popup_content.appendChild(new_invite);
@@ -182,23 +188,18 @@ function create_friend_request(friend_username, sender_id, message_id) {
     // --- ACCEPT BUTTON ---
     const acceptBtn = request_element.querySelector('#accept_friend');
     acceptBtn.addEventListener('click', () => {
-        // 1. Tell the server to add this user to your friends list
         window.socket.emit("add_friend", sender_id);
         
-        // 2. Tell the server to delete the request notification
         window.socket.emit("remove_message", message_id);
         
-        // 3. Remove it from the popup instantly
         request_element.remove();
     });
 
     // --- DECLINE BUTTON ---
     const declineBtn = request_element.querySelector('#decline_friend');
     declineBtn.addEventListener('click', () => {
-        // Just delete the notification
         window.socket.emit("remove_message", message_id);
         
-        // Remove it from the popup instantly
         request_element.remove();
     });
 
@@ -216,10 +217,8 @@ function create_message(sender_username, message_id, message_text, event_name) {
 
     const declineBtn = message_element.querySelector('#remove_message');
     declineBtn.addEventListener('click', () => {
-        // Just delete the notification
         window.socket.emit("remove_message", message_id);
         
-        // Remove it from the popup instantly
         message_element.remove();
     });
 
@@ -237,16 +236,11 @@ function add_attendee_list(attendee_name, attendee_id) {
     const label = new_attendee.querySelector('label');
 
     checkbox.id = attendee_id;
-    checkbox.value = attendee_name; // Store name in value for easy access later
+    checkbox.value = attendee_name;
     
-    // Add the name text next to the checkbox
     label.appendChild(document.createTextNode(" " + attendee_name));
 
     container.appendChild(new_attendee);
-}
-
-function make_calendar(day, dow, month, year) {
-    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
 }
 
 function add_location(location_name, location_id) {
@@ -266,14 +260,11 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     // --- NEW DELETE LOGIC ---
     const deleteBtn = new_event.querySelector('.delete_event_btn');
     deleteBtn.addEventListener('click', (e) => {
-        // Prevent clicking the button from triggering other event clicks
-        e.stopPropagation(); 
+        e.stopPropagation();
 
         if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
-            // Tell the server to delete it from the database
             window.socket.emit("delete_event", event_id);
             
-            // Remove it from the UI immediately
             remove_event(event_id);
             window.socket.once("event_deleted", (success) => {
                 if (!success) {
@@ -287,7 +278,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     const message_button = new_event.querySelector('.message_button');
     message_button.addEventListener('click', (e) => {
         e.stopPropagation();
-        current_event_id = event_id; // Set the global variable to know which event we're messaging about
+        current_event_id = event_id;
         message_popup.style.display = "block";
     })
 
@@ -342,6 +333,11 @@ function clear_events() {
 }
 
 function update_events() {
+    update_day_events();
+    update_month_events();
+}
+
+function update_day_events() {
     window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
         clear_events();
@@ -357,21 +353,16 @@ function update_events() {
             const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
 
             if (calendarDate >= startDay && calendarDate <= endDay) {
-                // Default to a full 24-hour block
                 let displayStart = 0;
                 let displayEnd = 24;
 
-                // If viewing the actual start day, use the actual start hour
                 if (calendarDate.getTime() === startDay.getTime()) {
                     displayStart = startVal.getHours() + (startVal.getMinutes() / 60);
                 }
 
-                // If viewing the actual end day, use the actual end hour
                 if (calendarDate.getTime() === endDay.getTime()) {
                     displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
                 }
-
-                console.log(event);
 
                 add_event(
                     event.name, 
@@ -384,6 +375,127 @@ function update_events() {
             }
         });
     });
+}
+
+function update_month_events() {
+    window.socket.emit("get_events");
+    window.socket.once("events_got", (events) => {
+        document.querySelectorAll('.month_event').forEach(el => el.remove());
+
+        events.forEach(event => {
+            const startDate = new Date(event.start_time);
+            const endDate = new Date(event.end_time);
+
+            let iterator = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const finalDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+            while (iterator <= finalDate) {
+                // Only render if the runner date is in the currently viewed month/year
+                if (iterator.getMonth() === current_month && iterator.getFullYear() === current_year) {
+                    add_month_event(
+                        event.name,
+                        iterator.getFullYear(),
+                        iterator.getMonth(),
+                        iterator.getDate()
+                    );
+                }
+
+                iterator.setDate(iterator.getDate() + 1);
+            }
+        });
+    });
+}
+
+const month_label = document.getElementById('month_label');
+const month_calendar_dates =  document.querySelector('.month_calendar_dates');
+
+/* Calendar Specific functions */
+function make_calendar(day, dow, month, year) {
+    make_day_calendar(day, dow, month, year);
+    make_month_calendar(month, year);
+
+}
+
+function make_day_calendar(day, dow, month, year) {
+    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+}
+
+function make_month_calendar(month, year) {
+    month_calendar_dates.innerHTML = '';
+    month_label.textContent = `${months[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+        const blank_element = document.createElement('div');
+        blank_element.classList.add('calendar_day');
+        month_calendar_dates.appendChild(blank_element);
+    }
+
+    //fills out dates
+    for (let i = 1; i <= daysInMonth; i++) {
+        const day_element = document.createElement('div');
+        day_element.classList.add('calendar_day');
+
+        day_element.addEventListener('click', () => {
+           current_day = i;
+           current_month = month;
+           current_year = year;
+
+           const new_day = new Date(year, month, i);
+           current_dow = new_day.getDay();
+
+           make_day_calendar(current_day, current_dow, current_month, current_year);
+           update_day_events();
+
+           month_calendar.style.display = "none";
+           day_calendar.style.display = "block";
+        });
+
+        const day_number = document.createElement('div');
+        day_number.classList.add('day_number');
+        day_number.textContent = i;
+
+        const event_space = document.createElement('div');
+        event_space.classList.add('event_space');
+        event_space.id = `month_space-${year}-${month}-${i}`;
+
+        day_element.appendChild(day_number);
+        day_element.appendChild(event_space);
+        month_calendar_dates.appendChild(day_element);
+    }
+
+    const occupied_slots = firstDay + daysInMonth;
+
+    if ((occupied_slots % 7) !== 0) {
+        for (let i = 0; i < (7 - (occupied_slots % 7)); i++) {
+            const blank_element = document.createElement('div');
+            blank_element.classList.add('calendar_day');
+            month_calendar_dates.appendChild(blank_element);
+        }
+    }
+}
+
+function add_month_event(event_name, year, month, day) {
+    const target_id = `month_space-${year}-${month}-${day}`;
+    const target_event_space = document.getElementById(target_id);
+
+    if (target_event_space) {
+        const month_event = document.getElementById('month_event_template');
+        let new_month_event = month_event.content.cloneNode(true);
+        let month_element = new_month_event.querySelector('.month_event');
+        month_element.querySelector('.month_event_name').innerText = event_name;
+        target_event_space.appendChild(new_month_event);
+    }
+}
+
+function reset_current_day() {
+    current_day = current_date.getDate();
+    current_dow = current_date.getDay();
+    current_month = current_date.getMonth();
+    current_year = current_date.getFullYear();
 }
 
 function clear_event_window() {
@@ -416,8 +528,7 @@ window.addEventListener('resize', function(){
     change_attendees_size();
     change_message_size();
 
-    // Re-draw events to match new scale
-    update_events(); 
+    update_events();
 });
 
 scrap_event.addEventListener('click', () => {
@@ -426,28 +537,23 @@ scrap_event.addEventListener('click', () => {
 })
 
 save_event.addEventListener('click', () => {
-    // 1. Create Date objects from the inputs
+
+    if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
+        alert("No empty fields!")
+        return;
+    }
+
     const startVal = new Date(start_time.value);
     const endVal = new Date(end_time.value);
 
-    // 2. Create a Date object representing the CURRENTLY VIEWED calendar day
-    // We set time to 00:00:00 to compare just the date range effectively
     const calendarDate = new Date(current_year, current_month, current_day);
 
-    // 3. Normalize the range dates to "start of day" for a pure date-inclusion check
-    // If you want the event to show up if the calendar day matches ANY part of the event duration:
     const startDay = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate());
     const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
 
-    // 4. Logic check: Is the calendar date within the start and end day?
     if (calendarDate >= startDay && calendarDate <= endDay) {
         
-        // Prepare the data to send (including our selected attendee IDs)
         const attendeeIdsArray = Array.from(selectedAttendeeIds);
-        if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
-            alert("No empty fields!")
-            return;
-        }
         window.socket.emit("create_event", 
             title.value,
             start_time.value, 
@@ -517,68 +623,19 @@ close_inbox.addEventListener('click', () => {
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
-        // Redraw the calendar now that the server has officially added us
         update_events();
     }
 });
 
-previous_day.addEventListener('click', () => {
-    current_day--;
-    current_dow--;
-    if (current_day < 1) {
-        current_month--;
-        current_day =  new Date(current_year, current_month + 1, 0).getDate();
-    }
-
-    if (current_dow < 0) {
-      current_dow = 6;
-    }
-
-    if (current_month < 0) {
-        current_year--;
-        current_month = 11;
-        current_day =  new Date(current_year, current_month + 1, 0).getDate();
-    }
-    make_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
-})
-
-next_day.addEventListener('click', () => {
-    current_day++;
-    current_dow++;
-    if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
-        current_day = 1;
-        current_month++;
-    }
-
-    if (current_dow > 6) {
-        current_dow = 0;
-    }
-
-    if (current_month > 11) {
-        current_year++;
-        current_month = 0;
-    }
-
-    make_calendar(current_day, current_dow, current_month, current_year);
-    update_events();
-})
-
 more_attendees_button.addEventListener('click', () => {
-    // 1. CLEAR the popup content so friends don't duplicate on every click
-    attendees_content.innerHTML = ''; 
-    // Re-insert the template so it's available for the next call (optional, but safer to keep template outside content div)
-    // Note: In your HTML, the template is INSIDE attendees_popup_content. 
-    // It's better to move the template OUTSIDE that div so it doesn't get deleted.
+    attendees_content.innerHTML = '';
 
     window.socket.emit("get_friends");
     
-    // 2. Use .once so we don't stack up multiple listeners
     window.socket.once("friends_got", (ret) => {
         ret.forEach(friend => {
             add_attendee_list(friend.username, friend.id);
             
-            // 3. Persist checkmarks: if they were saved before, check them again
             const cb = document.getElementById(friend.id);
             if (cb && selectedAttendeeIds.has(String(friend.id))) {
                 cb.checked = true;
@@ -598,7 +655,6 @@ save_attendees.addEventListener('click', () => {
         }
     });
 
-    // Update the UI text so the user sees how many are invited
     attendeeText.innerText = `Attendees (${selectedAttendeeIds.size})`;
     attendees_popup.style.display = "none";
 });
@@ -624,3 +680,117 @@ send_message.addEventListener('click', () => {
         message_text.value = null;
     }
 })
+
+/* Calendar specific things */
+cancel_calendar_change.addEventListener('click', () => {
+    calendar_popup.style.display = "none";
+})
+change_mode_button.addEventListener('click', () => {
+    calendar_popup.style.display = "block";
+})
+
+previous_day.addEventListener('click', () => {
+    current_day--;
+    current_dow--;
+    if (current_day < 1) {
+        current_month--;
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
+    }
+
+    if (current_dow < 0) {
+        current_dow = 6;
+    }
+
+    if (current_month < 0) {
+        current_year--;
+        current_month = 11;
+        current_day =  new Date(current_year, current_month + 1, 0).getDate();
+    }
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_day_events();
+})
+
+next_day.addEventListener('click', () => {
+    current_day++;
+    current_dow++;
+    if (current_day > new Date(current_year, current_month + 1, 0).getDate()) {
+        current_day = 1;
+        current_month++;
+    }
+
+    if (current_dow > 6) {
+        current_dow = 0;
+    }
+
+    if (current_month > 11) {
+        current_year++;
+        current_month = 0;
+    }
+
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_day_events();
+})
+
+previous_month.addEventListener('click', () => {
+    current_month--;
+    if (current_month < 0) {
+        current_month = 11;
+        current_year--;
+    }
+
+    make_month_calendar(current_month, current_year);
+    update_month_events();
+})
+
+next_month.addEventListener('click', () => {
+    current_month++;
+    if (current_month > 11) {
+        current_month = 0;
+        current_year++;
+    }
+
+    make_month_calendar(current_month, current_year);
+    update_month_events();
+})
+
+
+day_change.addEventListener('click', () => {
+    reset_current_day();
+    make_day_calendar(current_day, current_dow, current_month, current_year);
+    update_day_events();
+
+    month_calendar.style.display = "none";
+    day_calendar.style.display = "block";
+    calendar_popup.style.display = "none";
+})
+
+week_change.addEventListener('click', () => {
+    reset_current_day();
+
+    day_calendar.style.display = "none";
+    month_calendar.style.display = "none";
+    calendar_popup.style.display = "none";
+})
+
+month_change.addEventListener('click', () => {
+    reset_current_day();
+    make_month_calendar(current_month, current_year);
+    update_month_events();
+
+    day_calendar.style.display = "none";
+    month_calendar.style.display = "flex";
+    calendar_popup.style.display = "none";
+})
+
+year_change.addEventListener('click', () => {
+    reset_current_day();
+
+    day_calendar.style.display = "none";
+    month_calendar.style.display = "none";
+    calendar_popup.style.display = "none";
+})
+
+
+
+
+
