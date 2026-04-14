@@ -454,7 +454,7 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
         "end_time": end_time,
         "locationid": locationid,
         "location_name": location_name,
-        "attendee_ids": attendee_ids,
+        "attendee_ids": [user["localId"]],
     }
     key = firebase.database().generate_key()
     db.child("Events").child(key).set(data, token=user["idToken"])
@@ -504,7 +504,7 @@ def join_event(user, event_id):
     if event is None:
         return None
 
-    attendee_ids = event.get("attendee_ids", [])
+    attendee_ids = event.get("attendee_ids", token=user["localId"])
     if user["localId"] not in attendee_ids:
         attendee_ids.append(user["localId"])
         db.child("Events").child(event_id).update(
