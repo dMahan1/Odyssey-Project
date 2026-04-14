@@ -28,6 +28,11 @@
         <div class="edits" >
             <label id="email_display">@email</label>
         </div>
+        <div class="edits checkboxes">
+            <label id="private_checkbox">Private</label>
+            <input type="checkbox" id="private" />
+        </div>
+
 
         <button id="logout">
             Logout
@@ -42,7 +47,7 @@
                 </select>
                 <button id="add_friends" title="Send Friend Request">&#x2713</button>
             </div>
-            
+
             <div class="line_up" style="margin-top: 10px;">
                 <select id="current_friends_search">
                     <option value="" disabled selected>Remove a friend...</option>
@@ -72,7 +77,7 @@
             <button class="change" id="user_check"> &#x2713</button>
         </div>
     </div>
-    
+
     <div id="nav_bar">
         <button id="map_button">
             <img class="Map" src="../static/images/Map_icon.png" id="Map_icon" alt="Map icon">

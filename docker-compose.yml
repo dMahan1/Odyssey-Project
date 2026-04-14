@@ -1,0 +1,13 @@
+services:
+  odyssey:
+    build: .
+    image: odyssey-app:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true
