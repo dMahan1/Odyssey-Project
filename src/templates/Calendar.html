@@ -145,6 +145,21 @@
         </div>
     </div>
 
+    <div id="calendar_popup_background">
+        <div id = "calendar_popup" class="popup">
+            <div id = "calendar_popup_bar">
+                <button id="cancel_calendar_change">&#x2717;</button>
+            </div>
+
+            <div id = "calendar_popup_content">
+                <button id="day_change">Day</button>
+                <button id="week_change">Week</button>
+                <button id="month_change">Month</button>
+                <button id="year_change">Year</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Calendar -->
     <div class = "day_calendar">
         <div class = "day_calendar_header">
@@ -222,6 +237,35 @@
             </template>
         </div>
     </div>
+
+    <div class="month_calendar">
+        <div class="month_calendar_header">
+            <button id="prev_month"><</button>
+            <div id="month_label"></div>
+            <button id="next_month">></button>
+        </div>
+        <div class="month_calendar_body">
+            <div class="month_calendar_weekdays">
+                <div class="weekday">Sun</div>
+                <div class="weekday">Mon</div>
+                <div class="weekday">Tue</div>
+                <div class="weekday">Wed</div>
+                <div class="weekday">Thu</div>
+                <div class="weekday">Fri</div>
+                <div class="weekday">Sat</div>
+            </div>
+            <div class="month_calendar_dates">
+            </div>
+
+            <template id="month_event_template">
+                <div class="month_event" id="me">
+                    <label class="month_event_name"> Event Name </label>
+                </div>
+            </template>
+        </div>
+    </div>
+
+
 
     <!-- Navigation bar things -->
     <div id="nav_bar">
