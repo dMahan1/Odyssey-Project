@@ -1,10 +1,39 @@
 #include "PathfinderBuilder.hpp"
 #include <fstream>
 #include <filesystem>
+#include <pybind11/embed.h>
+#include <iostream>
 
 #include "json.hpp"
 using json = nlohmann::json;
+namespace py = pybind11;
 
+void load_and_print_locations() {
+    std::cout << "Loading locations..." << std::endl;
+    try {
+        py::module_ sys = py::module_::import("sys");
+        std::cout << "1\n\n\n\n" << std::endl;
+        sys.attr("path").attr("append")("./src");
+
+        py::module_ db = py::module_::import("Database");
+
+        py::object user = db.attr("auth_user")("pf@pf.com", "password", 0.0, 0.0);
+
+        if (user["status"].cast<std::string>() == "Success") {
+            py::list locations = db.attr("get_permanent_locations")(user);
+
+            for (auto loc : locations) {
+                py::dict d = loc.cast<py::dict>();
+                std::cout << "Found Permanent Location: " << d["name"].cast<std::string>() << std::endl;
+            }
+        } else {
+            std::cerr << "Failed to authenticate with Firebase." << std::endl;
+        }
+
+    } catch (py::error_already_set &e) {
+        std::cerr << "Python/Firebase Error\n\n\n\n\n\n\n\n\n\n\n: " << e.what() << std::endl;
+    }
+}
 
 std::vector<Location> PathfinderBuilder::get_locations() const {
     return locations;
@@ -15,6 +44,7 @@ std::vector<Edge> PathfinderBuilder::get_edges() const {
 
 void PathfinderBuilder::load_data_debug() {
     // Simulates area in front of PMU, with a tunnel to KRAN
+    load_and_print_locations();
     Location A("1", "A", 40.42443, -86.91180);
     Location B("2", "B", 40.42443, -86.91162);
     Location C("3", "C", 40.42444, -86.91162);
@@ -87,6 +117,7 @@ void PathfinderBuilder::load_data_debug() {
 
 
 void PathfinderBuilder::load_data_demo() {
+    load_and_print_locations();
     std::filesystem::path base = std::filesystem::path(__FILE__).parent_path().parent_path();
     std::ifstream f(base / "tests" / "DemoGraph.json");
     json data = json::parse(f);
@@ -123,5 +154,13 @@ void PathfinderBuilder::load_data_demo() {
 }
 
 void PathfinderBuilder::load_data_release() {
-    // TODO: Implement data loading for release mode
+    py::scoped_interpreter guard{};
+
+    py::module_ sys = py::module_::import("sys");
+    sys.attr("path").attr("append")("../");
+    sys.attr("path").attr("append")("./src");
+
+    py::module_ db = py::module_::import("Database");
 }
+
+
