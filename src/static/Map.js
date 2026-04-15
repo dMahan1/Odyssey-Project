@@ -23,6 +23,7 @@ function initMap() {
   window.leafletMap = map;
   window.appLatitude = () => latitude;
   window.appLongitude = () => longitude;
+  window.currentRouteLayer = currentRouteLayer;
   window.setAppLocation = (lat, lng) => { latitude = lat; longitude = lng; };
   
 
@@ -464,6 +465,8 @@ socket.on("id_coords_result", (data) => {
             opacity: 1.0,
             smoothFactor: 1
         }).addTo(map);
+
+        window.currentRouteLayer = currentRouteLayer;
 
         map.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
     } else {
