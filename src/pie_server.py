@@ -208,6 +208,50 @@ def handle_get_user_pins():
 
     emit("user_pins_got", pins)
 
+@socketio.on("get_event_locations")
+def handle_get_event_locations():
+    user = session.get('user')
+    if not user:
+        return
+
+    locations = []
+    user_data = get_user_data(user)
+
+    for event_id in user_data.get("attended_event_ids", []):
+        event_info = get_event_data(user, event_id)
+        if event_info and "location_name" in event_info:
+            for loc in locations:
+                if loc["name"] == event_info["location_name"]:
+                    loc["events"].append(event_info["name"])
+                    break
+            else:
+                matched = get_locations_from_name(user, event_info["location_name"])
+                lat, lng, count = 0, 0, 0
+                if matched:
+                    for match in matched:
+                        full_data = get_location_data(user, match['id'])
+
+                        if full_data and 'coordinates' in full_data:
+                            lat += full_data['coordinates']['latitude']
+                            lng += full_data['coordinates']['longitude']
+                            count += 1
+                    if count > 0:
+                        lat = lat / count
+                        lng = lng / count
+                        id = event_info.get("locationids", [])
+                        if id and not isinstance(id, list):
+                            id = [id]
+
+                        locations.append({
+                            "name": event_info["location_name"],
+                            "events": [event_info["name"]],
+                            "latitude": lat,
+                            "longitude": lng,
+                            "id": id
+                        })
+    print(f"Event locations prepared to send: {locations}")
+
+    emit("event_locations_got", locations)
 
 @socketio.on("get_public_users")
 def handle_get_public_users():
@@ -244,9 +288,9 @@ def handle_report_user(subject_username, message):
     emit("user_reported", result)
 
 @socketio.on("create_event")
-def event_create(name, start_time, end_time, locationid, attendee_ids):
+def event_create(name, start_time, end_time, locationids, attendee_ids):
     user = session.get('user')
-    key = create_event(user, name, start_time, end_time, locationid, attendee_ids)
+    key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
     emit("event_created", key)
 
 @socketio.on("get_events")

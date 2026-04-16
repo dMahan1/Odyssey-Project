@@ -132,10 +132,14 @@ function change_attendees_size () {
 }
 
 function load_permanent_locations() {
-    window.socket.emit("get_permanent_locations");
-    
-    window.socket.once("permanent_locations_got", (locations) => {
-        permanent_locations = locations;
+    window.socket.emit("search_locations", "");
+
+    window.socket.once("search_result", (locations) => {
+        if (locations && locations.status === "success") {
+            permanent_locations = locations.results;
+        } else {
+            permanent_locations = [];
+        }
         update_permanent_locations();
     });
 }
@@ -145,7 +149,7 @@ function update_permanent_locations() {
 
     if (permanent_locations) {
         permanent_locations.forEach(loc => {
-            add_location(loc.name, loc.id);
+            add_location(loc.name, loc.source_ids);
         });
     }
 }
@@ -243,8 +247,8 @@ function add_attendee_list(attendee_name, attendee_id) {
     container.appendChild(new_attendee);
 }
 
-function add_location(location_name, location_id) {
-    const newLoc = new Option(location_name, location_id);
+function add_location(location_name, location_ids) {
+    const newLoc = new Option(location_name, JSON.stringify(location_ids));
     loc.appendChild(newLoc);
 }
 
@@ -538,7 +542,7 @@ scrap_event.addEventListener('click', () => {
 
 save_event.addEventListener('click', () => {
 
-    if (title.value === "" || loc.value === "" || start_time.value === "" || end_time.value === "") {
+    if (title.value === "" || loc.value === "⌕ Location" || start_time.value === "" || end_time.value === "") {
         alert("No empty fields!")
         return;
     }
@@ -552,13 +556,13 @@ save_event.addEventListener('click', () => {
     const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
 
     if (calendarDate >= startDay && calendarDate <= endDay) {
-        
+
         const attendeeIdsArray = Array.from(selectedAttendeeIds);
-        window.socket.emit("create_event", 
+        window.socket.emit("create_event",
             title.value,
-            start_time.value, 
-            end_time.value, 
-            loc.value,
+            start_time.value,
+            end_time.value,
+            JSON.parse(loc.value),
             attendeeIdsArray
         );
 
@@ -570,7 +574,7 @@ save_event.addEventListener('click', () => {
             }
         });
     } else {
-        window.socket.emit("create_event", title.value, start_time.value, end_time.value, loc.value, Array.from(selectedAttendeeIds));
+        window.socket.emit("create_event", title.value, start_time.value, end_time.value, JSON.parse(loc.value), Array.from(selectedAttendeeIds));
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
@@ -580,6 +584,7 @@ save_event.addEventListener('click', () => {
 });
 
 event_popup_open.addEventListener('click', () => {
+    load_permanent_locations();
     event_popup.style.display = "block";
 })
 

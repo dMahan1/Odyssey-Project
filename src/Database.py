@@ -425,19 +425,40 @@ def get_permanent_locations(user):
 
     return perm_locations
 
+def get_user_dropped_pins(user):
+    db = firebase.database()
+    user_data = (
+        db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
+    )
+    dropped_pins = user_data.get("dropped_pins", [])
+    pins = []
+    for pin_id in dropped_pins:
+        pin_data = (
+            db.child("Locations").child(pin_id).get(token=user["idToken"]).val()
+        )
+        if pin_data:
+            pins.append({"id": pin_id, "name": pin_data.get("name")})
+    return pins
 
 def get_locations_from_name(user, loc_name):
     all_locations = get_permanent_locations(user)
+    all_locations += get_user_dropped_pins(user)
     matches = [loc for loc in all_locations if loc_name.lower() in loc["name"].lower()]
     return matches
 
 
-def create_event(user, name, start_time, end_time, locationid, attendee_ids):
+def create_event(user, name, start_time, end_time, locationids, attendee_ids):
 
     db = firebase.database()
 
-    loc_data = get_location_data(user, locationid)
-    location_name = loc_data.get("name") if loc_data else "Unknown"
+    location_name = "Unknown"
+    for locationid in locationids:
+        print(f"Checking location ID: {locationid}")
+        loc_data = get_location_data(user, locationid)
+        if loc_data:
+            location_name = loc_data.get("name")
+            break
+
     creator_username = (
         db.child("Users")
         .child(user["localId"])
@@ -452,16 +473,19 @@ def create_event(user, name, start_time, end_time, locationid, attendee_ids):
         "name": name,
         "start_time": start_time,
         "end_time": end_time,
-        "locationid": locationid,
+        "locationids": locationids,
         "location_name": location_name,
         "attendee_ids": [user["localId"]],
     }
     key = firebase.database().generate_key()
     db.child("Events").child(key).set(data, token=user["idToken"])
 
-    db.child("Locations").child(locationid).update(
-        {"usedInEvent": True}, token=user["idToken"]
-    )
+    if locationids is not None and not isinstance(locationids, list):
+        locationids = [locationids]
+    for locationid in locationids:
+        db.child("Locations").child(locationid).update(
+            {"usedInEvent": True}, token=user["idToken"]
+        )
 
     events = (
         db.child("Users")
@@ -548,6 +572,15 @@ def delete_event(user, event_id):
             events.remove(event_id)
         db.child("Users").child(attendee_id).update(
             {"attended_event_ids": events}, token=user["idToken"]
+        )
+
+    # Set usedInEvent to False for all associated locations
+    locationids = event.get("locationids", [])
+    if locationids is not None and not isinstance(locationids, list):
+        locationids = [locationids]
+    for locationid in locationids:
+        db.child("Locations").child(locationid).update(
+            {"usedInEvent": False}, token=user["idToken"]
         )
 
     # Delete the event document
@@ -726,8 +759,14 @@ def get_friends(user):
 def get_event_data(user, event_id):
     db = firebase.database()
     event_data = db.child("Events").child(event_id).get(token=user["idToken"]).val()
-    location_data = get_location_data(user, event_data.get("locationid"))
-    event_data["location_name"] = location_data.get("name")
+    if event_data and "location_name" not in event_data:
+        locationids = event_data.get("locationids", [])
+        if locationids:
+            loc_id = locationids[0] if isinstance(locationids, list) else locationids
+            location_data = get_location_data(user, loc_id)
+            event_data["location_name"] = location_data.get("name", "Unknown") if location_data else "Unknown"
+        else:
+            event_data["location_name"] = "Unknown"
     return event_data
 
 

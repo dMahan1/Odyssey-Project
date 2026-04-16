@@ -6,6 +6,7 @@ let oldLon;
 let currentRouteLayer = null;
 let isPlacingPin = false;
 let pins = [];
+let pinMarkers = {};  // keyed by pin.id → Leaflet marker
 let hotspots = [];
 let pinLayerGroup;
 
@@ -476,6 +477,7 @@ window.socket.on("user_pins_got", (data) => {
     }
 
     pins = [];
+    pinMarkers = {};
 
     data.forEach(pin => {
         const lat = pin.coordinates?.latitude;
@@ -501,6 +503,41 @@ window.socket.on("user_pins_got", (data) => {
                 closeButton: false,
                 offset: L.point(0, -5)
             });
+            pinLayerGroup.addLayer(marker);
+            pinMarkers[pinId] = marker;
+        }
+    });
+
+    socket.emit("get_event_locations");
+});
+
+window.socket.on("event_locations_got", (data) => {
+    console.log("Received event locations:", data);
+
+    data.forEach(loc => {
+        const eventsHtml = loc.events.map(e => `<div style="color: black;">${e}</div>`).join('');
+        const popupContent = `
+            <div style="font-family: Rockwell, monaco, monospace; padding: 5px; text-align: center;">
+                <strong style="color: black; display: block; margin-bottom: 5px;">${loc.name}</strong>
+                <strong style="color: black; display: block; margin-bottom: 3px;">Events:</strong>
+                ${eventsHtml}
+            </div>
+        `;
+
+        // Match by name against existing user pins
+        const existingPin = pins.find(pin => pin.name === loc.name);
+
+        if (existingPin) {
+            // Update the existing marker's popup and remove the pull-pin button
+            const marker = pinMarkers[existingPin.id];
+            if (marker) {
+                marker.bindPopup(popupContent, { closeButton: false, offset: L.point(0, -5) });
+            }
+        } else {
+            // No user pin here — add a new event-only marker (no pull button)
+            pins.push(loc);
+            const marker = L.marker([loc.latitude, loc.longitude]);
+            marker.bindPopup(popupContent, { closeButton: false, offset: L.point(0, -5) });
             pinLayerGroup.addLayer(marker);
         }
     });
