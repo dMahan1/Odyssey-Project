@@ -164,6 +164,8 @@ def get_user():
 @socketio.on('update_loc')
 def update_loc(latitude, longitude):
     user = session.get('user')
+    if not user:
+        return
     update_user_location(user, latitude, longitude)
     emit("updated_loc")
 
@@ -225,7 +227,7 @@ def handle_get_event_locations():
                     loc["events"].append(event_info["name"])
                     break
             else:
-                matched = get_locations_from_name(user, event_info["location_name"])
+                matched = get_locations_from_name(user, event_info["location_name"], True)
                 lat, lng, count = 0, 0, 0
                 if matched:
                     for match in matched:
@@ -266,7 +268,9 @@ def handle_get_public_users():
 @socketio.on("get_permanent_locations")
 def handle_get_perm_locs():
     user = session.get('user')
-    locations = get_permanent_locations(user)
+    if not user:
+        return
+    locations = get_permanent_locations(user, include_dropped_pins=False)
     emit("permanent_locations_got", locations)
 
 @socketio.on("report_issue")
@@ -449,7 +453,7 @@ def handle_search_locations(loc_name):
     if not user:
         return emit("search_result", {"status": "error", "message": "Not logged in"})
 
-    matches = get_locations_from_name(user, loc_name)
+    matches = get_locations_from_name(user, loc_name, False)
 
     if not matches:
         return emit("search_result", {"status": "error", "message": "No matches found"})

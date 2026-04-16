@@ -79,7 +79,7 @@ const socket = io({
 });
 window.socket = socket;
 // added
-const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+const backupUser = JSON.parse(sessionStorage.getItem('user_backup'));
 if (backupUser) {
     socket.emit("verify_session", backupUser);
 }

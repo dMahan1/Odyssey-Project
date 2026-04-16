@@ -111,10 +111,12 @@ def get_public_user_location_and_icon(user):
 
     user_locations = []
 
-    if not user_data:
+    if not user_data or not isinstance(user_data, dict):
         return user_locations
 
     for user_id, data in user_data.items():
+        if user_id == user["localId"] and not data.get("location_public", False):
+            return []
         if not isinstance(data, dict):
             continue
         if not data.get("location_public"):
@@ -406,12 +408,15 @@ def pull_pin(user, key):
         return "Error: Pin is currently being used in an event and cannot be pulled."
 
 
-def get_permanent_locations(user):
+def get_permanent_locations(user, include_dropped_pins=False):
     db = firebase.database()
     # Fetch all locations from the database
     all_locations = db.child("Locations").get(token=user["idToken"]).val()
 
     perm_locations = []
+
+    if include_dropped_pins and isinstance(all_locations, dict):
+        return all_locations
 
     if all_locations:
         for loc_id, loc_data in all_locations.items():
@@ -440,9 +445,20 @@ def get_user_dropped_pins(user):
             pins.append({"id": pin_id, "name": pin_data.get("name")})
     return pins
 
-def get_locations_from_name(user, loc_name):
-    all_locations = get_permanent_locations(user)
-    all_locations += get_user_dropped_pins(user)
+def get_locations_from_name(user, loc_name, include_dropped_pins=False):
+    if include_dropped_pins:
+        raw = get_permanent_locations(user, include_dropped_pins=True)
+        if isinstance(raw, dict):
+            all_locations = [
+                {"id": loc_id, "name": data.get("name", "")}
+                for loc_id, data in raw.items()
+                if isinstance(data, dict) and data.get("name")
+            ]
+        else:
+            all_locations = []
+    else:
+        all_locations = get_permanent_locations(user, include_dropped_pins=False)
+        all_locations += get_user_dropped_pins(user)
     matches = [loc for loc in all_locations if loc_name.lower() in loc["name"].lower()]
     return matches
 
@@ -528,7 +544,7 @@ def join_event(user, event_id):
     if event is None:
         return None
 
-    attendee_ids = event.get("attendee_ids", token=user["localId"])
+    attendee_ids = event.get("attendee_ids", [])
     if user["localId"] not in attendee_ids:
         attendee_ids.append(user["localId"])
         db.child("Events").child(event_id).update(
@@ -800,7 +816,7 @@ def get_user_data_by_id(user):
                     .val()
                 )
                 if event is None:
-                    remove_message(user["localId"], message_id)
+                    remove_message(user, message_id)
                     continue
             else:
                 sender_data = (
@@ -810,7 +826,7 @@ def get_user_data_by_id(user):
                     .val()
                 )
                 if sender_data is None:
-                    remove_message(user["localId"], message_id)
+                    remove_message(user, message_id)
                     continue
     return user_data
 
