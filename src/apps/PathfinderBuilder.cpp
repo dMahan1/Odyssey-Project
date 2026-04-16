@@ -11,8 +11,6 @@ using json = nlohmann::json;
 namespace py = pybind11;
 
 
-
-
 std::vector<Location> PathfinderBuilder::get_locations() const {
     return locations;
 }
@@ -133,7 +131,6 @@ void PathfinderBuilder::load_data_release() {
     std::cout << "Loading locations..." << std::endl;
     try {
         py::module_ sys = py::module_::import("sys");
-        std::cout << "1\n\n\n\n" << std::endl;
         sys.attr("path").attr("append")("./src");
 
         py::module_ db = py::module_::import("Database");
@@ -143,7 +140,7 @@ void PathfinderBuilder::load_data_release() {
 
 
         if (env_email == nullptr || env_pass == nullptr) {
-            std::cout << "Warning: Jawns not found in env!" << std::endl;
+            std::cerr << "Warning: Jawns not found in env!" << std::endl;
         }
         py::object user = db.attr("auth_user")(env_email, env_pass, 0.0, 0.0);
 
@@ -151,7 +148,6 @@ void PathfinderBuilder::load_data_release() {
             py::list pylocations = db.attr("get_permanent_locations")(user);
 
             for (auto loc : pylocations) {
-                // py::print("DEBUG - loc is:", loc);
                 try {
                     py::dict d = loc.cast<py::dict>();
 
@@ -163,9 +159,6 @@ void PathfinderBuilder::load_data_release() {
                     double latitude = coords["latitude"].cast<double>();
                     double longitude = coords["longitude"].cast<double>();
 
-                    std::cout << "Successfully Loaded: " << locname << " at ("
-                              << latitude << ", " << longitude << ")" << std::endl;
-
                     Location location(locid, locname, latitude, longitude);
                     locations.push_back(location);
 
@@ -174,6 +167,7 @@ void PathfinderBuilder::load_data_release() {
                     continue;
                 }
             }
+            std::cout << "Successfully Loaded " << locations.size() << " locations." << std::endl;
 
             py::list pyedges = db.attr("get_edges")(user);
             for (auto edge : pyedges) {
@@ -187,15 +181,15 @@ void PathfinderBuilder::load_data_release() {
                     double weight = d["weight"].cast<double>();
                     uint32_t flags = d["flags"].cast<uint32_t>();
 
-                    std::cout << "Successfully Loaded Edge: " << from << " -> " << to << std::endl;
-
                     edges.emplace_back(from, to, weight, flags);
+                    edges.emplace_back(to, from, weight, flags);
 
                 } catch (const py::error_already_set& e) {
                     std::cerr << "Edge Mapping Error: " << e.what() << std::endl;
                     continue;
                 }
             }
+            std::cout << "Successfully Loaded " << edges.size() << " edges." << std::endl;
         } else {
             std::cerr << "Failed to authenticate with Firebase." << std::endl;
         }
