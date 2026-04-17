@@ -271,7 +271,9 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
             
             remove_event(event_id);
             window.socket.once("event_deleted", (success) => {
-                if (!success) {
+                if (success == "Left Event") {
+                    alert("You have left the event.");
+                } else if (!success) {
                     alert("An error occurred while deleting the event. Please try again.");
                     add_event(event_name, event_creator, event_location, start_time, end_time, event_id); // Re-add if deletion failed
                 }

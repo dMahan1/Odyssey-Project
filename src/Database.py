@@ -299,20 +299,31 @@ def update_user_toucoins(user, amount):
 
 def delete_user(user):
 
+    admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
+
+    try:
+        auth.delete_user_account(user["idToken"])
+    except Exception as e:
+        return e
+    
+    for event_id in user.get("attended_event_ids", []):
+        event_data = (
+            db.child("Events").child(event_id).get(token=admin["idToken"]).val()
+        )
+        if event_data is None:
+            continue
+        delete_event(user, event_id)
+
     # Delete the user's data
     db = firebase.database()
-    friends = db.child("Users").child(user["localId"]).child("friend_ids").get(token=user["idToken"]).val()
+    friends = db.child("Users").child(user["localId"]).child("friend_ids").get(token=admin["idToken"]).val()
     if friends:
         for friend_id in friends:
             remove_friend(user, friend_id)
-    db.child("Users").child(user["localId"]).remove(token=user["idToken"])
+    db.child("Users").child(user["localId"]).remove(token=admin["idToken"])
 
     # Delete the user
-    try:
-        auth.delete_user_account(user["idToken"])
-        return "Success"
-    except Exception as e:
-        return e
+    return "Success"
 
 
 def get_all_users(user):
@@ -567,12 +578,39 @@ def join_event(user, event_id):
         )
     return True
 
+def leave_event(user, event_id):
+    db = firebase.database()
+    event = db.child("Events").child(event_id).get(token=user["idToken"]).val()
+    if event is None:
+        return None
+
+    attendee_ids = event.get("attendee_ids", [])
+    if user["localId"] in attendee_ids:
+        attendee_ids.remove(user["localId"])
+        db.child("Events").child(event_id).update(
+            {"attendee_ids": attendee_ids}, token=user["idToken"]
+        )
+
+    events = (
+        db.child("Users")
+        .child(user["localId"])
+        .child("attended_event_ids")
+        .get(token=user["idToken"])
+        .val()
+    )
+    if events and event_id in events:
+        events.remove(event_id)
+        db.child("Users").child(user["localId"]).update(
+            {"attended_event_ids": events}, token=user["idToken"]
+        )
+    return "Left Event"
+
 
 def delete_event(user, event_id):
     db = firebase.database()
     event = db.child("Events").child(event_id).get(token=user["idToken"]).val()
     if event["creator_id"] != user["localId"]:
-        return None
+        return leave_event(user, event_id)
 
     # Remove the event from all attendees' attended_event_ids
     attendee_ids = event.get("attendee_ids", [])

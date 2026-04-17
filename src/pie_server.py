@@ -317,8 +317,8 @@ def handle_accept_invite(event_id, message_id):
 @socketio.on("delete_event")
 def event_delete(event_id):
     user = session.get('user')
-    delete_event(user, event_id)
-    emit("event deleted")
+    status = delete_event(user, event_id)
+    emit("event_deleted", status)
 
 @socketio.on("send_invite")
 #check if none
