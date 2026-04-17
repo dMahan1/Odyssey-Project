@@ -24,8 +24,10 @@ describe('signup page', () => {
         });
         cy.get('#add_friends').click();
         cy.get('#logout').click();
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
         cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
@@ -52,11 +54,13 @@ describe('signup page', () => {
         cy.get('#settings_button').click();
         cy.url().should('include', 'Settings.html');
         cy.get('#logout').click();
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
         cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
-            win.alert = () => {};
+            cy.stub(win, 'alert').as('alert');
         });
         cy.get('#signin_email').type('cypressTheGreat@test.cdy');
         cy.get('#signin_password').type('password');
@@ -75,8 +79,10 @@ describe('signup page', () => {
             win.alert = () => {};
         });
         cy.get('#delete').click();
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
         cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
@@ -91,6 +97,7 @@ describe('signup page', () => {
             cy.stub(win, 'confirm').returns(true);
         });
         cy.wait(1000);
+        cy.contains('.month_event', 'TestEvent').click();
         cy.get('.delete_event_btn').click();
         cy.contains('.event_name', 'Name: TestEvent').should('not.exist');
     });
