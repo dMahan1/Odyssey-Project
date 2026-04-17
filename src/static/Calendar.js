@@ -60,6 +60,7 @@ let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
 
 const month_calendar_dates =  document.querySelector('.month_calendar_dates');
+const year_calendar_months =  document.querySelector('.year_calendar_months');
 
 const cancel_calendar_change = document.getElementById('cancel_calendar_change');
 const change_mode_button = document.getElementById('change_mode_button');
@@ -461,7 +462,7 @@ function make_month_calendar(month, year) {
            update_day_events();
 
            month_calendar.style.display = "none";
-           day_calendar.style.display = "block";
+           day_calendar.style.display = "flex";
         });
 
         const day_number = document.createElement('div');
@@ -489,7 +490,26 @@ function make_month_calendar(month, year) {
 }
 
 function make_year_calendar(year) {
+    year_calendar_months.innerHTML = '';
     year_label.textContent = `${year}`;
+    for (let i = 0; i <= 11; i++) {
+        const month_element = document.createElement('button');
+        month_element.classList.add('month');
+        month_element.innerHTML = `${months[i]}`;
+
+        month_element.addEventListener('click', () => {
+            current_month = i;
+            current_year = year;
+
+            make_month_calendar(current_month, current_year);
+            update_month_events();
+
+            year_calendar.style.display = "none";
+            month_calendar.style.display = "flex";
+        })
+
+        year_calendar_months.appendChild(month_element);
+    }
 
 }
 
@@ -645,8 +665,6 @@ inbox_button.addEventListener('click', () => {
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
 })
-
-
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
