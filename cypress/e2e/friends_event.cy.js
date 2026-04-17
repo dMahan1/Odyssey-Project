@@ -3,6 +3,8 @@ describe('signup page', () => {
         let date = new Date().toLocaleDateString();
         const [month, day, year] = date.split('/');
         date = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
+        const latitude = 40.427083;
+        const longitude = -86.92;
         cy.visit('/');
         cy.get('#sign_here a').click();
         cy.url().should('include', 'Signup.html');
@@ -23,6 +25,7 @@ describe('signup page', () => {
         cy.get('#add_friends').click();
         cy.get('#logout').click();
         cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
         cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
@@ -50,6 +53,7 @@ describe('signup page', () => {
         cy.url().should('include', 'Settings.html');
         cy.get('#logout').click();
         cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
         cy.stubGeolocation();
         cy.window().then((win) => {
             win.alert = () => {};
@@ -72,7 +76,8 @@ describe('signup page', () => {
         });
         cy.get('#delete').click();
         cy.url().should('eq', 'http://127.0.0.1:8080/');
-         cy.stubGeolocation();
+        cy.location('pathname').should('eq', '/');
+        cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
         });
@@ -85,6 +90,7 @@ describe('signup page', () => {
         cy.window().then((win) => {
             cy.stub(win, 'confirm').returns(true);
         });
+        cy.wait(1000);
         cy.get('.delete_event_btn').click();
         cy.contains('.event_name', 'Name: TestEvent').should('not.exist');
     });
