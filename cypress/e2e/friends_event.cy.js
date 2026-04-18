@@ -3,8 +3,6 @@ describe('signup page', () => {
         let date = new Date().toLocaleDateString();
         const [month, day, year] = date.split('/');
         date = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
-        const latitude = 40.427083;
-        const longitude = -86.92;
         cy.visit('/');
         cy.get('#sign_here a').click();
         cy.url().should('include', 'Signup.html');
@@ -60,7 +58,7 @@ describe('signup page', () => {
         cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
-            cy.stub(win, 'alert').as('alert');
+            win.alert = () => {};
         });
         cy.get('#signin_email').type('cypressTheGreat@test.cdy');
         cy.get('#signin_password').type('password');
@@ -79,6 +77,7 @@ describe('signup page', () => {
             win.alert = () => {};
         });
         cy.get('#delete').click();
+        cy.url({ timeout: 10000 }).should('eq', 'http://127.0.0.1:8080/');
         cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
         cy.location('pathname').should('eq', '/');
@@ -96,9 +95,8 @@ describe('signup page', () => {
         cy.window().then((win) => {
             cy.stub(win, 'confirm').returns(true);
         });
-        cy.wait(1000);
-        cy.contains('.month_event', 'TestEvent').click();
+        cy.contains('.month_event', 'TestEvent').should('exist').click();
         cy.get('.delete_event_btn').click();
-        cy.contains('.event_name', 'Name: TestEvent').should('not.exist');
+        cy.get('.event').should('not.exist');
     });
 });
