@@ -1,9 +1,14 @@
 #include "PathfinderBuilder.hpp"
 #include <fstream>
 #include <filesystem>
+#include <pybind11/embed.h>
+#include <iostream>
+#include <cstdlib>
+#include <string>
 
 #include "json.hpp"
 using json = nlohmann::json;
+namespace py = pybind11;
 
 
 std::vector<Location> PathfinderBuilder::get_locations() const {
@@ -123,5 +128,73 @@ void PathfinderBuilder::load_data_demo() {
 }
 
 void PathfinderBuilder::load_data_release() {
-    // TODO: Implement data loading for release mode
+    std::cout << "Loading locations..." << std::endl;
+    try {
+        py::module_ sys = py::module_::import("sys");
+        sys.attr("path").attr("append")("./src");
+
+        py::module_ db = py::module_::import("Database");
+
+        const char* env_email = std::getenv("ADMIN_EMAIL");
+        const char* env_pass = std::getenv("ADMIN_PASSWORD");
+
+
+        if (env_email == nullptr || env_pass == nullptr) {
+            std::cerr << "Warning: Jawns not found in env!" << std::endl;
+        }
+        py::object user = db.attr("auth_user")(env_email, env_pass, 0.0, 0.0);
+
+        if (user["status"].cast<std::string>() == "Success") {
+            py::list pylocations = db.attr("get_permanent_locations")(user);
+
+            for (auto loc : pylocations) {
+                try {
+                    py::dict d = loc.cast<py::dict>();
+
+                    py::dict coords = d["coordinates"].cast<py::dict>();
+
+                    std::string locid = d["id"].cast<std::string>();
+                    std::string locname = d["name"].cast<std::string>();
+
+                    double latitude = coords["latitude"].cast<double>();
+                    double longitude = coords["longitude"].cast<double>();
+
+                    Location location(locid, locname, latitude, longitude);
+                    locations.push_back(location);
+
+                } catch (const py::error_already_set& e) {
+                    std::cerr << "Data mapping error: " << e.what() << std::endl;
+                    continue;
+                }
+            }
+            std::cout << "Successfully Loaded " << locations.size() << " locations." << std::endl;
+
+            py::list pyedges = db.attr("get_edges")(user);
+            for (auto edge : pyedges) {
+                try {
+                    py::dict d = edge.cast<py::dict>();
+
+                    if (!d.contains("from")) continue;
+
+                    std::string from = d["from"].cast<std::string>();
+                    std::string to = d["to"].cast<std::string>();
+                    double weight = d["weight"].cast<double>();
+                    uint32_t flags = d["flags"].cast<uint32_t>();
+
+                    edges.emplace_back(from, to, weight, flags);
+                    edges.emplace_back(to, from, weight, flags);
+
+                } catch (const py::error_already_set& e) {
+                    std::cerr << "Edge Mapping Error: " << e.what() << std::endl;
+                    continue;
+                }
+            }
+            std::cout << "Successfully Loaded " << edges.size() << " edges." << std::endl;
+        } else {
+            std::cerr << "Failed to authenticate with Firebase." << std::endl;
+        }
+
+    } catch (py::error_already_set &e) {
+        std::cerr << "Python/Firebase Error: " << e.what() << std::endl;
+    }
 }
