@@ -673,11 +673,10 @@ body {
     flex: 1;
 }
 
-.week_calendar_day_1, .week_calendar_day_2,
-.week_calendar_day_3, .week_calendar_day_4, .week_calendar_day_5,
-.week_calendar_day_6, .week_calendar_day_7 {
+.week_calendar_day {
     background-color: #ababab;
     display: flex;
+    position: relative;
     border-right: 2px solid black;
 }
 

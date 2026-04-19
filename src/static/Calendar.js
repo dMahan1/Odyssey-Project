@@ -59,6 +59,8 @@ let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
 
+const week_calendar_blocks = [...document.querySelectorAll('.week_main_content')]
+
 const month_calendar_dates =  document.querySelector('.month_calendar_dates');
 const year_calendar_months =  document.querySelector('.year_calendar_months');
 
@@ -333,6 +335,78 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     main_content.appendChild(new_event);
 }
 
+function add_week_event(event_name, event_creator, event_location, start_time, end_time, event_id, day_block) {
+    let new_event = event_template.content.cloneNode(true);
+
+    let event_div = new_event.querySelector('.event');
+    const hour_size = 60;
+    event_div.style.top = ((start_time + 1) * hour_size) + "px";
+    event_div.style.height = ((end_time - start_time) * hour_size) + "px";
+    event_div.id = event_id;
+
+    // --- NEW DELETE LOGIC ---
+    const deleteBtn = new_event.querySelector('.delete_event_btn');
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
+            window.socket.emit("delete_event", event_id);
+
+            remove_event(event_id);
+            window.socket.once("event_deleted", (success) => {
+                if (!success) {
+                    alert("An error occurred while deleting the event. Please try again.");
+                    add_event(event_name, event_creator, event_location, start_time, end_time, event_id); // Re-add if deletion failed
+                }
+            });
+        }
+    });
+
+    const message_button = new_event.querySelector('.message_button');
+    message_button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        current_event_id = event_id;
+        message_popup.style.display = "block";
+    })
+
+    new_event.querySelector('.event_name').innerText = "Name: " + event_name;
+    new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
+    new_event.querySelector('.event_location').innerText = "Location: " + event_location;
+
+    let start_hour = Math.floor(start_time);
+    let start_minute = Math.floor((start_time * 60) % 60)
+
+    if (start_hour > 12) {
+        start_hour = start_hour % 12;
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "pm";
+
+    } else {
+        if (start_hour === 0) {
+            start_hour = 12;
+        }
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "am";
+    }
+
+    let end_hour = Math.floor(end_time);
+    let end_minute = Math.floor((end_time * 60) % 60);
+
+    if (end_hour > 12) {
+        end_hour = end_hour % 12;
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "pm";
+    } else {
+        if (end_hour === 0) {
+            end_hour = 12;
+        }
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "am";
+    }
+
+    if (event_creator !== current_user.displayName) {
+        message_button.style.display = "none";
+    }
+
+    day_block.appendChild(new_event);
+}
+
 function remove_event(event_id) {
     let to_remove = document.getElementById(event_id);
     if (to_remove) {
@@ -347,6 +421,7 @@ function clear_events() {
 
 function update_events() {
     update_day_events();
+    update_week_events();
     update_month_events();
 }
 
@@ -385,6 +460,60 @@ function update_day_events() {
                     displayEnd, 
                     event.id
                 );
+            }
+        });
+    });
+}
+
+function update_week_events() {
+    window.socket.emit("get_events");
+    window.socket.once("events_got", (events) => {
+        clear_events();
+
+        const first_day = new Date(current_date);
+        const day_index = first_day.getDay();
+        first_day.setDate(first_day.getDate() - day_index);
+        first_day.setHours(0, 0, 0, 0);
+
+        const last_day = new Date(first_day);
+        last_day.setDate(first_day.getDate() + 6)
+
+        events.forEach(event => {
+            const startVal = new Date(event.start_time);
+            const endVal = new Date(event.end_time);
+            const startDayTime = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate()).getTime();
+            const endDayTime = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate()).getTime();
+
+            for (let i = 0; i < 7; i++) {
+                const  calendar_date = new Date(first_day);
+                calendar_date.setDate(first_day.getDate() + i);
+                const currentCalTime = calendar_date.getTime();
+
+                if (currentCalTime >= startDayTime && currentCalTime <= endDayTime) {
+
+                    let displayStart = 0; // Default to top of day
+                    let displayEnd = 24;  // Default to bottom of day
+
+                    // 2. If it's the first day of the event, use the actual start time
+                    if (currentCalTime === startDayTime) {
+                        displayStart = startVal.getHours() + (startVal.getMinutes() / 60);
+                    }
+
+                    // 3. If it's the last day of the event, use the actual end time
+                    if (currentCalTime === endDayTime) {
+                        displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
+                    }
+
+                    add_week_event(
+                        event.name,
+                        event.creator_username,
+                        event.location_name,
+                        displayStart,
+                        displayEnd,
+                        event.id,
+                        week_calendar_blocks[i]
+                    );
+                }
             }
         });
     });
@@ -817,6 +946,7 @@ previous_week.addEventListener('click', () => {
     current_year = current_date.getFullYear();
 
     make_week_calendar();
+    update_week_events();
 })
 
 next_week.addEventListener('click', () => {
@@ -828,6 +958,7 @@ next_week.addEventListener('click', () => {
     current_year = current_date.getFullYear();
 
     make_week_calendar();
+    update_week_events();
 })
 
 
@@ -846,6 +977,7 @@ day_change.addEventListener('click', () => {
 week_change.addEventListener('click', () => {
     reset_current_day();
     make_week_calendar();
+    update_week_events();
 
     day_calendar.style.display = "none";
     year_calendar.style.display = "none";
