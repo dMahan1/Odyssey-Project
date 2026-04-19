@@ -49,6 +49,13 @@ describe('signup page', () => {
         cy.get('#location_search').first().select('University Book Store');
         cy.get('#save_event').click();
         cy.contains('.event_name', 'Name: TestEvent').should('exist');
+        cy.contains('.month_event', 'TestEvent').should('exist').click();
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.contains('.event', 'TestEvent').find('.message_button').click();
+        cy.get('#message_text').type('Test Message');
+        cy.get('#send_message').click();
         cy.get('#settings_button').click();
         cy.url().should('include', 'Settings.html');
         cy.get('#logout').click();
@@ -68,6 +75,13 @@ describe('signup page', () => {
         cy.url().should('include', 'Calendar.html');
         cy.get('#inbox_button').click();
         cy.get('#accept_event').click();
+        cy.get('#close_inbox').click();
+        cy.get('#inbox_button').click();
+        cy.get('.message').within(() => {
+            cy.get('.event_name').should('have.text', 'TestEvent');
+            cy.get('.sender_username').should('have.text', '@TestUser');
+            cy.get('.message_text').should('have.text', 'Test Message');
+        });
         cy.get('#close_inbox').click();
         cy.contains('.event_name', 'Name: TestEvent').should('exist');
         cy.get('#settings_button').click();
