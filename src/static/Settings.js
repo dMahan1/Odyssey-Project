@@ -33,7 +33,7 @@ const socket = io({
 window.socket = socket;
 
 // added
-const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+const backupUser = JSON.parse(sessionStorage.getItem('user_backup'));
 if (backupUser) {
     // Manually tell the server "Hey, remember me?"
     // This helps the server re-fill the session['user'] if it got wiped
@@ -52,7 +52,7 @@ socket.on("auth", (user) => {
 logout.addEventListener('click', () => {
     current_user = null;
     sessionStorage.removeItem('user');
-    localStorage.removeItem('user_backup');
+    sessionStorage.removeItem('user_backup');
     socket.emit('logout');
     window.location.href = "Signin.html";
 })
@@ -291,7 +291,7 @@ user_check.addEventListener('click', () => {
 
             // 2. Persist to storage so it survives page navigation
             sessionStorage.setItem('user', JSON.stringify(current_user));
-            localStorage.setItem('user_backup', JSON.stringify(current_user));
+            sessionStorage.setItem('user_backup', JSON.stringify(current_user));
 
             // 3. Update the UI text
             document.getElementById('username_display').innerText = newUsername;

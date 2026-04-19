@@ -135,4 +135,23 @@ def revert_transformed_data(output_filepath):
     
     print(f"Success! Reverted data saved to {output_filepath}")
 
+def clear_graph_data():
+    db = firebase.database()
+
+    # Remove all edges
+    db.child("Edges").remove(token=admin['idToken'])
+    print("All edges removed.")
+
+    # Remove all permanent locations
+    all_locations = db.child("Locations").get(token=admin['idToken']).val()
+    if all_locations:
+        removed = 0
+        for loc_id, loc_data in all_locations.items():
+            if isinstance(loc_data, dict) and loc_data.get("permanent"):
+                db.child("Locations").child(loc_id).remove(token=admin['idToken'])
+                removed += 1
+        print(f"{removed} permanent location(s) removed.")
+    else:
+        print("No locations found.")
+#clear_graph_data()
 save_transformed_data(sys.argv[1])
