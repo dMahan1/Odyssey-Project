@@ -49,7 +49,7 @@ signin_button.addEventListener('click', () =>{
 
         socket.once("auth", (user) => {
             sessionStorage.setItem('user', JSON.stringify(user));
-            localStorage.setItem('user_backup', JSON.stringify(user));
+            sessionStorage.setItem('user_backup', JSON.stringify(user));
             setTimeout(() => {
                 window.location.href = "Map.html";
             }, 200);
