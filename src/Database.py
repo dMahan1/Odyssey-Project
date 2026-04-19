@@ -300,11 +300,6 @@ def update_user_toucoins(user, amount):
 def delete_user(user):
 
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
-
-    try:
-        auth.delete_user_account(user["idToken"])
-    except Exception as e:
-        return e
     
     for event_id in user.get("attended_event_ids", []):
         event_data = (
@@ -321,6 +316,11 @@ def delete_user(user):
         for friend_id in friends:
             remove_friend(user, friend_id)
     db.child("Users").child(user["localId"]).remove(token=admin["idToken"])
+
+    try:
+        auth.delete_user_account(user["idToken"])
+    except Exception as e:
+        return e
 
     # Delete the user
     return "Success"
