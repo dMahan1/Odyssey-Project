@@ -72,6 +72,7 @@ function updateLoc() {
         navigator.geolocation.getCurrentPosition(locSuccess, locFail, {enableHighAccuracy: true});
         console.log(locationSuccess + ", " + latitude + ", " + longitude + ", " + updated);
         window.socket.emit("get_hotspots");
+        window.socket.emit("get_user_pins");
     } else {
         locFail();
     }
@@ -572,7 +573,7 @@ window.socket.on("hotspot_result", (data) => {
               const endTime = new Date(hotspot.end_time).getTime();
               const now = Date.now();
 
-              const maxLife = 1000 * 60 * 5;
+              const maxLife = 1000 * 60 * 5; // 5 minutes
               const timeLeft = Math.max(0, endTime - now);
               const ratio = Math.min(1, timeLeft / maxLife);
 
@@ -583,8 +584,8 @@ window.socket.on("hotspot_result", (data) => {
               const dynamicColor = ratio > 0.2 ? '#f03' : '#888';
 
               const circle = L.circle([hotspot.latitude, hotspot.longitude], {
-                  color: ratio > 0.2 ? 'red' : 'gray',
                   fillColor: dynamicColor,
+                  opacity: 0.0,
                   fillOpacity: dynamicOpacity,
                   radius: dynamicRadius
               }).addTo(map);
