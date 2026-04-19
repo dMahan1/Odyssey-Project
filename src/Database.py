@@ -434,7 +434,7 @@ def get_permanent_locations(user, include_dropped_pins=False):
             # Check if the location is marked as permanent
             try:
                 if loc_data.get("permanent"):
-                    perm_locations.append({"id": loc_id, "name": loc_data.get("name")})
+                    perm_locations.append({"id": loc_id, "name": loc_data.get("name"), "coordinates": loc_data.get("coordinates")})
             except Exception as e:
                 print(f"Error processing location {loc_id}: {e}")
                 continue
@@ -455,6 +455,16 @@ def get_user_dropped_pins(user):
         if pin_data:
             pins.append({"id": pin_id, "name": pin_data.get("name")})
     return pins
+
+def get_edges(user):
+    db = firebase.database()
+    edges_data = db.child("Edges").get(token=user["idToken"]).val()
+
+    if not edges_data:
+        return []
+
+    return list(edges_data.values())
+
 
 def get_locations_from_name(user, loc_name, include_dropped_pins=False):
     if include_dropped_pins:
