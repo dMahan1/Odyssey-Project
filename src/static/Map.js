@@ -6,6 +6,8 @@ let oldLon;
 let currentRouteLayer = null;
 let isPlacingPin = false;
 let pins = [];
+let unownedEventLocations = [];
+let pinMarkers = {};  // keyed by pin.id → Leaflet marker
 let hotspots = [];
 let pinLayerGroup;
 
@@ -54,7 +56,7 @@ const socket = io({
 window.socket = socket;
 
 // added
-const backupUser = JSON.parse(localStorage.getItem('user_backup'));
+const backupUser = JSON.parse(sessionStorage.getItem('user_backup'));
 if (backupUser) {
     // Manually tell the server "Hey, remember me?"
     // This helps the server re-fill the session['user'] if it got wiped
@@ -109,7 +111,7 @@ function locFail() {
     console.log("Location Didn't Work")
     current_user = null;
     sessionStorage.removeItem('user');
-    localStorage.removeItem('user_backup');
+    sessionStorage.removeItem('user_backup');
     socket.emit('logout');
     window.location.href = "Signin.html";
 }
@@ -374,6 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     console.log("fetching pins");
+    
     window.socket.emit("get_user_pins");
 });
 
@@ -485,6 +488,7 @@ window.socket.on("user_pins_got", (data) => {
     }
 
     pins = [];
+    pinMarkers = {};
 
     data.forEach(pin => {
         const lat = pin.coordinates?.latitude;
@@ -511,6 +515,54 @@ window.socket.on("user_pins_got", (data) => {
                 offset: L.point(0, -5)
             });
             pinLayerGroup.addLayer(marker);
+            pinMarkers[pinId] = marker;
+        }
+    });
+
+    socket.emit("get_event_locations");
+});
+
+window.socket.on("event_locations_got", (data) => {
+    console.log("Received event locations:", data);
+
+    // Remove stale unowned markers before re-adding from fresh server response
+    unownedEventLocations.forEach(loc => {
+        if (loc.marker) pinLayerGroup.removeLayer(loc.marker);
+    });
+    unownedEventLocations = [];
+
+    data.forEach(loc => {
+        // Match by name against the current user's own pins only
+        const existingPin = pins.find(pin => pin.name === loc.name);
+
+        if (existingPin) {
+            // This is the user's own pin used in an event — show pin-style popup with fake pull
+            const marker = pinMarkers[existingPin.id];
+            if (marker) {
+                const eventsHtml = loc.events.map(e => `<div style="color: black;">${e}</div>`).join('');
+                const popupContent = `
+                    <div style="font-family: Rockwell, monaco, monospace; padding: 5px; text-align: center;">
+                        <strong style="color: black; display: block; margin-bottom: 5px;">${loc.name}</strong>
+                        <strong style="color: black; display: block; margin-bottom: 3px;">Events:</strong>
+                        ${eventsHtml}
+                    </div>
+                `;
+                marker.setPopupContent(popupContent);
+            }
+        } else {
+            // Event at a location the user doesn't own — show event info, no pull button
+            const eventsHtml = loc.events.map(e => `<div style="color: black;">${e}</div>`).join('');
+            const popupContent = `
+                <div style="font-family: Rockwell, monaco, monospace; padding: 5px; text-align: center;">
+                    <strong style="color: black; display: block; margin-bottom: 5px;">${loc.name}</strong>
+                    <strong style="color: black; display: block; margin-bottom: 3px;">Events:</strong>
+                    ${eventsHtml}
+                </div>
+            `;
+            const marker = L.marker([loc.latitude, loc.longitude]);
+            marker.bindPopup(popupContent, { closeButton: false, offset: L.point(0, -5) });
+            pinLayerGroup.addLayer(marker);
+            unownedEventLocations.push({ ...loc, marker });
         }
     });
 });
