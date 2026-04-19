@@ -164,6 +164,8 @@ def get_user():
 @socketio.on('update_loc')
 def update_loc(latitude, longitude):
     user = session.get('user')
+    if not user:
+        return
     update_user_location(user, latitude, longitude)
     emit("updated_loc")
 
@@ -208,6 +210,50 @@ def handle_get_user_pins():
 
     emit("user_pins_got", pins)
 
+@socketio.on("get_event_locations")
+def handle_get_event_locations():
+    user = session.get('user')
+    if not user:
+        return
+
+    locations = []
+    user_data = get_user_data(user)
+
+    for event_id in user_data.get("attended_event_ids", []):
+        event_info = get_event_data(user, event_id)
+        if event_info and "location_name" in event_info:
+            for loc in locations:
+                if loc["name"] == event_info["location_name"]:
+                    loc["events"].append(event_info["name"])
+                    break
+            else:
+                matched = get_locations_from_name(user, event_info["location_name"], True)
+                lat, lng, count = 0, 0, 0
+                if matched:
+                    for match in matched:
+                        full_data = get_location_data(user, match['id'])
+
+                        if full_data and 'coordinates' in full_data:
+                            lat += full_data['coordinates']['latitude']
+                            lng += full_data['coordinates']['longitude']
+                            count += 1
+                    if count > 0:
+                        lat = lat / count
+                        lng = lng / count
+                        id = event_info.get("locationids", [])
+                        if id and not isinstance(id, list):
+                            id = [id]
+
+                        locations.append({
+                            "name": event_info["location_name"],
+                            "events": [event_info["name"]],
+                            "latitude": lat,
+                            "longitude": lng,
+                            "id": id
+                        })
+    print(f"Event locations prepared to send: {locations}")
+
+    emit("event_locations_got", locations)
 
 @socketio.on("get_public_users")
 def handle_get_public_users():
@@ -222,7 +268,9 @@ def handle_get_public_users():
 @socketio.on("get_permanent_locations")
 def handle_get_perm_locs():
     user = session.get('user')
-    locations = get_permanent_locations(user)
+    if not user:
+        return
+    locations = get_permanent_locations(user, include_dropped_pins=False)
     emit("permanent_locations_got", locations)
 
 @socketio.on("report_issue")
@@ -244,9 +292,9 @@ def handle_report_user(subject_username, message):
     emit("user_reported", result)
 
 @socketio.on("create_event")
-def event_create(name, start_time, end_time, locationid, attendee_ids):
+def event_create(name, start_time, end_time, locationids, attendee_ids):
     user = session.get('user')
-    key = create_event(user, name, start_time, end_time, locationid, attendee_ids)
+    key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
     emit("event_created", key)
 
 @socketio.on("get_events")
@@ -269,8 +317,8 @@ def handle_accept_invite(event_id, message_id):
 @socketio.on("delete_event")
 def event_delete(event_id):
     user = session.get('user')
-    delete_event(user, event_id)
-    emit("event deleted")
+    status = delete_event(user, event_id)
+    emit("event_deleted", status)
 
 @socketio.on("send_invite")
 #check if none
@@ -405,7 +453,7 @@ def handle_search_locations(loc_name):
     if not user:
         return emit("search_result", {"status": "error", "message": "Not logged in"})
 
-    matches = get_locations_from_name(user, loc_name)
+    matches = get_locations_from_name(user, loc_name, False)
 
     if not matches:
         return emit("search_result", {"status": "error", "message": "No matches found"})
