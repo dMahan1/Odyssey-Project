@@ -694,6 +694,9 @@ def add_friend(user, friend_id):
 
     db = firebase.database()
 
+    if db.child("Users").child(friend_id).get(token=user["idToken"]).val() is None:
+        return None
+
     # 1. Add friend to current user's list
     my_friends = (
         db.child("Users")
@@ -797,7 +800,7 @@ def get_friends(user):
             friend_data = (
                 db.child("Users").child(friend_id).get(token=user["idToken"]).val()
             )
-            if friend_data:
+            if friend_data is not None:
                 print(f"Friend: {friend_data}")
                 friends.append(
                     {
