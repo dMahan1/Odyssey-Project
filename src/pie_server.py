@@ -531,7 +531,10 @@ def handle_create_hotspot(data):
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
 
     ret = create_hotspot(user, data["latitude"], data["longitude"])
-    emit("create_hotspot_result", {"status": "success", "id": ret})
+    if ret:
+        emit("create_hotspot_result", {"status": "success", "id": ret})
+    else:
+        emit("create_hotspot_result", {"status": "error", "message": "Too soon"})
 
 @socketio.on("get_hotspots")
 def handle_get_hotspots():
