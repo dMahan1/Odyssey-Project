@@ -25,6 +25,8 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
+const hats = ["./static/images/Avatar_Hat1.png", "./static/images/Avatar_Hat2.png"];
+const shirts = ["./static/images/Avatar_Shirt1.png"];
 
 const socket = io({
     withCredentials: true,
@@ -175,7 +177,7 @@ ban_user.addEventListener('click', () => {
         }
         else {
             alert("There has been an error");
-        }  
+        }
     });
 });
 

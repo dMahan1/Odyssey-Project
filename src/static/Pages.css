@@ -30,7 +30,7 @@ body {
 /* Map css */
 #map_top_bar {
     height: 50px;
-    background-color: #e8a2a7;
+    background-color: var(--ui-pinkish);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -987,4 +987,49 @@ body {
     flex-direction: row;
     font-family: Rockwell, monaco, monospace;
     justify-content: flex-start;
+}
+
+.dressing-room-container {
+    position: absolute;
+    top: 20px;   /* Distance from the top */
+    left: 20px;  /* Distance from the left */
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: var(--ui-pinkish);
+    border: 3px solid black;
+}
+
+.avatar-square {
+    width: 180px;
+    height: 180px;
+    background-color: var(--ui-cream);
+    border: 3px solid #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-square img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.controls-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.controls-column button {
+    padding: 5px 10px;
+    cursor: pointer;
 }
