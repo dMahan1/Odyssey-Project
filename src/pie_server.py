@@ -516,6 +516,22 @@ def handle_get_route(src_lat, src_lon, dst_lat, dst_lon, bad_weather, traversal_
         }
     emit("route_result", {"status": "success", "route": path_result})
 
+@socketio.on("events_at_loc")
+def handle_events_at_loc(loc_name):
+    user = session.get('user')
+    if not user:
+        return emit("events_at_loc_result", {"status": "error", "message": "Not logged in"})
+
+    all_user_events = get_user_events(user)
+    events_at_loc = []
+
+    for event in all_user_events:
+        event_data = get_event_data(user, event["id"])
+        if event_data["location_name"] == loc_name:
+            events_at_loc.append(event_data)
+
+
+    emit("events_at_loc_result", {"status": "success", "events": events_at_loc})
 @socketio.on("get_id_coords")
 def handle_get_id_coords(ids):
     user = session.get('user')
