@@ -5,17 +5,13 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from multiprocessing import context
 from pathlib import Path
+from PIL import Image
 
-import cloudinary
-import cloudinary.api
-import cloudinary.uploader
+_src_dir = os.path.dirname(os.path.abspath(__file__))
+
 import empyrebase
 
-# Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-from cloudinary import CloudinaryImage, CloudinaryVideo
 from dotenv import load_dotenv
-
-cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -31,6 +27,7 @@ config = {
     "authDomain": os.getenv("AUTH_DOMAIN"),
     "projectId": os.getenv("PROJECT_ID"),
     "databaseURL": os.getenv("DATABASE_URL"),
+
     "storageBucket": os.getenv("STORAGE_BUCKET"),
     # "serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
 }
@@ -190,17 +187,43 @@ def create_user(email, username, password, latitude, longitude):
         user["status"] = "Success"
         return user
 
-def set_user_icon_image(user, image):
+def set_user_icon_image(user, images):
     db = firebase.database()
-    if image is None:
+    if images is None:
         db.child("Users").child(user["localId"]).update(
-            {"icon_image_path": "../images/Default.png"}, token=user["idToken"]
+            {"icon_image_path": "/static/images/Default.png"}, token=user["idToken"]
         )
     else:
+        img1 = None
+        hat_path = images.get("hat")
+        if hat_path and Path(hat_path).exists():
+            img1 = Image.open(hat_path).convert("RGBA")
+
+        img2 = None
+        shirt_path = images.get("shirt")
+        if shirt_path and Path(shirt_path).exists():
+            img2 = Image.open(shirt_path).convert("RGBA")
+
+        img3 = None
+        shoe_path = images.get("shoes")
+        if shoe_path and Path(shoe_path).exists():
+            img3 = Image.open(shoe_path).convert("RGBA")
+
+        base = Image.open(os.path.join(_src_dir, "static/images/Default.png")).convert("RGBA")
+
+        if img1:
+            base.paste(img1, (0, 0), img1)
+        if img2:
+            base.paste(img2, (0, 0), img2)
+        if img3:
+            base.paste(img3, (0, 0), img3)
+
+        save_path = os.path.join(_src_dir, "static", "images", "Users", f"{user['localId']}.png")
+        base.save(save_path)
+
         db.child("Users").child(user["localId"]).update(
-            {"icon_image_path": user["localId"]}, token=user["idToken"]
+            {"icon_image_path": f"/static/images/Users/{user['localId']}.png"}, token=user["idToken"]
         )
-        cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
@@ -300,7 +323,10 @@ def update_user_toucoins(user, amount):
 def delete_user(user):
 
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
-    
+
+    image_path = Path(f"{_src_dir}/static/images/Users/{user["localId"]}.png")
+    image_path.unlink(missing_ok=True)
+
     for event_id in user.get("attended_event_ids", []):
         event_data = (
             db.child("Events").child(event_id).get(token=admin["idToken"]).val()
@@ -904,13 +930,13 @@ def get_user_events(user):
                         "name": event_data.get("name"),
                         "creator_username": event_data.get(
                             "creator_username"
-                        ),  # <-- ALSO ADD THIS for the GUI
+                        ),
                         "start_time": event_data.get("start_time"),
                         "end_time": event_data.get("end_time"),
                         "locationid": event_data.get("locationid"),
                         "location_name": event_data.get(
                             "location_name"
-                        ),  # <-- ADD THIS LINE
+                        ),
                         "attendee_ids": event_data.get("attendee_ids"),
                     }
                 )
@@ -918,12 +944,29 @@ def get_user_events(user):
 
 def create_hotspot(user, latitude, longitude):
     db = firebase.database()
-    end_time = datetime.now(timezone.utc) + timedelta(minutes=5)
+    prev_hotspot_expiry = db.child("Users").child(user["localId"]).child("hotspot_expiry").get(token=user["idToken"]).val()
+
+    now = datetime.now(timezone.utc)
+
+    if prev_hotspot_expiry:
+        try:
+            expiry = datetime.fromisoformat(prev_hotspot_expiry)
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if now < expiry:
+                return None
+        except Exception as e:
+            print(f"Error processing expiry: {e}")
+
+    end_time = now + timedelta(minutes=5)
+    db.child("Users").child(user["localId"]).child("hotspot_expiry").set(end_time.isoformat(), token=user["idToken"])
+
     hotspot = {
         "latitude": latitude,
         "longitude": longitude,
         "end_time": end_time.isoformat()
     }
+
     new_hotspot = db.child("Hotspots").push(hotspot, token=user["idToken"])
     return new_hotspot["name"]
 
@@ -937,7 +980,11 @@ def get_hotspots(user):
     if hotspots:
         for id, data in hotspots.items():
             try:
+                # Use replace to ensure it is treated as UTC if the string lacks offset
                 expiry = datetime.fromisoformat(data["end_time"])
+                if expiry.tzinfo is None:
+                    expiry = expiry.replace(tzinfo=timezone.utc)
+
                 if now < expiry:
                     active_hotspots[id] = data
                 else:
@@ -997,5 +1044,4 @@ def test():
         print("Error: User data retrieval should have failed after deletion.")
     except Exception:
         print("User deleted successfully, data retrieval failed as expected.")
-
 

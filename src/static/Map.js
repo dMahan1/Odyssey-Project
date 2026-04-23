@@ -237,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
             users.forEach(u => {
                 if (u.latitude == null || u.longitude == null) return;
                 seenIds.add(u.id);
-                const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                const iconUrl = (u.icon_image_path && (u.icon_image_path.startsWith('http') || u.icon_image_path.startsWith('/static/')))
                     ? u.icon_image_path
                     : '../static/images/Default.png';
                 if (otherUserMarkers[u.id]) {
@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.emit("get_user");
     window.socket.once("return_user", (user) => {
         if (user) {
-            const iconUrl = (user.icon_image_path && user.icon_image_path.startsWith('http'))
+            const iconUrl = (user.icon_image_path && (user.icon_image_path.startsWith('http') || user.icon_image_path.startsWith('/static/')))
                 ? user.icon_image_path
                 : '../static/images/Default.png';
             userIcon = L.icon({
@@ -335,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('hotspot_btn').addEventListener('click', () => {
         window.socket.emit('create_hotspot', { "latitude": latitude, "longitude": longitude });
-        window.socket.emit('get_hotspots');
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');
@@ -370,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     console.log("fetching pins");
-    
+
     window.socket.emit("get_user_pins");
 });
 
@@ -557,6 +556,15 @@ window.socket.on("event_locations_got", (data) => {
             unownedEventLocations.push({ ...loc, marker });
         }
     });
+});
+
+window.socket.on("create_hotspot_result", (data) => {
+    window.socket.emit('get_hotspots');
+    if (data.status === "success") {
+        alert("Thank you for creating a hotspot!");
+    } else {
+        alert("You are creating hotspots too fast!");
+    }
 });
 
 window.socket.on("hotspot_result", (data) => {

@@ -297,6 +297,12 @@ def event_create(name, start_time, end_time, locationids, attendee_ids):
     key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
     emit("event_created", key)
 
+@socketio.on("get_privacy")
+def get_privacy():
+    user = session.get('user')
+    is_private = not get_user_data(user).get('location_public', False)
+    emit("privacy_got", is_private)
+
 @socketio.on("get_events")
 def get_events():
     user = session.get('user')
@@ -531,7 +537,10 @@ def handle_create_hotspot(data):
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
 
     ret = create_hotspot(user, data["latitude"], data["longitude"])
-    emit("create_hotspot_result", {"status": "success", "id": ret})
+    if ret:
+        emit("create_hotspot_result", {"status": "success", "id": ret})
+    else:
+        emit("create_hotspot_result", {"status": "error", "message": "Too soon"})
 
 @socketio.on("get_hotspots")
 def handle_get_hotspots():
@@ -540,6 +549,32 @@ def handle_get_hotspots():
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
     hotspots = get_hotspots(user)
     emit("hotspot_result", {"status": "success", "hotspots": hotspots})
+
+_HATS = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat1.png"),
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat2.png"),
+]
+_SHIRTS = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt1.png"),
+]
+_SHOES = [None]
+
+@socketio.on("set_icon_image")
+def handle_set_icon_image(hat_idx, shirt_idx, shoe_idx):
+    user = session.get('user')
+    if not user:
+        return emit("icon_set", {"status": "error"})
+
+    images = {
+        "hat": _HATS[hat_idx] if 0 <= hat_idx < len(_HATS) else None,
+        "shirt": _SHIRTS[shirt_idx] if 0 <= shirt_idx < len(_SHIRTS) else None,
+        "shoes": _SHOES[shoe_idx] if 0 <= shoe_idx < len(_SHOES) else None,
+    }
+
+    set_user_icon_image(user, images)
+    emit("icon_set", {"status": "success"})
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

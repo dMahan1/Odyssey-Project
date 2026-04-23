@@ -25,6 +25,9 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
+const hats = [null, "../static/images/Hats/Avatar_Hat1.png", "../static/images/Hats/Avatar_Hat2.png"];
+const shirts = [null, "../static/images/Shirts/Avatar_Shirt1.png"];
+const shoes = [null];
 
 const socket = io({
     withCredentials: true,
@@ -46,6 +49,37 @@ socket.on("auth", (user) => {
     current_user = user;
     sessionStorage.setItem('user', JSON.stringify(user));
 });
+
+
+let hat_idx = 0;
+let shirt_idx = 0;
+let shoe_idx = 0;
+function change_item(item, direction) {
+    const layer = document.getElementById(`layer-${item}`);
+    let assetList = [];
+
+    // Select the correct array
+    switch (item) {
+        case 'hat':
+            assetList = hats;
+            hat_idx = (hat_idx + direction + hats.length) % hats.length;
+            if (hats.length > 0) layer.src = hats[hat_idx];
+            break;
+        case 'shirt':
+            assetList = shirts;
+            shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
+            if (shirts.length > 0) layer.src = shirts[shirt_idx];
+            break;
+        case 'shoe':
+            assetList = shoes;
+            // Only update if you actually have shoes in the array
+            if (shoes.length > 0) {
+                shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
+                layer.src = shoes[shoe_idx];
+            }
+            break;
+    }
+}
 
 // On run
 
@@ -84,7 +118,18 @@ document.addEventListener("DOMContentLoaded", () => {
         // Request the list of all available users
         window.socket.emit("get_all_users");
         window.socket.emit("get_friends");
+
+
+        document.getElementById("private").addEventListener("change", () => {
+            const isPrivate = document.getElementById("private").checked;
+            window.socket.emit("loc_status_update", !isPrivate);
+        });
+        window.socket.emit("get_privacy");
     }
+});
+
+window.socket.on("privacy_got", (is_private) => {
+    document.getElementById("private").checked = is_private;
 });
 
 window.socket.on("friends_got", (friends) => {
@@ -175,7 +220,7 @@ ban_user.addEventListener('click', () => {
         }
         else {
             alert("There has been an error");
-        }  
+        }
     });
 });
 
@@ -351,3 +396,14 @@ function add_users(username, id) {
     const newUser = new Option(username, id);
     friends_search.appendChild(newUser);
 }
+
+document.getElementById('save_avatar').addEventListener('click', () => {
+    window.socket.emit("set_icon_image", hat_idx, shirt_idx, shoe_idx);
+    window.socket.once("icon_set", (result) => {
+        if (result.status === "success") {
+            alert("Avatar saved!");
+        } else {
+            alert("Failed to save avatar. Please try again.");
+        }
+    });
+});
