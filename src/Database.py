@@ -122,9 +122,8 @@ def get_public_user_location_and_icon(user):
         if not location:
             continue
         icon_path = data.get("icon_image_path")
-        # Only pass icon_image_path if it's a valid external URL (e.g. Cloudinary)
-        if not icon_path or not Path(icon_path).exists():
-            icon_path = "../images/Default.png"
+        if not icon_path or not (icon_path.startswith('http') or icon_path.startswith('/static/')):
+            icon_path = "/static/images/Default.png"
         user_locations.append({
             "id": user_id,
             "username": data.get("username"),

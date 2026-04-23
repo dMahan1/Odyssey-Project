@@ -554,12 +554,18 @@ _HATS = [
     None,
     os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat1.png"),
     os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat2.png"),
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat3.png"),
 ]
 _SHIRTS = [
     None,
     os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt1.png"),
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt2.png"),
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt3.png"),
 ]
-_SHOES = [None]
+_SHOES = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Shoes", "Avatar_Shoes1.png"),
+]
 
 @socketio.on("set_icon_image")
 def handle_set_icon_image(hat_idx, shirt_idx, shoe_idx):
