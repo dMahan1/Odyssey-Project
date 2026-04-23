@@ -556,6 +556,16 @@ def handle_give_toucoins(amount):
     give_toucoins(user, amount)
     emit("toucoins_result", {"status": "success", "message": f"Gave {amount} toucoins"})
 
+@socketio.on("get_toucoins")
+def handle_get_toucoins():
+    user = session.get('user')
+    if not user:
+        return emit("toucoins_result", {"status": "error", "message": "Not logged in"})
+    user_data = get_user_data(user)
+    toucoins = user_data["toucoins"]
+    if not isinstance(toucoins, int):
+        toucoins = 0
+    emit("toucoins_result", {"status": "success", "toucoins": toucoins})
 
 @socketio.on("create_hotspot")
 def handle_create_hotspot(data):
