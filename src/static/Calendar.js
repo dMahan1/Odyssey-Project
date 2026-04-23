@@ -38,11 +38,19 @@ const inbox_popup_content = document.getElementById('inbox_popup_content');
 const calendar_popup = document.getElementById('calendar_popup_background');
 
 // Calendar specific variables
-const day_textfield = document.getElementById('day');
+const day_label = document.getElementById('day_label');
+const month_label = document.getElementById('month_label');
+const year_label = document.getElementById('year_label');
+const week_label = document.getElementById('week_label');
+
 const previous_day = document.getElementById('prev_day');
 const next_day = document.getElementById('next_day');
 const previous_month = document.getElementById('prev_month');
 const next_month = document.getElementById('next_month');
+const previous_year = document.getElementById('prev_year');
+const next_year = document.getElementById('next_year');
+const next_week = document.getElementById('next_week');
+const previous_week = document.getElementById('prev_week');
 
 let current_date = new Date();
 let current_day = current_date.getDate();
@@ -50,6 +58,11 @@ let current_dow = current_date.getDay();
 let current_month = current_date.getMonth();
 let current_year = current_date.getFullYear();
 let current_event_id = null; // To track which event we're messaging about, if any
+
+const week_calendar_blocks = [...document.querySelectorAll('.week_main_content')]
+
+const month_calendar_dates =  document.querySelector('.month_calendar_dates');
+const year_calendar_months =  document.querySelector('.year_calendar_months');
 
 const cancel_calendar_change = document.getElementById('cancel_calendar_change');
 const change_mode_button = document.getElementById('change_mode_button');
@@ -59,6 +72,8 @@ const month_change = document.getElementById('month_change');
 const year_change = document.getElementById('year_change');
 const day_calendar = document.querySelector('.day_calendar');
 const month_calendar = document.querySelector('.month_calendar');
+const year_calendar = document.querySelector('.year_calendar');
+const week_calendar = document.querySelector('.week_calendar');
 
 
 // Message specific variables
@@ -251,7 +266,7 @@ function add_location(location_name, location_ids) {
     const newLoc = new Option(location_name, JSON.stringify(location_ids));
     loc.appendChild(newLoc);
 }
-
+/* Calendar Specific functions */
 function add_event(event_name, event_creator, event_location, start_time, end_time, event_id) {
     let new_event = event_template.content.cloneNode(true);
 
@@ -326,6 +341,78 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
     main_content.appendChild(new_event);
 }
 
+function add_week_event(event_name, event_creator, event_location, start_time, end_time, event_id, day_block) {
+    let new_event = event_template.content.cloneNode(true);
+
+    let event_div = new_event.querySelector('.event');
+    const hour_size = 60;
+    event_div.style.top = ((start_time + 1) * hour_size) + "px";
+    event_div.style.height = ((end_time - start_time) * hour_size) + "px";
+    event_div.id = event_id;
+
+    // --- NEW DELETE LOGIC ---
+    const deleteBtn = new_event.querySelector('.delete_event_btn');
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
+            window.socket.emit("delete_event", event_id);
+
+            remove_event(event_id);
+            window.socket.once("event_deleted", (success) => {
+                if (!success) {
+                    alert("An error occurred while deleting the event. Please try again.");
+                    add_event(event_name, event_creator, event_location, start_time, end_time, event_id); // Re-add if deletion failed
+                }
+            });
+        }
+    });
+
+    const message_button = new_event.querySelector('.message_button');
+    message_button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        current_event_id = event_id;
+        message_popup.style.display = "block";
+    })
+
+    new_event.querySelector('.event_name').innerText = "Name: " + event_name;
+    new_event.querySelector('.event_creator').innerText = "Coordinator: " + event_creator;
+    new_event.querySelector('.event_location').innerText = "Location: " + event_location;
+
+    let start_hour = Math.floor(start_time);
+    let start_minute = Math.floor((start_time * 60) % 60)
+
+    if (start_hour > 12) {
+        start_hour = start_hour % 12;
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "pm";
+
+    } else {
+        if (start_hour === 0) {
+            start_hour = 12;
+        }
+        new_event.querySelector('.event_start').innerText = "Start: " + start_hour + ":" + start_minute.toString().padStart(2, '0') + "am";
+    }
+
+    let end_hour = Math.floor(end_time);
+    let end_minute = Math.floor((end_time * 60) % 60);
+
+    if (end_hour > 12) {
+        end_hour = end_hour % 12;
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "pm";
+    } else {
+        if (end_hour === 0) {
+            end_hour = 12;
+        }
+        new_event.querySelector('.event_end').innerText = "End: " + end_hour + ":" + end_minute.toString().padStart(2, '0') + "am";
+    }
+
+    if (event_creator !== current_user.displayName) {
+        message_button.style.display = "none";
+    }
+
+    day_block.appendChild(new_event);
+}
+
 function remove_event(event_id) {
     let to_remove = document.getElementById(event_id);
     if (to_remove) {
@@ -340,6 +427,7 @@ function clear_events() {
 
 function update_events() {
     update_day_events();
+    update_week_events();
     update_month_events();
 }
 
@@ -383,6 +471,60 @@ function update_day_events() {
     });
 }
 
+function update_week_events() {
+    window.socket.emit("get_events");
+    window.socket.once("events_got", (events) => {
+        clear_events();
+
+        const first_day = new Date(current_date);
+        const day_index = first_day.getDay();
+        first_day.setDate(first_day.getDate() - day_index);
+        first_day.setHours(0, 0, 0, 0);
+
+        const last_day = new Date(first_day);
+        last_day.setDate(first_day.getDate() + 6)
+
+        events.forEach(event => {
+            const startVal = new Date(event.start_time);
+            const endVal = new Date(event.end_time);
+            const startDayTime = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate()).getTime();
+            const endDayTime = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate()).getTime();
+
+            for (let i = 0; i < 7; i++) {
+                const  calendar_date = new Date(first_day);
+                calendar_date.setDate(first_day.getDate() + i);
+                const currentCalTime = calendar_date.getTime();
+
+                if (currentCalTime >= startDayTime && currentCalTime <= endDayTime) {
+
+                    let displayStart = 0; // Default to top of day
+                    let displayEnd = 24;  // Default to bottom of day
+
+                    // 2. If it's the first day of the event, use the actual start time
+                    if (currentCalTime === startDayTime) {
+                        displayStart = startVal.getHours() + (startVal.getMinutes() / 60);
+                    }
+
+                    // 3. If it's the last day of the event, use the actual end time
+                    if (currentCalTime === endDayTime) {
+                        displayEnd = endVal.getHours() + (endVal.getMinutes() / 60);
+                    }
+
+                    add_week_event(
+                        event.name,
+                        event.creator_username,
+                        event.location_name,
+                        displayStart,
+                        displayEnd,
+                        event.id,
+                        week_calendar_blocks[i]
+                    );
+                }
+            }
+        });
+    });
+}
+
 function update_month_events() {
     window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
@@ -412,18 +554,16 @@ function update_month_events() {
     });
 }
 
-const month_label = document.getElementById('month_label');
-const month_calendar_dates =  document.querySelector('.month_calendar_dates');
-
-/* Calendar Specific functions */
 function make_calendar(day, dow, month, year) {
     make_day_calendar(day, dow, month, year);
     make_month_calendar(month, year);
+    make_year_calendar(year);
+    make_week_calendar();
 
 }
 
 function make_day_calendar(day, dow, month, year) {
-    day_textfield.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
+    day_label.textContent = days[dow] + ', ' + months[month] + ' ' + day + ', ' + year;
 }
 
 function make_month_calendar(month, year) {
@@ -436,7 +576,7 @@ function make_month_calendar(month, year) {
 
     for (let i = 0; i < firstDay; i++) {
         const blank_element = document.createElement('div');
-        blank_element.classList.add('calendar_day');
+        blank_element.classList.add('blank_day');
         month_calendar_dates.appendChild(blank_element);
     }
 
@@ -457,7 +597,7 @@ function make_month_calendar(month, year) {
            update_day_events();
 
            month_calendar.style.display = "none";
-           day_calendar.style.display = "block";
+           day_calendar.style.display = "flex";
         });
 
         const day_number = document.createElement('div');
@@ -478,10 +618,45 @@ function make_month_calendar(month, year) {
     if ((occupied_slots % 7) !== 0) {
         for (let i = 0; i < (7 - (occupied_slots % 7)); i++) {
             const blank_element = document.createElement('div');
-            blank_element.classList.add('calendar_day');
+            blank_element.classList.add('blank_day');
             month_calendar_dates.appendChild(blank_element);
         }
     }
+}
+
+function make_year_calendar(year) {
+    year_calendar_months.innerHTML = '';
+    year_label.textContent = `${year}`;
+    for (let i = 0; i <= 11; i++) {
+        const month_element = document.createElement('button');
+        month_element.classList.add('month');
+        month_element.innerHTML = `${months[i]}`;
+
+        month_element.addEventListener('click', () => {
+            current_month = i;
+            current_year = year;
+
+            make_month_calendar(current_month, current_year);
+            update_month_events();
+
+            year_calendar.style.display = "none";
+            month_calendar.style.display = "flex";
+        })
+
+        year_calendar_months.appendChild(month_element);
+    }
+
+}
+
+function make_week_calendar() {
+    const first_day = new Date(current_date);
+    const day_index = first_day.getDay();
+    first_day.setDate(first_day.getDate() - day_index);
+
+    const last_day = new Date(first_day);
+    last_day.setDate(first_day.getDate() + 6)
+
+    week_label.textContent = `${first_day.toLocaleDateString()} - ${last_day.toLocaleDateString()}`;
 }
 
 function add_month_event(event_name, year, month, day) {
@@ -498,6 +673,7 @@ function add_month_event(event_name, year, month, day) {
 }
 
 function reset_current_day() {
+    current_date = new Date();
     current_day = current_date.getDate();
     current_dow = current_date.getDay();
     current_month = current_date.getMonth();
@@ -519,7 +695,7 @@ change_inbox_size();
 change_attendees_size();
 change_message_size();
 
-make_calendar(current_day, current_dow, current_month, current_year);
+make_calendar(current_day, current_dow, current_month, current_year, current_date);
 update_events();
 load_permanent_locations();
 
@@ -625,8 +801,6 @@ inbox_button.addEventListener('click', () => {
 close_inbox.addEventListener('click', () => {
     inbox_popup.style.display = "none";
 })
-
-
 
 window.socket.on("event_accepted", (success) => {
     if (success) {
@@ -760,6 +934,40 @@ next_month.addEventListener('click', () => {
     update_month_events();
 })
 
+previous_year.addEventListener('click', () => {
+    current_year--;
+    make_year_calendar(current_year);
+})
+
+next_year.addEventListener('click', () => {
+    current_year++;
+    make_year_calendar(current_year);
+})
+
+previous_week.addEventListener('click', () => {
+    current_date.setDate(current_date.getDate() - 7);
+
+    current_day = current_date.getDate();
+    current_dow = current_date.getDay();
+    current_month = current_date.getMonth();
+    current_year = current_date.getFullYear();
+
+    make_week_calendar();
+    update_week_events();
+})
+
+next_week.addEventListener('click', () => {
+    current_date.setDate(current_date.getDate() + 7);
+
+    current_day = current_date.getDate();
+    current_dow = current_date.getDay();
+    current_month = current_date.getMonth();
+    current_year = current_date.getFullYear();
+
+    make_week_calendar();
+    update_week_events();
+})
+
 
 day_change.addEventListener('click', () => {
     reset_current_day();
@@ -767,15 +975,21 @@ day_change.addEventListener('click', () => {
     update_day_events();
 
     month_calendar.style.display = "none";
-    day_calendar.style.display = "block";
+    year_calendar.style.display = "none";
+    week_calendar.style.display = "none";
+    day_calendar.style.display = "flex";
     calendar_popup.style.display = "none";
 })
 
 week_change.addEventListener('click', () => {
     reset_current_day();
+    make_week_calendar();
+    update_week_events();
 
     day_calendar.style.display = "none";
+    year_calendar.style.display = "none";
     month_calendar.style.display = "none";
+    week_calendar.style.display = "flex";
     calendar_popup.style.display = "none";
 })
 
@@ -785,15 +999,20 @@ month_change.addEventListener('click', () => {
     update_month_events();
 
     day_calendar.style.display = "none";
+    year_calendar.style.display = "none";
+    week_calendar.style.display = "none";
     month_calendar.style.display = "flex";
     calendar_popup.style.display = "none";
 })
 
 year_change.addEventListener('click', () => {
     reset_current_day();
+    make_year_calendar(current_year);
 
     day_calendar.style.display = "none";
     month_calendar.style.display = "none";
+    week_calendar.style.display = "none";
+    year_calendar.style.display = "flex";
     calendar_popup.style.display = "none";
 })
 
