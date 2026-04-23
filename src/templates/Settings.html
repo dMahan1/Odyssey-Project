@@ -17,26 +17,7 @@
 
 <div id="whole_page">
     <div id="settings_main">
-        <div class="dressing-room-container">
-            <div class="controls-column">
-                <button onclick="change_item('hat', -1)">&#x2190</button>
-                <button onclick="change_item('shirt', -1)">&#x2190</button>
-                <button onclick="change_item('shoes', -1)">&#x2190</button>
-            </div>
-
-            <div class="avatar-square">
-                <img id="avatar-base" src="./static/images/Avatar.png" alt="base">
-                <img id="layer-hat" class="overlay" src="" alt="">
-                <img id="layer-shirt" class="overlay" src="" alt="">
-                <img id="layer-shoes" class="overlay" src="" alt="">
-            </div>
-
-            <div class="controls-column">
-                <button onclick="change_item('hat', 1)">&#x2192</button>
-                <button onclick="change_item('shirt', 1)">&#x2192</button>
-                <button onclick="change_item('shoes', 1)">&#x2192</button>
-            </div>
-        </div>
+        <div id="toucoin_amount">Toucoins: </div>
         <div class="edits">
             <label id="username_display">@username</label>
             <button class="change" id="username">&#x270E</button>
@@ -88,7 +69,28 @@
 
         <div class="reports">
             <button id="report_bug">Report Bug</button>
+            <button id="suggestions">Make Suggestion</button>
             <button id="report_user">Report User</button>
+        </div>
+        <div class="dressing-room-container">
+            <div class="controls-column">
+                <button onclick="change_item('hat', -1)">&#x2190</button>
+                <button onclick="change_item('shirt', -1)">&#x2190</button>
+                <button onclick="change_item('shoes', -1)">&#x2190</button>
+            </div>
+
+            <div class="avatar-square">
+                <img id="avatar-base" src="./static/images/Avatar-2.0.png" alt="base">
+                <img id="layer-hat" class="overlay" src="" alt="">
+                <img id="layer-shirt" class="overlay" src="" alt="">
+                <img id="layer-shoes" class="overlay" src="" alt="">
+            </div>
+
+            <div class="controls-column">
+                <button onclick="change_item('hat', 1)">&#x2192</button>
+                <button onclick="change_item('shirt', 1)">&#x2192</button>
+                <button onclick="change_item('shoes', 1)">&#x2192</button>
+            </div>
         </div>
     </div>
     <div id="user_div_background">
@@ -140,6 +142,12 @@
                 <input id="report_user_username" type="text" placeholder="Username of the user you want to report" />
                 <label for="report_user_text"></label><textarea id="report_user_text" placeholder="Explain your issue here!" ></textarea>
             </div>
+        </div>
+    </div>
+
+    <div id="suggestions_background">
+        <div id="suggestions_popup" class="popup">
+
         </div>
     </div>
 
