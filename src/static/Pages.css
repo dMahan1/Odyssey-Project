@@ -95,6 +95,7 @@ body {
     overflow: hidden;
 }
 
+.loc_result_info,
 .loc_result_route {
     width: 34px;
     height: 34px;
@@ -110,6 +111,12 @@ body {
     margin-left: 10px;
 }
 
+.loc_result_actions {
+    display: flex;
+    align-items: center;
+}
+
+.loc_result_info:hover,
 .loc_result_route:hover {
     background-color: #b41923;
     color: black;

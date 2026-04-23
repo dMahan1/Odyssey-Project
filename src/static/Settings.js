@@ -131,6 +131,8 @@ document.addEventListener("DOMContentLoaded", () => {
         change_item('hat', 0);
         change_item('shirt', 0);
         change_item('shoes', 0);
+
+        window.socket.emit("get_toucoins");
     }
 });
 
@@ -412,4 +414,11 @@ document.getElementById('save_avatar').addEventListener('click', () => {
             alert("Failed to save avatar. Please try again.");
         }
     });
+});
+
+window.socket.on("toucoins_result", (data) => {
+    if (data.status === "success") {
+        const toucoins = data.toucoins;
+        document.getElementById("toucoin_amount").innerText = "Toucoins: " + toucoins;
+    }
 });

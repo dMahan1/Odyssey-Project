@@ -994,6 +994,13 @@ def get_hotspots(user):
 
     return active_hotspots
 
+def give_toucoins(user, amount):
+    db = firebase.database()
+    current = db.child("Users").child(user["localId"]).child("toucoins").get(token=user["idToken"]).val()
+    if current is None:
+        current = 0
+    db.child("Users").child(user["localId"]).child("toucoins").set(current + amount, token=user["idToken"])
+
 def test():
     firebase = empyrebase.initialize_app(config)
     auth = firebase.auth()
