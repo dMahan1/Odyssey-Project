@@ -102,7 +102,13 @@ def get_user_data(user):
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
 
-    print(user_data)
+    if (not user_data.get("owned_feature_ids")):
+        db.child("Users").child(user["localId"]).update({"owned_feature_ids":["./static/images/Blank-Avatar.png"]}, token=user["idToken"])
+
+    user_data = (
+        db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
+    )
+
     return user_data
 
 def get_public_user_location_and_icon(user):

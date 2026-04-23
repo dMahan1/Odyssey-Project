@@ -1043,8 +1043,6 @@ body {
     gap: 20px;
 }
 
-
-
 .controls-column button {
     background: #EDDEAB;
     border: 2px solid black;
@@ -1056,4 +1054,25 @@ body {
 .controls-column button:active {
     transform: scale(0.9); /* Little click effect */
     background: #eee;
+}
+
+#unlock_buttons {
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    gap: 20px;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+#hat_unlock, #shirt_unlock, #shoes_unlock {
+    border-radius: 50%;
+    width: 20%;
+    height: 20%;
+    aspect-ratio: 1 / 1;
+    background-color: #D4AF37;
+    cursor: pointer;
 }

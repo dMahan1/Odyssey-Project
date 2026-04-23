@@ -55,6 +55,49 @@ socket.on("auth", (user) => {
 let hat_idx = 0;
 let shirt_idx = 0;
 let shoe_idx = 0;
+
+function check_unlock(item, path) {
+    window.socket.emit("get_user");
+
+    window.socket.once("return_user", (user_data) => {
+        const owned_features = user_data.owned_feature_ids;
+        owned_features.forEach((feature) => {
+
+            console.log(feature);
+            console.log(path);
+            console.log(item);
+            if (path === feature) {
+                switch (item) {
+                    case 'hat':
+                        hat_unlock.style.visibility= 'hidden';
+                        break;
+                    case 'shirt':
+                        shirt_unlock.style.visibility= 'hidden';
+                        break;
+                    case 'shoes':
+                        shoes_unlock.style.visibility= 'hidden';
+                        break;
+                }
+            } else {
+                switch (item) {
+                    case 'hat':
+                        console.log("hat");
+                        hat_unlock.style.visibility = 'visible';
+                        break;
+                    case 'shirt':
+                        console.log("shirt");
+                        shirt_unlock.style.visibility = 'visible';
+                        break;
+                    case 'shoes':
+                        console.log("shoes");
+                        shoes_unlock.style.visibility = 'visible';
+                        break;
+                }
+            }
+        })
+    });
+}
+
 function change_item(item, direction) {
     const layer = document.getElementById(`layer-${item}`);
     let assetList = [];
@@ -65,19 +108,19 @@ function change_item(item, direction) {
             assetList = hats;
             hat_idx = (hat_idx + direction + hats.length) % hats.length;
             if (hats.length > 0) layer.src = hats[hat_idx];
+            check_unlock(item, hats[hat_idx]);
             break;
         case 'shirt':
             assetList = shirts;
             shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
             if (shirts.length > 0) layer.src = shirts[shirt_idx];
+            check_unlock(item, shirts[shirt_idx]);
             break;
         case 'shoes':
             assetList = shoes;
-            // Only update if you actually have shoes in the array
-            if (shoes.length > 0) {
-                shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
-                layer.src = shoes[shoe_idx];
-            }
+            shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
+            layer.src = shoes[shoe_idx];
+            check_unlock(item, shoes[shoe_idx]);
             break;
     }
 }
@@ -411,3 +454,20 @@ window.socket.on("toucoins_result", (data) => {
         document.getElementById("toucoin_amount").innerText = "Toucoins: " + toucoins;
     }
 });
+
+const hat_unlock = document.getElementById("hat_unlock");
+const shirt_unlock = document.getElementById("shirt_unlock");
+const shoes_unlock = document.getElementById("shoes_unlock");
+
+hat_unlock.addEventListener("click", () => {
+    confirm("Would you like to unlock this hat?");
+})
+
+shirt_unlock.addEventListener("click", () => {
+    confirm("Would you like to unlock this shirt?");
+})
+
+shoes_unlock.addEventListener("click", () => {
+    confirm("Would you like to unlock these shoes?");
+})
+
