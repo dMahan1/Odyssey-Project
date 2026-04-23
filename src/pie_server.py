@@ -297,6 +297,12 @@ def event_create(name, start_time, end_time, locationids, attendee_ids):
     key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
     emit("event_created", key)
 
+@socketio.on("get_privacy")
+def get_privacy():
+    user = session.get('user')
+    is_private = not get_user_data(user).get('location_public', False)
+    emit("privacy_got", is_private)
+
 @socketio.on("get_events")
 def get_events():
     user = session.get('user')
@@ -531,7 +537,10 @@ def handle_create_hotspot(data):
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
 
     ret = create_hotspot(user, data["latitude"], data["longitude"])
-    emit("create_hotspot_result", {"status": "success", "id": ret})
+    if ret:
+        emit("create_hotspot_result", {"status": "success", "id": ret})
+    else:
+        emit("create_hotspot_result", {"status": "error", "message": "Too soon"})
 
 @socketio.on("get_hotspots")
 def handle_get_hotspots():

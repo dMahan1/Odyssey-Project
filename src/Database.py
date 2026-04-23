@@ -6,16 +6,16 @@ from email.message import EmailMessage
 from multiprocessing import context
 from pathlib import Path
 
-import cloudinary
-import cloudinary.api
-import cloudinary.uploader
+# import cloudinary
+# import cloudinary.api
+# import cloudinary.uploader
 import empyrebase
 
 # Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-from cloudinary import CloudinaryImage, CloudinaryVideo
+# from cloudinary import CloudinaryImage, CloudinaryVideo
 from dotenv import load_dotenv
 
-cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
+# cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -200,7 +200,7 @@ def set_user_icon_image(user, image):
         db.child("Users").child(user["localId"]).update(
             {"icon_image_path": user["localId"]}, token=user["idToken"]
         )
-        cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
+        # cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
@@ -300,7 +300,7 @@ def update_user_toucoins(user, amount):
 def delete_user(user):
 
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
-    
+
     for event_id in user.get("attended_event_ids", []):
         event_data = (
             db.child("Events").child(event_id).get(token=admin["idToken"]).val()
@@ -904,13 +904,13 @@ def get_user_events(user):
                         "name": event_data.get("name"),
                         "creator_username": event_data.get(
                             "creator_username"
-                        ),  # <-- ALSO ADD THIS for the GUI
+                        ),
                         "start_time": event_data.get("start_time"),
                         "end_time": event_data.get("end_time"),
                         "locationid": event_data.get("locationid"),
                         "location_name": event_data.get(
                             "location_name"
-                        ),  # <-- ADD THIS LINE
+                        ),
                         "attendee_ids": event_data.get("attendee_ids"),
                     }
                 )
@@ -918,12 +918,29 @@ def get_user_events(user):
 
 def create_hotspot(user, latitude, longitude):
     db = firebase.database()
-    end_time = datetime.now(timezone.utc) + timedelta(minutes=5)
+    prev_hotspot_expiry = db.child("Users").child(user["localId"]).child("hotspot_expiry").get(token=user["idToken"]).val()
+
+    now = datetime.now(timezone.utc)
+
+    if prev_hotspot_expiry:
+        try:
+            expiry = datetime.fromisoformat(prev_hotspot_expiry)
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if now < expiry:
+                return None
+        except Exception as e:
+            print(f"Error processing expiry: {e}")
+
+    end_time = now + timedelta(minutes=5)
+    db.child("Users").child(user["localId"]).child("hotspot_expiry").set(end_time.isoformat(), token=user["idToken"])
+
     hotspot = {
         "latitude": latitude,
         "longitude": longitude,
         "end_time": end_time.isoformat()
     }
+
     new_hotspot = db.child("Hotspots").push(hotspot, token=user["idToken"])
     return new_hotspot["name"]
 
@@ -937,7 +954,11 @@ def get_hotspots(user):
     if hotspots:
         for id, data in hotspots.items():
             try:
+                # Use replace to ensure it is treated as UTC if the string lacks offset
                 expiry = datetime.fromisoformat(data["end_time"])
+                if expiry.tzinfo is None:
+                    expiry = expiry.replace(tzinfo=timezone.utc)
+
                 if now < expiry:
                     active_hotspots[id] = data
                 else:

@@ -335,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('hotspot_btn').addEventListener('click', () => {
         window.socket.emit('create_hotspot', { "latitude": latitude, "longitude": longitude });
-        window.socket.emit('get_hotspots');
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');
@@ -370,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     console.log("fetching pins");
-    
+
     window.socket.emit("get_user_pins");
 });
 
@@ -557,6 +556,15 @@ window.socket.on("event_locations_got", (data) => {
             unownedEventLocations.push({ ...loc, marker });
         }
     });
+});
+
+window.socket.on("create_hotspot_result", (data) => {
+    window.socket.emit('get_hotspots');
+    if (data.status === "success") {
+        alert("Thank you for creating a hotspot!");
+    } else {
+        alert("You are creating hotspots too fast!");
+    }
 });
 
 window.socket.on("hotspot_result", (data) => {
