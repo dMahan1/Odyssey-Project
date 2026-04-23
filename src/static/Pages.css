@@ -894,7 +894,7 @@ body {
     align-items: end;
 }
 
-#logout, #delete, #report_bug, #report_user {
+#logout, #delete, #report_bug, #report_user, #suggestions {
     font-size: 20px;
     font-family: Rockwell, monaco, monospace;
     background-color: black;
@@ -1000,7 +1000,6 @@ body {
     position: absolute;
     top: 20px;   /* Distance from the top */
     left: 20px;  /* Distance from the left */
-
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1044,7 +1043,7 @@ body {
 
 
 .controls-column button {
-    background: white;
+    background: #EDDEAB;
     border: 2px solid black;
     border-radius: 4px;
     font-weight: bold;
