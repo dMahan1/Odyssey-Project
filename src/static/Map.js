@@ -464,7 +464,7 @@ socket.on("id_coords_result", (data) => {
         }
 
         currentRouteLayer = L.polyline(coords, {
-            color: '#00ace6',
+            color: (data.flags & 1) ? '#EA213A' : '#00ace6',
             weight: 5,
             opacity: 1.0,
             smoothFactor: 1
