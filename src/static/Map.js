@@ -569,6 +569,7 @@ window.socket.on("event_locations_got", (data) => {
 window.socket.on("create_hotspot_result", (data) => {
     window.socket.emit('get_hotspots');
     if (data.status === "success") {
+        window.socket.emit('give_toucoins', 10);
         alert("Thank you for creating a hotspot!");
     } else {
         alert("You are creating hotspots too fast!");

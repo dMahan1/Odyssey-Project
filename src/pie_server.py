@@ -546,6 +546,17 @@ def handle_get_id_coords(ids):
             print(f"Warning: Location ID {loc_id} not found in Pathfinder.")
     emit("id_coords_result", {"status": "success", "coords": lat_lon})
 
+@socketio.on("give_toucoins")
+def handle_give_toucoins(amount):
+    user = session.get('user')
+    if not user:
+        return emit("toucoins_result", {"status": "error", "message": "Not logged in"})
+    if not isinstance(amount, int):
+        amount = int(amount)
+    give_toucoins(user, amount)
+    emit("toucoins_result", {"status": "success", "message": f"Gave {amount} toucoins"})
+
+
 @socketio.on("create_hotspot")
 def handle_create_hotspot(data):
     user = session.get('user')
