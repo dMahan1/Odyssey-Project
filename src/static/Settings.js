@@ -25,9 +25,9 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
-const hats = [null, "./static/images/Avatar_Hat1.png", "./static/images/Avatar_Hat2.png"];
-const shirts = [null, "./static/images/Avatar_Shirt1.png"];
-const shoes = [null];
+const hats = ["./static/images/Blank-Avatar.png", "./static/images/Avatar_Hat1.png", "./static/images/Avatar_Hat2.png", "./static/images/Avatar_Hat3.png"];
+const shirts = ["./static/images/Blank-Avatar.png", "./static/images/Avatar_Shirt1.png", "./static/images/Avatar_Shirt2.png", "./static/images/Avatar_Shirt3.png"];
+const shoes = ["./static/images/Blank-Avatar.png", "./static/images/Avatar_Shoes1.png"];
 
 const socket = io({
     withCredentials: true,
@@ -70,7 +70,7 @@ function change_item(item, direction) {
             shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
             if (shirts.length > 0) layer.src = shirts[shirt_idx];
             break;
-        case 'shoe':
+        case 'shoes':
             assetList = shoes;
             // Only update if you actually have shoes in the array
             if (shoes.length > 0) {
@@ -125,6 +125,10 @@ document.addEventListener("DOMContentLoaded", () => {
             window.socket.emit("loc_status_update", !isPrivate);
         });
         window.socket.emit("get_privacy");
+
+        change_item('hat', 0);
+        change_item('shirt', 0);
+        change_item('shoes', 0);
     }
 });
 
