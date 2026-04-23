@@ -118,7 +118,18 @@ document.addEventListener("DOMContentLoaded", () => {
         // Request the list of all available users
         window.socket.emit("get_all_users");
         window.socket.emit("get_friends");
+
+
+        document.getElementById("private").addEventListener("change", () => {
+            const isPrivate = document.getElementById("private").checked;
+            window.socket.emit("loc_status_update", !isPrivate);
+        });
+        window.socket.emit("get_privacy");
     }
+});
+
+window.socket.on("privacy_got", (is_private) => {
+    document.getElementById("private").checked = is_private;
 });
 
 window.socket.on("friends_got", (friends) => {

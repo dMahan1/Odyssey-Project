@@ -297,6 +297,12 @@ def event_create(name, start_time, end_time, locationids, attendee_ids):
     key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
     emit("event_created", key)
 
+@socketio.on("get_privacy")
+def get_privacy():
+    user = session.get('user')
+    is_private = not get_user_data(user).get('location_public', False)
+    emit("privacy_got", is_private)
+
 @socketio.on("get_events")
 def get_events():
     user = session.get('user')
