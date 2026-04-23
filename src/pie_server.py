@@ -282,6 +282,15 @@ def report_issue(message):
     result = store_report(user, message)
     emit("issue_reported", result)
 
+@socketio.on("make_suggestion")
+def make_suggestion(message, suggest_type):
+    user = session.get('user')
+    if not user:
+        emit("error", "Not logged in")
+        return
+    result = store_suggestion(user, message, suggest_type)
+    emit("suggestion_made", result)
+
 @socketio.on("report_user")
 def handle_report_user(subject_username, message):
     user = session.get('user')

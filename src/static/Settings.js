@@ -25,6 +25,7 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
+
 const hats = ["./static/images/Blank-Avatar.png", "./static/images/Hats/Avatar_Hat1.png", "./static/images/Hats/Avatar_Hat2.png", "./static/images/Hats/Avatar_Hat3.png"];
 const shirts = ["./static/images/Blank-Avatar.png", "./static/images/Shirts/Avatar_Shirt1.png", "./static/images/Shirts/Avatar_Shirt2.png", "./static/images/Shirts/Avatar_Shirt3.png"];
 const shoes = ["./static/images/Blank-Avatar.png", "./static/images/Shoes/Avatar_Shoes1.png"];

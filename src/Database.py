@@ -232,6 +232,35 @@ def store_report(user, message):
 
     return "Success"
 
+def store_suggestion(user, message, suggest_type):
+    db = firebase.database()
+    data = {
+        "reporter": user["localId"],
+        "message": message,
+        "date_time": datetime.now(timezone.utc).isoformat()
+    }
+    db.child("Reports").push(data, token=user["idToken"])
+
+    sender_email = os.getenv("ADMIN_EMAIL")
+    receiver_email = os.getenv("ADMIN_EMAIL")
+    password = os.getenv("EMAIL_PASSWORD")
+
+    msg = EmailMessage()
+    msg.set_content(f"Reporter ID: {user['localId']}\n\n"
+                    f"Suggestion type: {suggest_type}\n\n"
+                    f"{message}\n\n")
+    msg['Subject'] = "New Odyssey Report"
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.send_message(msg)
+
+    return "Success"
+
 def report_user(user, subject_username, message):
     db = firebase.database()
     subject_user = (
