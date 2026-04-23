@@ -525,6 +525,22 @@ def handle_get_route(src_lat, src_lon, dst_lat, dst_lon, bad_weather, traversal_
         }
     emit("route_result", {"status": "success", "route": path_result})
 
+@socketio.on("events_at_loc")
+def handle_events_at_loc(loc_name):
+    user = session.get('user')
+    if not user:
+        return emit("events_at_loc_result", {"status": "error", "message": "Not logged in"})
+
+    all_user_events = get_user_events(user)
+    events_at_loc = []
+
+    for event in all_user_events:
+        event_data = get_event_data(user, event["id"])
+        if event_data["location_name"] == loc_name:
+            events_at_loc.append(event_data)
+
+
+    emit("events_at_loc_result", {"status": "success", "events": events_at_loc})
 @socketio.on("get_id_coords")
 def handle_get_id_coords(ids):
     user = session.get('user')
@@ -538,6 +554,27 @@ def handle_get_id_coords(ids):
         else:
             print(f"Warning: Location ID {loc_id} not found in Pathfinder.")
     emit("id_coords_result", {"status": "success", "coords": lat_lon})
+
+@socketio.on("give_toucoins")
+def handle_give_toucoins(amount):
+    user = session.get('user')
+    if not user:
+        return emit("toucoins_result", {"status": "error", "message": "Not logged in"})
+    if not isinstance(amount, int):
+        amount = int(amount)
+    give_toucoins(user, amount)
+    emit("toucoins_result", {"status": "success", "message": f"Gave {amount} toucoins"})
+
+@socketio.on("get_toucoins")
+def handle_get_toucoins():
+    user = session.get('user')
+    if not user:
+        return emit("toucoins_result", {"status": "error", "message": "Not logged in"})
+    user_data = get_user_data(user)
+    toucoins = user_data["toucoins"]
+    if not isinstance(toucoins, int):
+        toucoins = 0
+    emit("toucoins_result", {"status": "success", "toucoins": toucoins})
 
 @socketio.on("create_hotspot")
 def handle_create_hotspot(data):

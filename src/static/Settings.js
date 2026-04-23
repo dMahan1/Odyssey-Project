@@ -130,6 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
         change_item('hat', 0);
         change_item('shirt', 0);
         change_item('shoes', 0);
+
+        window.socket.emit("get_toucoins");
     }
 });
 
@@ -401,3 +403,11 @@ function add_users(username, id) {
     const newUser = new Option(username, id);
     friends_search.appendChild(newUser);
 }
+
+
+window.socket.on("toucoins_result", (data) => {
+    if (data.status === "success") {
+        const toucoins = data.toucoins;
+        document.getElementById("toucoin_amount").innerText = "Toucoins: " + toucoins;
+    }
+});
