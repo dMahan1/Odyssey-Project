@@ -25,8 +25,9 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
-const hats = ["./static/images/Avatar_Hat1.png", "./static/images/Avatar_Hat2.png"];
-const shirts = ["./static/images/Avatar_Shirt1.png"];
+const hats = [null, "./static/images/Avatar_Hat1.png", "./static/images/Avatar_Hat2.png"];
+const shirts = [null, "./static/images/Avatar_Shirt1.png"];
+const shoes = [null];
 
 const socket = io({
     withCredentials: true,
@@ -48,6 +49,37 @@ socket.on("auth", (user) => {
     current_user = user;
     sessionStorage.setItem('user', JSON.stringify(user));
 });
+
+
+let hat_idx = 0;
+let shirt_idx = 0;
+let shoe_idx = 0;
+function change_item(item, direction) {
+    const layer = document.getElementById(`layer-${item}`);
+    let assetList = [];
+
+    // Select the correct array
+    switch (item) {
+        case 'hat':
+            assetList = hats;
+            hat_idx = (hat_idx + direction + hats.length) % hats.length;
+            if (hats.length > 0) layer.src = hats[hat_idx];
+            break;
+        case 'shirt':
+            assetList = shirts;
+            shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
+            if (shirts.length > 0) layer.src = shirts[shirt_idx];
+            break;
+        case 'shoe':
+            assetList = shoes;
+            // Only update if you actually have shoes in the array
+            if (shoes.length > 0) {
+                shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
+                layer.src = shoes[shoe_idx];
+            }
+            break;
+    }
+}
 
 // On run
 
