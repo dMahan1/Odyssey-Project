@@ -30,6 +30,7 @@ const hats = ["./static/images/Blank-Avatar.png", "./static/images/Hats/Avatar_H
 const shirts = ["./static/images/Blank-Avatar.png", "./static/images/Shirts/Avatar_Shirt1.png", "./static/images/Shirts/Avatar_Shirt2.png", "./static/images/Shirts/Avatar_Shirt3.png"];
 const shoes = ["./static/images/Blank-Avatar.png", "./static/images/Shoes/Avatar_Shoes1.png"];
 
+
 const socket = io({
     withCredentials: true,
     transports: ['websocket', 'polling'] // Force websocket to keep the session stable
@@ -127,6 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         window.socket.once("return_user", (user_data) => {
             console.log(user_data);
+            if (user_data && user_data.banned) {
+                alert(`You have been banned until ${new Date(user_data.banned_until).toLocaleString()}.`);
+                window.location.href = "Signin.html";
+                return;
+            }
             if (user_data && user_data.admin) {
                 ban_search.style.display = "inline";
                 ban_user.style.display = "inline";
@@ -245,9 +251,10 @@ ban_user.addEventListener('click', () => {
     window.socket.once("ban_response", (success) => {
         console.log(success);
         if (success === "Success") {
-            alert("The user has banned for one week, SO SAYS THE BAN HAMMER!!!");
-        }
-        else {
+            alert("The user has been banned for one week, SO SAYS THE BAN HAMMER!!!");
+        } else if (success === "Unbanned") {
+            alert("The user has been unbanned.");
+        } else {
             alert("There has been an error");
         }
     });
@@ -426,6 +433,24 @@ function add_users(username, id) {
     friends_search.appendChild(newUser);
 }
 
+document.getElementById('save_avatar').addEventListener('click', () => {
+    window.socket.emit("get_user");
+    window.socket.once("return_user", (user_data) => {
+        const owned = user_data.owned_feature_ids;
+        if (!owned.includes(hats[hat_idx]) || !owned.includes(shirts[shirt_idx]) || !owned.includes(shoes[shoe_idx])) {
+            alert("You don't own all the selected items. Please unlock them before saving your avatar.");
+            return;
+        }
+        window.socket.emit("set_icon_image", hat_idx, shirt_idx, shoe_idx);
+        window.socket.once("icon_set", (result) => {
+            if (result.status === "success") {
+                alert("Avatar saved!");
+            } else {
+                alert("Failed to save avatar. Please try again.");
+            }
+        });
+    });
+});
 
 window.socket.on("toucoins_result", (data) => {
     if (data.status === "success") {
@@ -477,4 +502,3 @@ shoes_unlock.addEventListener("click", () => {
 window.socket.on("user error", () => {
     alert("Error getting user data from session storage")
 })
-

@@ -25,3 +25,8 @@ window.socket.on('server_instance', (id) => {
 window.socket.on('connect_error', (err) => {
     console.error("Socket connection error:", err);
 });
+
+window.socket.on('banned', (data) => {
+    alert(`You have been banned until ${new Date(data.until).toLocaleString()}.`);
+    window.location.href = 'Signin.html';
+});

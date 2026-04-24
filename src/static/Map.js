@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
             users.forEach(u => {
                 if (u.latitude == null || u.longitude == null) return;
                 seenIds.add(u.id);
-                const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                const iconUrl = (u.icon_image_path && (u.icon_image_path.startsWith('http') || u.icon_image_path.startsWith('/static/')))
                     ? u.icon_image_path
                     : '../static/images/Default.png';
                 if (otherUserMarkers[u.id]) {
@@ -286,8 +286,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     socket.emit("get_user");
     window.socket.once("return_user", (user) => {
+        if (user && user.banned) {
+            alert(`You have been banned until ${new Date(user.banned_until).toLocaleString()}.`);
+            window.location.href = "Signin.html";
+            return;
+        }
         if (user) {
-            const iconUrl = (user.icon_image_path && user.icon_image_path.startsWith('http'))
+            const iconUrl = (user.icon_image_path && (user.icon_image_path.startsWith('http') || user.icon_image_path.startsWith('/static/')))
                 ? user.icon_image_path
                 : '../static/images/Default.png';
             userIcon = L.icon({
