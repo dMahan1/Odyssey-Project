@@ -596,11 +596,13 @@ def handle_get_hotspots():
     hotspots = get_hotspots(user)
     emit("hotspot_result", {"status": "success", "hotspots": hotspots})
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
-
 @socketio.on("add_feature_items")
 def unlock_item(path):
     user = session.get('user')
     if user:
-        add_feature_items(user, path)
+        emit("feature purchase", add_feature_items(user, path))
+    else:
+        emit("user error")
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

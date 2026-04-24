@@ -61,40 +61,19 @@ function check_unlock(item, path) {
 
     window.socket.once("return_user", (user_data) => {
         const owned_features = user_data.owned_feature_ids;
-        owned_features.forEach((feature) => {
-
-            console.log(feature);
-            console.log(path);
-            console.log(item);
-            if (path === feature) {
-                switch (item) {
-                    case 'hat':
-                        hat_unlock.style.visibility= 'hidden';
-                        break;
-                    case 'shirt':
-                        shirt_unlock.style.visibility= 'hidden';
-                        break;
-                    case 'shoes':
-                        shoes_unlock.style.visibility= 'hidden';
-                        break;
-                }
-            } else {
-                switch (item) {
-                    case 'hat':
-                        console.log("hat");
-                        hat_unlock.style.visibility = 'visible';
-                        break;
-                    case 'shirt':
-                        console.log("shirt");
-                        shirt_unlock.style.visibility = 'visible';
-                        break;
-                    case 'shoes':
-                        console.log("shoes");
-                        shoes_unlock.style.visibility = 'visible';
-                        break;
-                }
-            }
-        })
+        const is_owned = owned_features.includes(path);
+        const visibility = is_owned ? 'hidden' : 'visible';
+        switch (item) {
+            case 'hat':
+                hat_unlock.style.visibility = visibility;
+                break;
+            case 'shirt':
+                shirt_unlock.style.visibility = visibility;
+                break;
+            case 'shoes':
+                shoes_unlock.style.visibility = visibility;
+                break;
+        }
     });
 }
 
@@ -462,21 +441,40 @@ const shoes_unlock = document.getElementById("shoes_unlock");
 hat_unlock.addEventListener("click", () => {
     if( confirm("Would you like to unlock this hat?") ) {
         const path_to_unlock = hats[hat_idx];
-        window.socket.emit("unlock_item", path_to_unlock);
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('hat', hats[hat_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
     }
 })
 
 shirt_unlock.addEventListener("click", () => {
     if( confirm("Would you like to unlock this shirt?") ) {
-        const path_to_unlock = shirts[hat_idx];
-        window.socket.emit("unlock_item", path_to_unlock);
+        const path_to_unlock = shirts[shirt_idx];
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('shirt', shirts[shirt_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
     }
 })
 
 shoes_unlock.addEventListener("click", () => {
     if( confirm("Would you like to unlock these shoes?") ) {
-        const path_to_unlock = shoes[hat_idx];
-        window.socket.emit("unlock_item", path_to_unlock);
+        const path_to_unlock = shoes[shoe_idx];
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('shoes', shoes[shoe_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
     }
+})
+
+window.socket.on("user error", () => {
+    alert("Error getting user data from session storage")
 })
 
