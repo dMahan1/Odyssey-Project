@@ -87,6 +87,7 @@ def get_user_data(user):
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
 
+<<<<<<< HEAD
     if user_data and user_data.get("banned_until"):
         banned_until = datetime.fromisoformat(user_data["banned_until"])
         if datetime.now(timezone.utc) < banned_until:
@@ -98,6 +99,15 @@ def get_user_data(user):
             user_data["banned_until"] = None
 
     print(user_data)
+=======
+    if (not user_data.get("owned_feature_ids")):
+        db.child("Users").child(user["localId"]).update({"owned_feature_ids":["./static/images/Blank-Avatar.png"]}, token=user["idToken"])
+
+    user_data = (
+        db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
+    )
+
+>>>>>>> fb2a1171b5382295ff38057ca7296a03c0153779
     return user_data
 
 def get_public_user_location_and_icon(user):
@@ -252,6 +262,35 @@ def store_report(user, message):
 
     return "Success"
 
+def store_suggestion(user, message, suggest_type):
+    db = firebase.database()
+    data = {
+        "reporter": user["localId"],
+        "message": message,
+        "date_time": datetime.now(timezone.utc).isoformat()
+    }
+    db.child("Reports").push(data, token=user["idToken"])
+
+    sender_email = os.getenv("ADMIN_EMAIL")
+    receiver_email = os.getenv("ADMIN_EMAIL")
+    password = os.getenv("EMAIL_PASSWORD")
+
+    msg = EmailMessage()
+    msg.set_content(f"Reporter ID: {user['localId']}\n\n"
+                    f"Suggestion type: {suggest_type}\n\n"
+                    f"{message}\n\n")
+    msg['Subject'] = "New Odyssey Report"
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+        server.login(sender_email, password)
+        server.send_message(msg)
+
+    return "Success"
+
 def report_user(user, subject_username, message):
     db = firebase.database()
     subject_user = (
@@ -316,9 +355,22 @@ def update_user_toucoins(user, amount):
         {"toucoins": amount}, token=user["idToken"]
     )
 
+def add_feature_items(user, path):
+    db = firebase.database()
+    owned = get_user_data(user).get("owned_feature_ids")
+    if isinstance(owned, list) and (path not in owned):
+        if ((toucoins := db.child("Users").child(user["localId"]).child("toucoins").get(token=user["idToken"]).val()) is not None and toucoins >= 50):
+            db.child("Users").child(user["localId"]).update({"toucoins":toucoins-50}, token=user["idToken"])
+            owned.append(path)
+        else:
+            return "Not enough Toucoins for this feature. 50 toucoins are required"
+    else:
+        return "Owned features not a list, or Feature is already Owned"
+    db.child("Users").child(user["localId"]).update({"owned_feature_ids":owned}, token=user["idToken"])
+    return "Feature Bought"
 
 def delete_user(user):
-
+    db = firebase.database()
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
 
     image_path = Path(f"{_src_dir}/static/images/Users/{user["localId"]}.png")

@@ -12,6 +12,14 @@ let hotspots = [];
 let pinLayerGroup;
 let poiLayerGroup;
 
+const suggestions_background = document.getElementById('suggestions_popup_background');
+const suggestions_button = document.getElementById('suggestions_btn');
+const close_suggestions = document.getElementById('close_suggestions');
+const suggestions_text = document.getElementById('suggestions_text');
+const send_suggestions = document.getElementById('send_suggestions');
+const path_check = document.getElementById('path_check');
+const location_check = document.getElementById('location_check');
+
 function initMap() {
   let southWest = L.latLng(40.405, -86.955);
   let northEast = L.latLng(40.445, -86.895);
@@ -710,3 +718,52 @@ window.socket.on("pin_dropped", () => window.socket.emit("get_user_pins"));
 window.socket.on("pin_pulled", () => {
     window.socket.emit("get_user_pins");
 });
+
+close_suggestions.addEventListener('click', () => {
+    suggestions_background.style.display = "none";
+    suggestions_text.value = null;
+})
+
+send_suggestions.addEventListener('click', () => {
+    if (location_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Location");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your location suggestion!");
+            } else {
+                alert("Failed to submit your location suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else if (path_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Path");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your path suggestion!");
+            } else {
+                alert("Failed to submit your path suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else {
+        alert("Please chose suggestion type!");
+    }
+})
+
+location_check.addEventListener("click", () => {
+    if (path_check.checked === true) {
+        path_check.checked = false;
+    }
+})
+
+path_check.addEventListener("click", () => {
+    if (location_check.checked === true) {
+        location_check.checked = false;
+    }
+})
+
+suggestions_button.addEventListener("click", () => {
+    suggestions_background.style.display = "block";
+})
