@@ -371,6 +371,12 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("fetching pins");
 
     window.socket.emit("get_user_pins");
+    window.socket.emit("get_pois");
+});
+
+window.socket.on("pois_got", (data) => {
+    console.log("POIs received:", JSON.stringify(data, null, 2));
+
 });
 
 window.socket.on("search_result", (data) => {

@@ -251,7 +251,7 @@ def handle_get_event_locations():
                             "longitude": lng,
                             "id": id
                         })
-    print(f"Event locations prepared to send: {locations}")
+    #print(f"Event locations prepared to send: {locations}")
 
     emit("event_locations_got", locations)
 
@@ -292,10 +292,16 @@ def handle_report_user(subject_username, message):
     emit("user_reported", result)
 
 @socketio.on("create_event")
-def event_create(name, start_time, end_time, locationids, attendee_ids):
+def event_create(name, start_time, end_time, locationids, attendee_ids, is_poi=False):
     user = session.get('user')
-    key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
+    key = create_event(user, name, start_time, end_time, locationids, attendee_ids, is_poi)
     emit("event_created", key)
+
+@socketio.on("get_pois")
+def handle_get_pois():
+    user = session.get('user')
+    pois = get_pois(user)
+    emit("pois_got", pois)
 
 @socketio.on("get_privacy")
 def get_privacy():
