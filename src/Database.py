@@ -453,7 +453,7 @@ def get_pois(user):
                 continue
             #print(f"\nEvent: < {event} >")
             if event.get("is_poi"):
-                pois.append(event)
+                pois.append(event | {"id": event_id})
 
     return pois
 

@@ -300,8 +300,26 @@ def event_create(name, start_time, end_time, locationids, attendee_ids, is_poi=F
 @socketio.on("get_pois")
 def handle_get_pois():
     user = session.get('user')
-    pois = get_pois(user)
-    emit("pois_got", pois)
+    if not user:
+        return
+
+    raw_pois = get_pois(user)
+    processed_pois = []
+
+    for poi in raw_pois:
+        # Check if coordinates are already there; if not, look them up via locationids
+        if "latitude" not in poi and "locationids" in poi and poi["locationids"]:
+            # Use the first ID in the list to represent the POI location
+            loc_id = poi["locationids"][0]
+            loc_data = pathfinder.get_location_by_id(loc_id)
+
+            if loc_data:
+                poi["latitude"] = loc_data.get_latitude()
+                poi["longitude"] = loc_data.get_longitude()
+
+        processed_pois.append(poi)
+
+    emit("pois_got", processed_pois)
 
 @socketio.on("get_privacy")
 def get_privacy():
