@@ -87,7 +87,6 @@ def get_user_data(user):
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
 
-<<<<<<< HEAD
     if user_data and user_data.get("banned_until"):
         banned_until = datetime.fromisoformat(user_data["banned_until"])
         if datetime.now(timezone.utc) < banned_until:
@@ -97,17 +96,13 @@ def get_user_data(user):
                 {"banned_until": None}, token=user["idToken"]
             )
             user_data["banned_until"] = None
-
-    print(user_data)
-=======
+ 
     if (not user_data.get("owned_feature_ids")):
         db.child("Users").child(user["localId"]).update({"owned_feature_ids":["./static/images/Blank-Avatar.png"]}, token=user["idToken"])
 
     user_data = (
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
-
->>>>>>> fb2a1171b5382295ff38057ca7296a03c0153779
     return user_data
 
 def get_public_user_location_and_icon(user):

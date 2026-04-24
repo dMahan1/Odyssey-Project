@@ -434,13 +434,21 @@ function add_users(username, id) {
 }
 
 document.getElementById('save_avatar').addEventListener('click', () => {
-    window.socket.emit("set_icon_image", hat_idx, shirt_idx, shoe_idx);
-    window.socket.once("icon_set", (result) => {
-        if (result.status === "success") {
-            alert("Avatar saved!");
-        } else {
-            alert("Failed to save avatar. Please try again.");
+    window.socket.emit("get_user");
+    window.socket.once("return_user", (user_data) => {
+        const owned = user_data.owned_feature_ids;
+        if (!owned.includes(hats[hat_idx]) || !owned.includes(shirts[shirt_idx]) || !owned.includes(shoes[shoe_idx])) {
+            alert("You don't own all the selected items. Please unlock them before saving your avatar.");
+            return;
         }
+        window.socket.emit("set_icon_image", hat_idx, shirt_idx, shoe_idx);
+        window.socket.once("icon_set", (result) => {
+            if (result.status === "success") {
+                alert("Avatar saved!");
+            } else {
+                alert("Failed to save avatar. Please try again.");
+            }
+        });
     });
 });
 

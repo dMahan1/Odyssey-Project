@@ -16,7 +16,7 @@
 <script src="../static/Settings.js" defer></script>
 
 <div id="whole_page">
-    <div id="settings_main">
+    <div id="settings_main"> 
         <div class="dressing-room-container">
             <div class="controls-column">
                 <button onclick="change_item('hat', -1)">&#x2190</button>
@@ -29,6 +29,11 @@
                 <img id="layer-hat" class="overlay" src="" alt="">
                 <img id="layer-shirt" class="overlay" src="" alt="">
                 <img id="layer-shoes" class="overlay" src="" alt="">
+                <div id="unlock_buttons">
+                    <button id="hat_unlock" style="visibility: hidden;">&#9919</button>
+                    <button id="shirt_unlock" style="visibility: hidden;">&#9919</button>
+                    <button id="shoes_unlock" style="visibility: hidden;">&#x26BF</button>
+                </div>
             </div>
 
             <div class="controls-column">
@@ -51,12 +56,7 @@
         </div>
         <div class="edits" >
             <label id="email_display">@email</label>
-        </div>
-        <div class="edits checkboxes">
-            <label id="private_checkbox">Private</label>
-            <input type="checkbox" id="private" />
-        </div>
-
+        </div> 
 
         <button id="logout">
             Logout
@@ -64,6 +64,10 @@
         <button id="delete">
             Delete Account
         </button>
+        <div class="edits checkboxes">
+            <label id="private_checkbox">Private</label>
+            <input type="checkbox" id="private" />
+        </div>
         <div id="friends_bar">
             <div class="line_up">
                 <select id="friends_search">

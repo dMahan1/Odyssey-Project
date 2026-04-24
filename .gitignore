@@ -12,8 +12,5 @@ logs/cypress/service-account.json
 cypress/service-account.json
 /logs
 /node_modules
-<<<<<<< HEAD
 /src/static/images/Users
-=======
-src/static/images/Users/
->>>>>>> fb2a1171b5382295ff38057ca7296a03c0153779
+
