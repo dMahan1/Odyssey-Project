@@ -153,5 +153,5 @@ def clear_graph_data():
         print(f"{removed} permanent location(s) removed.")
     else:
         print("No locations found.")
-#clear_graph_data()
+clear_graph_data()
 save_transformed_data(sys.argv[1])

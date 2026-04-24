@@ -5,17 +5,13 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from multiprocessing import context
 from pathlib import Path
+from PIL import Image
 
-# import cloudinary
-# import cloudinary.api
-# import cloudinary.uploader
+_src_dir = os.path.dirname(os.path.abspath(__file__))
+
 import empyrebase
 
-# Import the CloudinaryImage and CloudinaryVideo methods for the simplified syntax used in this guide
-# from cloudinary import CloudinaryImage, CloudinaryVideo
 from dotenv import load_dotenv
-
-# cloudinary.config(cloudinary_url=os.getenv("CLOUDINARY_URL"))
 
 # Get the user's home directory path
 # home_dir = Path.home()
@@ -31,6 +27,7 @@ config = {
     "authDomain": os.getenv("AUTH_DOMAIN"),
     "projectId": os.getenv("PROJECT_ID"),
     "databaseURL": os.getenv("DATABASE_URL"),
+
     "storageBucket": os.getenv("STORAGE_BUCKET"),
     # "serviceAccount": path/"odyssey-cd6c7-firebase-adminsdk-fbsvc-33704d2399.json"
 }
@@ -60,28 +57,19 @@ def auth_user(email, password, latitude, longitude):
         user_data = get_user_data(user)
         if user_data is None:
             return {"status": "NoAccount"}
+        if user_data.get("banned"):
+            return {"status": "Banned", "banned_until": user_data["banned_until"]}
         # Update the user's location
         update_user_location(user, latitude, longitude)
-        if user_data.get("banned_until") is not None:
-            banned_until = datetime.fromisoformat(user_data["banned_until"])
-            if datetime.now(timezone.utc) < banned_until:
-                return {"status": "Banned", "banned_until": user_data["banned_until"]}
-            else:
-                db = firebase.database()
-                db.child("Users").child(user["localId"]).update(
-                    {"banned_until": None}, token=user["idToken"]
-                )
-        if user_data.get("banned_until") is not None:
-            banned_until = datetime.fromisoformat(user_data["banned_until"])
-            if datetime.now(timezone.utc) < banned_until:
-                return {"status": "Banned", "banned_until": user_data["banned_until"]}
-            else:
-                db = firebase.database()
-                db.child("Users").child(user["localId"]).update(
-                    {"banned_until": None}, token=user["idToken"]
-                )
         user["status"] = "Success"
         return user
+
+def get_target_user_data(user, username):
+    db = firebase.database()
+    result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
+    if not result:
+        return None
+    return list(result.values())[0]
 
 def ban_user(user, username, banned_until):
     db = firebase.database()
@@ -94,21 +82,27 @@ def ban_user(user, username, banned_until):
         db.child("Users").child(target_id).update({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
-    # Get a reference to the database service
     db = firebase.database()
-
-    # Get a reference to the user's data
     user_data = (
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
 
+    if user_data and user_data.get("banned_until"):
+        banned_until = datetime.fromisoformat(user_data["banned_until"])
+        if datetime.now(timezone.utc) < banned_until:
+            return {"banned": True, "banned_until": user_data["banned_until"]}
+        else:
+            db.child("Users").child(user["localId"]).update(
+                {"banned_until": None}, token=user["idToken"]
+            )
+            user_data["banned_until"] = None
+ 
     if (not user_data.get("owned_feature_ids")):
         db.child("Users").child(user["localId"]).update({"owned_feature_ids":["./static/images/Blank-Avatar.png"]}, token=user["idToken"])
 
     user_data = (
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
-
     return user_data
 
 def get_public_user_location_and_icon(user):
@@ -131,9 +125,8 @@ def get_public_user_location_and_icon(user):
         if not location:
             continue
         icon_path = data.get("icon_image_path")
-        # Only pass icon_image_path if it's a valid external URL (e.g. Cloudinary)
-        if not icon_path or not Path(icon_path).exists():
-            icon_path = "../images/Default.png"
+        if not icon_path or not (icon_path.startswith('http') or icon_path.startswith('/static/')):
+            icon_path = "/static/images/Default.png"
         user_locations.append({
             "id": user_id,
             "username": data.get("username"),
@@ -196,17 +189,43 @@ def create_user(email, username, password, latitude, longitude):
         user["status"] = "Success"
         return user
 
-def set_user_icon_image(user, image):
+def set_user_icon_image(user, images):
     db = firebase.database()
-    if image is None:
+    if images is None:
         db.child("Users").child(user["localId"]).update(
-            {"icon_image_path": "../images/Default.png"}, token=user["idToken"]
+            {"icon_image_path": "/static/images/Default.png"}, token=user["idToken"]
         )
     else:
+        img1 = None
+        hat_path = images.get("hat")
+        if hat_path and Path(hat_path).exists():
+            img1 = Image.open(hat_path).convert("RGBA")
+
+        img2 = None
+        shirt_path = images.get("shirt")
+        if shirt_path and Path(shirt_path).exists():
+            img2 = Image.open(shirt_path).convert("RGBA")
+
+        img3 = None
+        shoe_path = images.get("shoes")
+        if shoe_path and Path(shoe_path).exists():
+            img3 = Image.open(shoe_path).convert("RGBA")
+
+        base = Image.open(os.path.join(_src_dir, "static/images/Default.png")).convert("RGBA")
+
+        if img1:
+            base.paste(img1, (0, 0), img1)
+        if img2:
+            base.paste(img2, (0, 0), img2)
+        if img3:
+            base.paste(img3, (0, 0), img3)
+
+        save_path = os.path.join(_src_dir, "static", "images", "Users", f"{user['localId']}.png")
+        base.save(save_path)
+
         db.child("Users").child(user["localId"]).update(
-            {"icon_image_path": user["localId"]}, token=user["idToken"]
+            {"icon_image_path": f"/static/images/Users/{user['localId']}.png"}, token=user["idToken"]
         )
-        # cloudinary.uploader.upload(image, public_id=user["localId"], overwrite=True)
 
 def send_password_reset_email(email):
     auth.send_password_reset_email(email)
@@ -333,15 +352,24 @@ def update_user_toucoins(user, amount):
 
 def add_feature_items(user, path):
     db = firebase.database()
-    if (db.child("Users").child(user["localId"]))
-    owned = db.child("Users").child(user["localId"]).child("owned_feature_ids").get(token=user["idToken"]).val()
+    owned = get_user_data(user).get("owned_feature_ids")
     if isinstance(owned, list) and (path not in owned):
-        owned.append(path)
-    db.child("Users").child()
+        if ((toucoins := db.child("Users").child(user["localId"]).child("toucoins").get(token=user["idToken"]).val()) is not None and toucoins >= 50):
+            db.child("Users").child(user["localId"]).update({"toucoins":toucoins-50}, token=user["idToken"])
+            owned.append(path)
+        else:
+            return "Not enough Toucoins for this feature. 50 toucoins are required"
+    else:
+        return "Owned features not a list, or Feature is already Owned"
+    db.child("Users").child(user["localId"]).update({"owned_feature_ids":owned}, token=user["idToken"])
+    return "Feature Bought"
 
 def delete_user(user):
     db = firebase.database()
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
+
+    image_path = Path(f"{_src_dir}/static/images/Users/{user["localId"]}.png")
+    image_path.unlink(missing_ok=True)
 
     for event_id in user.get("attended_event_ids", []):
         event_data = (
@@ -1084,5 +1112,4 @@ def test():
         print("Error: User data retrieval should have failed after deletion.")
     except Exception:
         print("User deleted successfully, data retrieval failed as expected.")
-
 
