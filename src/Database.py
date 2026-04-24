@@ -464,6 +464,22 @@ def get_permanent_locations(user, include_dropped_pins=False):
 
     return perm_locations
 
+def get_pois(user):
+    db = firebase.database()
+    all_events = db.child("Events").get(token=user["idToken"]).val()
+    pois = []
+
+    if all_events:
+        for event_id in all_events:
+            event = get_event_data(user, event_id)
+            if event is None or not isinstance(event, dict):
+                continue
+            #print(f"\nEvent: < {event} >")
+            if event.get("is_poi"):
+                pois.append(event | {"id": event_id})
+
+    return pois
+
 def get_user_dropped_pins(user):
     db = firebase.database()
     user_data = (
@@ -507,7 +523,7 @@ def get_locations_from_name(user, loc_name, include_dropped_pins=False):
     return matches
 
 
-def create_event(user, name, start_time, end_time, locationids, attendee_ids):
+def create_event(user, name, start_time, end_time, locationids, attendee_ids, is_poi=False):
 
     db = firebase.database()
 
@@ -536,6 +552,7 @@ def create_event(user, name, start_time, end_time, locationids, attendee_ids):
         "locationids": locationids,
         "location_name": location_name,
         "attendee_ids": [user["localId"]],
+        "is_poi": is_poi,
     }
     key = firebase.database().generate_key()
     db.child("Events").child(key).set(data, token=user["idToken"])

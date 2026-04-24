@@ -172,7 +172,7 @@ function update_permanent_locations() {
 function create_event_invite(event_name, event_message, event_id, message_id){
     const event_template = document.getElementById("event_invite_template");
     let new_invite = event_template.content.cloneNode(true);
-    
+
     let invite_element = new_invite.querySelector('.event_invite');
 
     invite_element.querySelector('.event_name').innerText = event_name;
@@ -182,7 +182,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     const acceptBtn = invite_element.querySelector('#accept_event');
     acceptBtn.addEventListener('click', () => {
         window.socket.emit("accept_event_invite", event_id, message_id);
-        
+
         invite_element.remove();
     });
 
@@ -190,7 +190,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
     const declineBtn = invite_element.querySelector('#decline_event');
     declineBtn.addEventListener('click', () => {
         window.socket.emit("remove_message", message_id);
-        
+
         invite_element.remove();
     });
 
@@ -200,7 +200,7 @@ function create_event_invite(event_name, event_message, event_id, message_id){
 function create_friend_request(friend_username, sender_id, message_id) {
     const friend_template = document.getElementById("friend_invite_template");
     let new_friend_request = friend_template.content.cloneNode(true);
-    
+
     let request_element = new_friend_request.querySelector('.friend_invite');
     request_element.querySelector('.request_username').innerText = friend_username;
 
@@ -208,9 +208,9 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const acceptBtn = request_element.querySelector('#accept_friend');
     acceptBtn.addEventListener('click', () => {
         window.socket.emit("add_friend", sender_id);
-        
+
         window.socket.emit("remove_message", message_id);
-        
+
         request_element.remove();
     });
 
@@ -218,7 +218,7 @@ function create_friend_request(friend_username, sender_id, message_id) {
     const declineBtn = request_element.querySelector('#decline_friend');
     declineBtn.addEventListener('click', () => {
         window.socket.emit("remove_message", message_id);
-        
+
         request_element.remove();
     });
 
@@ -237,7 +237,7 @@ function create_message(sender_username, message_id, message_text, event_name) {
     const declineBtn = message_element.querySelector('#remove_message');
     declineBtn.addEventListener('click', () => {
         window.socket.emit("remove_message", message_id);
-        
+
         message_element.remove();
     });
 
@@ -256,7 +256,7 @@ function add_attendee_list(attendee_name, attendee_id) {
 
     checkbox.id = attendee_id;
     checkbox.value = attendee_name;
-    
+
     label.appendChild(document.createTextNode(" " + attendee_name));
 
     container.appendChild(new_attendee);
@@ -283,7 +283,7 @@ function add_event(event_name, event_creator, event_location, start_time, end_ti
 
         if (confirm(`Are you sure you want to delete "${event_name}"?`)) {
             window.socket.emit("delete_event", event_id);
-            
+
             remove_event(event_id);
             window.socket.once("event_deleted", (success) => {
                 if (success == "Left Event") {
@@ -435,9 +435,9 @@ function update_day_events() {
     window.socket.emit("get_events");
     window.socket.once("events_got", (events) => {
         clear_events();
-        
+
         const calendarDate = new Date(current_year, current_month, current_day);
-        calendarDate.setHours(0, 0, 0, 0); 
+        calendarDate.setHours(0, 0, 0, 0);
 
         events.forEach(event => {
             const startVal = new Date(event.start_time);
@@ -459,11 +459,11 @@ function update_day_events() {
                 }
 
                 add_event(
-                    event.name, 
+                    event.name,
                     event.creator_username,
                     event.location_name,
-                    displayStart, 
-                    displayEnd, 
+                    displayStart,
+                    displayEnd,
                     event.id
                 );
             }
@@ -732,6 +732,7 @@ save_event.addEventListener('click', () => {
 
     const startDay = new Date(startVal.getFullYear(), startVal.getMonth(), startVal.getDate());
     const endDay = new Date(endVal.getFullYear(), endVal.getMonth(), endVal.getDate());
+    const isPoi = document.getElementById("event_is_poi").checked;
 
     if (calendarDate >= startDay && calendarDate <= endDay) {
 
@@ -741,7 +742,8 @@ save_event.addEventListener('click', () => {
             start_time.value,
             end_time.value,
             JSON.parse(loc.value),
-            attendeeIdsArray
+            attendeeIdsArray,
+            isPoi
         );
 
         window.socket.once("event_created", (key) => {
@@ -752,7 +754,7 @@ save_event.addEventListener('click', () => {
             }
         });
     } else {
-        window.socket.emit("create_event", title.value, start_time.value, end_time.value, JSON.parse(loc.value), Array.from(selectedAttendeeIds));
+        window.socket.emit("create_event", title.value, start_time.value, end_time.value, JSON.parse(loc.value), Array.from(selectedAttendeeIds), isPoi);
         console.log("Event saved, but not displayed on this specific calendar day.");
     }
 
@@ -817,11 +819,11 @@ more_attendees_button.addEventListener('click', () => {
     attendees_content.innerHTML = '';
 
     window.socket.emit("get_friends");
-    
+
     window.socket.once("friends_got", (ret) => {
         ret.forEach(friend => {
             add_attendee_list(friend.username, friend.id);
-            
+
             const cb = document.getElementById(friend.id);
             if (cb && selectedAttendeeIds.has(String(friend.id))) {
                 cb.checked = true;
@@ -834,7 +836,7 @@ more_attendees_button.addEventListener('click', () => {
 save_attendees.addEventListener('click', () => {
     const checkboxes = attendees_content.querySelectorAll('.attendees_select');
     selectedAttendeeIds.clear(); // Refresh our saved list
-    
+
     checkboxes.forEach(cb => {
         if (cb.checked) {
             selectedAttendeeIds.add(cb.id);

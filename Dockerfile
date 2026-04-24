@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
     pybind11 \
     python-dotenv \
     empyrebase \
-    cloudinary
+    Pillow
 
 COPY . .
 
