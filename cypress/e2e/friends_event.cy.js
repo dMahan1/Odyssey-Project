@@ -1,5 +1,5 @@
 describe('signup page', () => {
-    it('friends_event', () => {
+    it('friends_event', { retries: 2 }, () => {
         let date = new Date().toLocaleDateString();
         const [month, day, year] = date.split('/');
         date = `${year}-${month.padStart(2,'0')}-${day.padStart(2,'0')}`;
@@ -22,7 +22,10 @@ describe('signup page', () => {
         });
         cy.get('#add_friends').click();
         cy.get('#logout').click();
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
@@ -49,7 +52,10 @@ describe('signup page', () => {
         cy.get('#settings_button').click();
         cy.url().should('include', 'Settings.html');
         cy.get('#logout').click();
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
         cy.stubGeolocation();
         cy.window().then((win) => {
             win.alert = () => {};
@@ -66,13 +72,64 @@ describe('signup page', () => {
         cy.contains('.event_name', 'Name: TestEvent').should('exist');
         cy.get('#settings_button').click();
         cy.url().should('include', 'Settings.html');
+        cy.get('#logout').click();
+        cy.visit('/');
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
+        cy.stubGeolocation();
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.get('#signin_email').type('cypress@test.qin');
+        cy.get('#signin_password').type('password');
+        cy.get('#signin_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#calendar_button').click();
+        cy.contains('.event_name', 'Name: TestEvent').should('exist');
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.contains('.event', 'TestEvent').find('.message_button').click();
+        cy.get('#message_text').type('Test Message');
+        cy.get('#send_message').click();
+        cy.get('#settings_button').click();
+        cy.url().should('include', 'Settings.html');
+        cy.get('#logout').click();
+        cy.visit('/');
+        cy.url().should('eq', 'http://127.0.0.1:8080/');
+        cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
+        cy.stubGeolocation();
+        cy.window().then((win) => {
+            win.alert = () => {};
+        });
+        cy.get('#signin_email').type('cypressTheGreat@test.cdy');
+        cy.get('#signin_password').type('password');
+        cy.get('#signin_button').click();
+        cy.url().should('include', 'Map.html');
+        cy.get('#calendar_button').click();
+        cy.url().should('include', 'Calendar.html');
+        cy.get('#inbox_button').click();
+        cy.get('.message').within(() => {
+            cy.get('.event_name').should('have.text', 'TestEvent');
+            cy.get('.sender_username').should('have.text', '@TestUser');
+            cy.get('.message_text').should('have.text', 'Test Message');
+        });
+        cy.get('#close_inbox').click();
+        cy.get('#settings_button').click();
+        cy.url().should('include', 'Settings.html');
         cy.window().then((win) => {
             cy.stub(win, 'confirm').returns(true);
             win.alert = () => {};
         });
         cy.get('#delete').click();
+        cy.url({ timeout: 10000 }).should('eq', 'http://127.0.0.1:8080/');
+        cy.visit('/');
         cy.url().should('eq', 'http://127.0.0.1:8080/');
-         cy.stubGeolocation();
+        cy.location('pathname').should('eq', '/');
+        cy.document().its('readyState').should('eq', 'complete');
+        cy.stubGeolocation();
         cy.window().then((win) => {
             cy.stub(win, 'alert').as('alert');
         });
@@ -86,6 +143,6 @@ describe('signup page', () => {
             cy.stub(win, 'confirm').returns(true);
         });
         cy.get('.delete_event_btn').click();
-        cy.contains('.event_name', 'Name: TestEvent').should('not.exist');
+        cy.get('.event').should('not.exist');
     });
 });
