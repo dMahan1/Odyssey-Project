@@ -333,11 +333,17 @@ def update_user_toucoins(user, amount):
 
 def add_feature_items(user, path):
     db = firebase.database()
-    if (db.child("Users").child(user["localId"]))
-    owned = db.child("Users").child(user["localId"]).child("owned_feature_ids").get(token=user["idToken"]).val()
+    owned = get_user_data(user).get("owned_feature_ids")
     if isinstance(owned, list) and (path not in owned):
-        owned.append(path)
-    db.child("Users").child()
+        if ((toucoins := db.child("Users").child(user["localId"]).child("toucoins").get(token=user["idToken"]).val()) is not None and toucoins >= 50):
+            db.child("Users").child(user["localId"]).update({"toucoins":toucoins-50}, token=user["idToken"])
+            owned.append(path)
+        else:
+            return "Not enough Toucoins for this feature. 50 toucoins are required"
+    else:
+        return "Owned features not a list, or Feature is already Owned"
+    db.child("Users").child(user["localId"]).update({"owned_feature_ids":owned}, token=user["idToken"])
+    return "Feature Bought"
 
 def delete_user(user):
     db = firebase.database()
