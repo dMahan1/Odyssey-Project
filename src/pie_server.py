@@ -282,6 +282,15 @@ def report_issue(message):
     result = store_report(user, message)
     emit("issue_reported", result)
 
+@socketio.on("make_suggestion")
+def make_suggestion(message, suggest_type):
+    user = session.get('user')
+    if not user:
+        emit("error", "Not logged in")
+        return
+    result = store_suggestion(user, message, suggest_type)
+    emit("suggestion_made", result)
+
 @socketio.on("report_user")
 def handle_report_user(subject_username, message):
     user = session.get('user')
@@ -610,6 +619,14 @@ def handle_get_hotspots():
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
     hotspots = get_hotspots(user)
     emit("hotspot_result", {"status": "success", "hotspots": hotspots})
+
+@socketio.on("add_feature_items")
+def unlock_item(path):
+    user = session.get('user')
+    if user:
+        emit("feature purchase", add_feature_items(user, path))
+    else:
+        emit("user error")
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

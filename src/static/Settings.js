@@ -25,6 +25,7 @@ const report_user_button = document.getElementById('report_user');
 const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
+
 const hats = ["./static/images/Blank-Avatar.png", "./static/images/Hats/Avatar_Hat1.png", "./static/images/Hats/Avatar_Hat2.png", "./static/images/Hats/Avatar_Hat3.png"];
 const shirts = ["./static/images/Blank-Avatar.png", "./static/images/Shirts/Avatar_Shirt1.png", "./static/images/Shirts/Avatar_Shirt2.png", "./static/images/Shirts/Avatar_Shirt3.png"];
 const shoes = ["./static/images/Blank-Avatar.png", "./static/images/Shoes/Avatar_Shoes1.png"];
@@ -54,6 +55,28 @@ socket.on("auth", (user) => {
 let hat_idx = 0;
 let shirt_idx = 0;
 let shoe_idx = 0;
+
+function check_unlock(item, path) {
+    window.socket.emit("get_user");
+
+    window.socket.once("return_user", (user_data) => {
+        const owned_features = user_data.owned_feature_ids;
+        const is_owned = owned_features.includes(path);
+        const visibility = is_owned ? 'hidden' : 'visible';
+        switch (item) {
+            case 'hat':
+                hat_unlock.style.visibility = visibility;
+                break;
+            case 'shirt':
+                shirt_unlock.style.visibility = visibility;
+                break;
+            case 'shoes':
+                shoes_unlock.style.visibility = visibility;
+                break;
+        }
+    });
+}
+
 function change_item(item, direction) {
     const layer = document.getElementById(`layer-${item}`);
     let assetList = [];
@@ -64,19 +87,19 @@ function change_item(item, direction) {
             assetList = hats;
             hat_idx = (hat_idx + direction + hats.length) % hats.length;
             if (hats.length > 0) layer.src = hats[hat_idx];
+            check_unlock(item, hats[hat_idx]);
             break;
         case 'shirt':
             assetList = shirts;
             shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
             if (shirts.length > 0) layer.src = shirts[shirt_idx];
+            check_unlock(item, shirts[shirt_idx]);
             break;
         case 'shoes':
             assetList = shoes;
-            // Only update if you actually have shoes in the array
-            if (shoes.length > 0) {
-                shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
-                layer.src = shoes[shoe_idx];
-            }
+            shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
+            layer.src = shoes[shoe_idx];
+            check_unlock(item, shoes[shoe_idx]);
             break;
     }
 }
@@ -410,3 +433,48 @@ window.socket.on("toucoins_result", (data) => {
         document.getElementById("toucoin_amount").innerText = "Toucoins: " + toucoins;
     }
 });
+
+const hat_unlock = document.getElementById("hat_unlock");
+const shirt_unlock = document.getElementById("shirt_unlock");
+const shoes_unlock = document.getElementById("shoes_unlock");
+
+hat_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock this hat?") ) {
+        const path_to_unlock = hats[hat_idx];
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('hat', hats[hat_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
+    }
+})
+
+shirt_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock this shirt?") ) {
+        const path_to_unlock = shirts[shirt_idx];
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('shirt', shirts[shirt_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
+    }
+})
+
+shoes_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock these shoes?") ) {
+        const path_to_unlock = shoes[shoe_idx];
+        window.socket.emit("add_feature_items", path_to_unlock);
+        window.socket.once("feature purchase", (status) => {
+            check_unlock('shoes', shoes[shoe_idx]);
+            alert(status);
+            window.socket.emit("get_toucoins");
+        })
+    }
+})
+
+window.socket.on("user error", () => {
+    alert("Error getting user data from session storage")
+})
+

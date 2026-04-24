@@ -330,7 +330,8 @@ body {
 #message_popup_background,
 #report_bug_background,
 #report_user_background,
-#calendar_popup_background {
+#calendar_popup_background,
+#suggestions_popup_background {
     display: none;
     z-index: 1;
     width: 100%;
@@ -339,7 +340,7 @@ body {
     position: fixed;
 }
 
-#event_popup, #inbox_popup, #message_popup, #report_bug_popup, #report_user_popup {
+#event_popup, #inbox_popup, #message_popup, #report_bug_popup, #report_user_popup, #suggestions_popup {
     background-color: #ABABAB;
     position: absolute;
     left: 50%;
@@ -401,7 +402,9 @@ body {
 #send_report_user,
 #close_report_bug,
 #close_report_user,
-#cancel_calendar_change {
+#cancel_calendar_change,
+#close_suggestions,
+#send_suggestions {
     background-color: #E8A2A7;
     border: none;
     cursor: pointer;
@@ -409,7 +412,7 @@ body {
 }
 
 #event_popup_bar, #inbox_popup_bar, #attendees_popup_bar, #message_popup_bar, #report_bug_popup_bar, #report_user_popup_bar,
-#calendar_popup_bar {
+#calendar_popup_bar, #suggestions_popup_bar {
     background-color: #E8A2A7;
     display: flex;
     justify-content: space-between;
@@ -576,21 +579,21 @@ body {
     text-align: left;
 }
 
-#message_popup_content, #report_bug_popup_content, #report_user_popup_content {
+#message_popup_content, #report_bug_popup_content, #report_user_popup_content, #suggestions_popup_content {
     display: flex;
     flex-direction: column;
     align-items: center;
     height: 100%;
 }
 
-#message_popup_title, #report_bug_popup_title, #report_user_popup_title {
+#message_popup_title, #report_bug_popup_title, #report_user_popup_title, #suggestions_popup_title {
     font-family: Rockwell, monaco, monospace;
     background-color: #7A7A7A;
     border: 1px solid black;
     width: 90%;
 }
 
-#message_text, #report_bug_text, #report_user_text {
+#message_text, #report_bug_text, #report_user_text, #suggestions_text {
     font-family: Rockwell, monaco, monospace;
     width: 90%;
     height: 75%;
@@ -988,7 +991,7 @@ body {
     width: 75%;
 }
 
-#checkboxes {
+.checkboxes {
     width: 90%;
     display: flex;
     flex-direction: row;
@@ -1040,8 +1043,6 @@ body {
     gap: 20px;
 }
 
-
-
 .controls-column button {
     background: #EDDEAB;
     border: 2px solid black;
@@ -1053,4 +1054,25 @@ body {
 .controls-column button:active {
     transform: scale(0.9); /* Little click effect */
     background: #eee;
+}
+
+#unlock_buttons {
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    gap: 20px;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+#hat_unlock, #shirt_unlock, #shoes_unlock {
+    border-radius: 50%;
+    width: 20%;
+    height: 20%;
+    aspect-ratio: 1 / 1;
+    background-color: #D4AF37;
+    cursor: pointer;
 }
