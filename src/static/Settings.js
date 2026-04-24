@@ -106,6 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         window.socket.once("return_user", (user_data) => {
             console.log(user_data);
+            if (user_data && user_data.banned) {
+                alert(`You have been banned until ${new Date(user_data.banned_until).toLocaleString()}.`);
+                window.location.href = "Signin.html";
+                return;
+            }
             if (user_data && user_data.admin) {
                 ban_search.style.display = "inline";
                 ban_user.style.display = "inline";
@@ -224,9 +229,10 @@ ban_user.addEventListener('click', () => {
     window.socket.once("ban_response", (success) => {
         console.log(success);
         if (success === "Success") {
-            alert("The user has banned for one week, SO SAYS THE BAN HAMMER!!!");
-        }
-        else {
+            alert("The user has been banned for one week, SO SAYS THE BAN HAMMER!!!");
+        } else if (success === "Unbanned") {
+            alert("The user has been unbanned.");
+        } else {
             alert("There has been an error");
         }
     });

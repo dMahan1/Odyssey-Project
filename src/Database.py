@@ -57,28 +57,19 @@ def auth_user(email, password, latitude, longitude):
         user_data = get_user_data(user)
         if user_data is None:
             return {"status": "NoAccount"}
+        if user_data.get("banned"):
+            return {"status": "Banned", "banned_until": user_data["banned_until"]}
         # Update the user's location
         update_user_location(user, latitude, longitude)
-        if user_data.get("banned_until") is not None:
-            banned_until = datetime.fromisoformat(user_data["banned_until"])
-            if datetime.now(timezone.utc) < banned_until:
-                return {"status": "Banned", "banned_until": user_data["banned_until"]}
-            else:
-                db = firebase.database()
-                db.child("Users").child(user["localId"]).update(
-                    {"banned_until": None}, token=user["idToken"]
-                )
-        if user_data.get("banned_until") is not None:
-            banned_until = datetime.fromisoformat(user_data["banned_until"])
-            if datetime.now(timezone.utc) < banned_until:
-                return {"status": "Banned", "banned_until": user_data["banned_until"]}
-            else:
-                db = firebase.database()
-                db.child("Users").child(user["localId"]).update(
-                    {"banned_until": None}, token=user["idToken"]
-                )
         user["status"] = "Success"
         return user
+
+def get_target_user_data(user, username):
+    db = firebase.database()
+    result = db.child("Users").order_by_child("username").equal_to(username).get(token=user["idToken"]).val()
+    if not result:
+        return None
+    return list(result.values())[0]
 
 def ban_user(user, username, banned_until):
     db = firebase.database()
@@ -91,13 +82,20 @@ def ban_user(user, username, banned_until):
         db.child("Users").child(target_id).update({"banned_until": banned_until}, token=user["idToken"])
 
 def get_user_data(user):
-    # Get a reference to the database service
     db = firebase.database()
-
-    # Get a reference to the user's data
     user_data = (
         db.child("Users").child(user["localId"]).get(token=user["idToken"]).val()
     )
+
+    if user_data and user_data.get("banned_until"):
+        banned_until = datetime.fromisoformat(user_data["banned_until"])
+        if datetime.now(timezone.utc) < banned_until:
+            return {"banned": True, "banned_until": user_data["banned_until"]}
+        else:
+            db.child("Users").child(user["localId"]).update(
+                {"banned_until": None}, token=user["idToken"]
+            )
+            user_data["banned_until"] = None
 
     print(user_data)
     return user_data

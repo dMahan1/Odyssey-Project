@@ -75,16 +75,9 @@ def handle_connect():
     user_data = get_user_data(user) if user else None
 
     if user_data:
-        if 'banned_until' in user_data:
-            banned_until = datetime.fromisoformat(user_data['banned_until'])
-            if datetime.now() < banned_until:
-                emit("banned", {"until": user_data['banned_until']})
-                return
-            else:
-                # Ban expired, remove ban info
-                db = firebase.database()
-                db.child("users").child(user['localId']).child("banned_until").remove(token=user['idToken'])
-                print(f"Ban expired for user: {user_data.get('username')}")
+        if user_data.get("banned"):
+            emit("banned", {"until": user_data["banned_until"]})
+            return
         print(f"Connected: {user_data.get('username')} (Session Active)")
     else:
         print("Connected: Anonymous (Session Empty)")
@@ -383,13 +376,21 @@ def friend_get():
 def user_ban(username):
     user = session.get('user')
     user_data = get_user_data(user)
-    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
-    print("PREPARING TO BAN USER: `{user_data}`")
-    if user_data.get("admin"):
-        ban_user(user, username, now_time)
-        emit("ban_response", "Success")
-    else:
+    print(f"This is the user data: {user_data}")
+    if not user_data.get("admin"):
         emit("ban_response", "Failed")
+        return
+    target_data = get_target_user_data(user, username)
+    if target_data and target_data.get("banned_until"):
+        banned_until = datetime.fromisoformat(target_data["banned_until"])
+        if datetime.now(timezone.utc) < banned_until:
+            ban_user(user, username, None)
+            emit("ban_response", "Unbanned")
+            return
+    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
+    print(f"PREPARING TO BAN USER: {target_data}")
+    ban_user(user, username, now_time)
+    emit("ban_response", "Success")
 
 @socketio.on("get_all_users")
 def handle_get_all_users():

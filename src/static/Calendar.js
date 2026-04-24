@@ -774,6 +774,11 @@ inbox_button.addEventListener('click', () => {
 
     window.socket.once("return_user", (data) => {
         console.log(data);
+        if (data && data.banned) {
+            alert(`You have been banned until ${new Date(data.banned_until).toLocaleString()}.`);
+            window.location.href = "Signin.html";
+            return;
+        }
 
         const userMessages = data.messages;
 

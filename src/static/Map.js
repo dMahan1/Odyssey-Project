@@ -275,6 +275,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     socket.emit("get_user");
     window.socket.once("return_user", (user) => {
+        if (user && user.banned) {
+            alert(`You have been banned until ${new Date(user.banned_until).toLocaleString()}.`);
+            window.location.href = "Signin.html";
+            return;
+        }
         if (user) {
             const iconUrl = (user.icon_image_path && (user.icon_image_path.startsWith('http') || user.icon_image_path.startsWith('/static/')))
                 ? user.icon_image_path
