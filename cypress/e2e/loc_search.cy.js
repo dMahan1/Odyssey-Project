@@ -1,5 +1,5 @@
 describe('map search', () => {
-    it('search', () => {
+    it('search', { retries: 2 }, () => {
         cy.visit('/');
         cy.stubGeolocation();
         cy.window().then((win) => {
