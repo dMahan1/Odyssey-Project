@@ -45,6 +45,8 @@
                 <label for="location_search"></label><select id="location_search">
                     <option hidden="hidden">&#x2315 Location</option>
                 </select>
+                <input type="checkbox" class="checkbox" id="event_is_poi">
+                <label for="event_is_poi">Make this event a PoI?</label>
             </div>
         </div>
     </div>
@@ -56,7 +58,7 @@
                 <button id="save_attendees">&#x2713</button>
             </div>
             <div id = "attendees_popup_content">
-                
+
             </div>
             <template id="attendee_template">
                 <div class="attendee">
@@ -220,7 +222,7 @@
                 <div class = "time_block"></div>
                 <div class = "time_block"></div>
                 <div class = "time_block"></div>
-                
+
             </div>
             <template id="event_template">
                 <div class="event" id="e">

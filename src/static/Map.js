@@ -10,6 +10,7 @@ let unownedEventLocations = [];
 let pinMarkers = {};  // keyed by pin.id → Leaflet marker
 let hotspots = [];
 let pinLayerGroup;
+let poiLayerGroup;
 
 function initMap() {
   let southWest = L.latLng(40.405, -86.955);
@@ -27,7 +28,8 @@ function initMap() {
       attribution: "© OpenStreetMap",
   }).addTo(map);
 
-  pinLayerGroup = L.layerGroup().addTo(map);
+    pinLayerGroup = L.layerGroup().addTo(map);
+    poiLayerGroup = L.layerGroup().addTo(map);
 }
 
 let locationSuccess = false;
@@ -73,6 +75,7 @@ function updateLoc() {
         console.log(locationSuccess + ", " + latitude + ", " + longitude + ", " + updated);
         window.socket.emit("get_hotspots");
         window.socket.emit("get_user_pins");
+        window.socket.emit("get_pois");
     } else {
         locFail();
     }
@@ -371,6 +374,46 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("fetching pins");
 
     window.socket.emit("get_user_pins");
+    window.socket.emit("get_pois");
+});
+
+window.socket.on("pois_got", (data) => {
+    console.log("POIs received:", JSON.stringify(data, null, 2));
+
+    poiLayerGroup.clearLayers();
+
+    console.log(current_user)
+    const id = current_user["localId"];
+    data.forEach(poi => {
+        if (poi.attendee_ids && poi.attendee_ids.some(attendeeId => String(attendeeId) === String(id))) {
+            return;
+        }
+        if (poi.latitude && poi.longitude) {
+            const poiIcon = L.divIcon({
+                className: '',
+                html: `<img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
+                            style="filter: hue-rotate(150deg) brightness(1.2);
+                                   width: 25px; height: 41px;">`,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            });
+
+            const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon }).addTo(map);
+
+            marker.bindPopup(`
+                <div class="poi-popup" style="text-align: center;">
+                    <b>⭐ POI: ${poi.name} ⭐</b><br>
+                    <sub>Created by ${poi.creator_username}</sub>
+                    <button type="button"
+                          style="background-color: #FFD700; border: 1px solid black; border-radius: 4px; cursor: pointer; padding: 4px 8px;"
+                          onclick="window.socket.emit('join_event', '${poi.id}')">
+                          Join Event
+                    </button>
+                </div>
+            `);
+        }
+    });
 });
 
 window.socket.on("search_result", (data) => {
@@ -651,6 +694,10 @@ window.socket.on("hotspot_result", (data) => {
           }
       });
     }
+});
+
+window.socket.on("event_joined", (data) => {
+    window.socket.emit("get_pois");
 });
 
 // Confirmation handlers to trigger the refresh
