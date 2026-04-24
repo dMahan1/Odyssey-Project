@@ -26,6 +26,10 @@ const close_report_user = document.getElementById('close_report_user');
 const report_user_text = document.getElementById('report_user_text');
 const send_report_user = document.getElementById('send_report_user');
 
+const hats = ["./static/images/Blank-Avatar.png", "./static/images/Hats/Avatar_Hat1.png", "./static/images/Hats/Avatar_Hat2.png", "./static/images/Hats/Avatar_Hat3.png"];
+const shirts = ["./static/images/Blank-Avatar.png", "./static/images/Shirts/Avatar_Shirt1.png", "./static/images/Shirts/Avatar_Shirt2.png", "./static/images/Shirts/Avatar_Shirt3.png"];
+const shoes = ["./static/images/Blank-Avatar.png", "./static/images/Shoes/Avatar_Shoes1.png"];
+
 const socket = io({
     withCredentials: true,
     transports: ['websocket', 'polling'] // Force websocket to keep the session stable
@@ -46,6 +50,80 @@ socket.on("auth", (user) => {
     current_user = user;
     sessionStorage.setItem('user', JSON.stringify(user));
 });
+
+
+let hat_idx = 0;
+let shirt_idx = 0;
+let shoe_idx = 0;
+
+function check_unlock(item, path) {
+    window.socket.emit("get_user");
+
+    window.socket.once("return_user", (user_data) => {
+        const owned_features = user_data.owned_feature_ids;
+        owned_features.forEach((feature) => {
+
+            console.log(feature);
+            console.log(path);
+            console.log(item);
+            if (path === feature) {
+                switch (item) {
+                    case 'hat':
+                        hat_unlock.style.visibility= 'hidden';
+                        break;
+                    case 'shirt':
+                        shirt_unlock.style.visibility= 'hidden';
+                        break;
+                    case 'shoes':
+                        shoes_unlock.style.visibility= 'hidden';
+                        break;
+                }
+            } else {
+                switch (item) {
+                    case 'hat':
+                        console.log("hat");
+                        hat_unlock.style.visibility = 'visible';
+                        break;
+                    case 'shirt':
+                        console.log("shirt");
+                        shirt_unlock.style.visibility = 'visible';
+                        break;
+                    case 'shoes':
+                        console.log("shoes");
+                        shoes_unlock.style.visibility = 'visible';
+                        break;
+                }
+            }
+        })
+    });
+}
+
+function change_item(item, direction) {
+    const layer = document.getElementById(`layer-${item}`);
+    let assetList = [];
+
+    // Select the correct array
+    switch (item) {
+        case 'hat':
+            assetList = hats;
+            hat_idx = (hat_idx + direction + hats.length) % hats.length;
+            if (hats.length > 0) layer.src = hats[hat_idx];
+            check_unlock(item, hats[hat_idx]);
+            break;
+        case 'shirt':
+            assetList = shirts;
+            shirt_idx = (shirt_idx + direction + shirts.length) % shirts.length;
+            if (shirts.length > 0) layer.src = shirts[shirt_idx];
+            check_unlock(item, shirts[shirt_idx]);
+            break;
+        case 'shoes':
+            assetList = shoes;
+            shoe_idx = (shoe_idx + direction + shoes.length) % shoes.length;
+            layer.src = shoes[shoe_idx];
+            check_unlock(item, shoes[shoe_idx]);
+            break;
+    }
+}
 
 // On run
 
@@ -84,7 +162,24 @@ document.addEventListener("DOMContentLoaded", () => {
         // Request the list of all available users
         window.socket.emit("get_all_users");
         window.socket.emit("get_friends");
+
+
+        document.getElementById("private").addEventListener("change", () => {
+            const isPrivate = document.getElementById("private").checked;
+            window.socket.emit("loc_status_update", !isPrivate);
+        });
+        window.socket.emit("get_privacy");
+
+        change_item('hat', 0);
+        change_item('shirt', 0);
+        change_item('shoes', 0);
+
+        window.socket.emit("get_toucoins");
     }
+});
+
+window.socket.on("privacy_got", (is_private) => {
+    document.getElementById("private").checked = is_private;
 });
 
 window.socket.on("friends_got", (friends) => {
@@ -175,7 +270,7 @@ ban_user.addEventListener('click', () => {
         }
         else {
             alert("There has been an error");
-        }  
+        }
     });
 });
 
@@ -351,3 +446,37 @@ function add_users(username, id) {
     const newUser = new Option(username, id);
     friends_search.appendChild(newUser);
 }
+
+
+window.socket.on("toucoins_result", (data) => {
+    if (data.status === "success") {
+        const toucoins = data.toucoins;
+        document.getElementById("toucoin_amount").innerText = "Toucoins: " + toucoins;
+    }
+});
+
+const hat_unlock = document.getElementById("hat_unlock");
+const shirt_unlock = document.getElementById("shirt_unlock");
+const shoes_unlock = document.getElementById("shoes_unlock");
+
+hat_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock this hat?") ) {
+        const path_to_unlock = hats[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
+})
+
+shirt_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock this shirt?") ) {
+        const path_to_unlock = shirts[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
+})
+
+shoes_unlock.addEventListener("click", () => {
+    if( confirm("Would you like to unlock these shoes?") ) {
+        const path_to_unlock = shoes[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
+})
+

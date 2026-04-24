@@ -138,7 +138,7 @@ Path Pathfinder::route_impl(const Location *src, const Location *dst, bool bad_w
             break;
         case RELEASE:
         default:
-            weather_multiplier = 1.10;
+            weather_multiplier = 7.5;
             break;
     }
     size_t n = adj.size();

@@ -11,6 +11,14 @@ let pinMarkers = {};  // keyed by pin.id → Leaflet marker
 let hotspots = [];
 let pinLayerGroup;
 
+const suggestions_background = document.getElementById('suggestions_popup_background');
+const suggestions_button = document.getElementById('suggestions_btn');
+const close_suggestions = document.getElementById('close_suggestions');
+const suggestions_text = document.getElementById('suggestions_text');
+const send_suggestions = document.getElementById('send_suggestions');
+const path_check = document.getElementById('path_check');
+const location_check = document.getElementById('location_check');
+
 function initMap() {
   let southWest = L.latLng(40.405, -86.955);
   let northEast = L.latLng(40.445, -86.895);
@@ -335,7 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('hotspot_btn').addEventListener('click', () => {
         window.socket.emit('create_hotspot', { "latitude": latitude, "longitude": longitude });
-        window.socket.emit('get_hotspots');
     });
 
     const modeButtons = document.querySelectorAll('.side-btn');
@@ -370,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     console.log("fetching pins");
-    
+
     window.socket.emit("get_user_pins");
 });
 
@@ -397,6 +404,14 @@ window.socket.on("search_result", (data) => {
 
         const nameLabel = clone.querySelector('.loc_name');
         nameLabel.textContent = location.name || "Unknown Location";
+
+        const infoBtn = clone.querySelector('.loc_result_info');
+        infoBtn.dataset.id = location.id;
+        infoBtn.addEventListener('click', () => {
+            window.socket.emit("events_at_loc", location.name);
+            //document.getElementById('loc_search_popup_background').style.display = 'none';
+            map.setView([location.latitude, location.longitude], 17);
+        });
 
         const routeBtn = clone.querySelector('.loc_result_route');
         routeBtn.dataset.id = location.id;
@@ -559,6 +574,56 @@ window.socket.on("event_locations_got", (data) => {
     });
 });
 
+window.socket.on("create_hotspot_result", (data) => {
+    window.socket.emit('get_hotspots');
+    if (data.status === "success") {
+        window.socket.emit('give_toucoins', 10);
+        alert("Thank you for creating a hotspot!");
+    } else {
+        alert("You are creating hotspots too fast!");
+    }
+});
+
+window.socket.on("events_at_loc_result", (data) => {
+    console.log("Events received:", data);
+
+    const popupBackground = document.getElementById('loc_search_popup_background');
+    const popupBody = document.getElementById('loc_search_popup');
+    const loadingLabel = document.getElementById('loading_label');
+
+    popupBackground.style.display = 'flex';
+    const existingResults = popupBody.querySelectorAll('.loc_search_result');
+    existingResults.forEach(res => res.remove());
+
+    if (data.status !== "success" || !data.events || data.events.length === 0) {
+        loadingLabel.textContent = '';
+        const noEvents = document.createElement('div');
+        noEvents.className = 'loc_search_result';
+        noEvents.innerHTML = `<label class="loc_name">No upcoming events at this location.</label>`;
+        popupBody.appendChild(noEvents);
+        return;
+    }
+
+    loadingLabel.textContent = `Events at ${data.location_name || 'Location'}`;
+    loadingLabel.style.fontWeight = 'bold';
+
+    data.events.forEach(event => {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'loc_search_result';
+        eventDiv.style.flexDirection = 'column';
+        eventDiv.style.alignItems = 'flex-start';
+        eventDiv.style.padding = '10px';
+
+        eventDiv.innerHTML = `
+            <div style="font-weight: bold; color: var(--ui-black);">${event.name || event}</div>
+            ${event.description ? `<div style="font-size: 0.85em; color: #555;">${event.description}</div>` : ''}
+            ${event.time ? `<div style="font-size: 0.8em; margin-top: 4px;">🕒 ${event.time}</div>` : ''}
+            `;
+
+        popupBody.appendChild(eventDiv);
+    });
+});
+
 window.socket.on("hotspot_result", (data) => {
     hotspots.forEach(hotspot => {
         if (hotspot.circle) {
@@ -601,3 +666,52 @@ window.socket.on("pin_dropped", () => window.socket.emit("get_user_pins"));
 window.socket.on("pin_pulled", () => {
     window.socket.emit("get_user_pins");
 });
+
+close_suggestions.addEventListener('click', () => {
+    suggestions_background.style.display = "none";
+    suggestions_text.value = null;
+})
+
+send_suggestions.addEventListener('click', () => {
+    if (location_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Location");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your location suggestion!");
+            } else {
+                alert("Failed to submit your location suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else if (path_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Path");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your path suggestion!");
+            } else {
+                alert("Failed to submit your path suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else {
+        alert("Please chose suggestion type!");
+    }
+})
+
+location_check.addEventListener("click", () => {
+    if (path_check.checked === true) {
+        path_check.checked = false;
+    }
+})
+
+path_check.addEventListener("click", () => {
+    if (location_check.checked === true) {
+        location_check.checked = false;
+    }
+})
+
+suggestions_button.addEventListener("click", () => {
+    suggestions_background.style.display = "block";
+})
