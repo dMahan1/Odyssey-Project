@@ -331,9 +331,16 @@ def update_user_toucoins(user, amount):
         {"toucoins": amount}, token=user["idToken"]
     )
 
+def add_feature_items(user, path):
+    db = firebase.database()
+    if (db.child("Users").child(user["localId"]))
+    owned = db.child("Users").child(user["localId"]).child("owned_feature_ids").get(token=user["idToken"]).val()
+    if isinstance(owned, list) and (path not in owned):
+        owned.append(path)
+    db.child("Users").child()
 
 def delete_user(user):
-
+    db = firebase.database()
     admin = auth.sign_in_with_email_and_password(os.getenv("ADMIN_EMAIL"), os.getenv("ADMIN_PASSWORD"))
 
     for event_id in user.get("attended_event_ids", []):

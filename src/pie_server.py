@@ -598,3 +598,9 @@ def handle_get_hotspots():
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)
+
+@socketio.on("add_feature_items")
+def unlock_item(path):
+    user = session.get('user')
+    if user:
+        add_feature_items(user, path)

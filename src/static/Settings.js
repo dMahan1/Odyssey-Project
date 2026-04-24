@@ -460,14 +460,23 @@ const shirt_unlock = document.getElementById("shirt_unlock");
 const shoes_unlock = document.getElementById("shoes_unlock");
 
 hat_unlock.addEventListener("click", () => {
-    confirm("Would you like to unlock this hat?");
+    if( confirm("Would you like to unlock this hat?") ) {
+        const path_to_unlock = hats[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
 })
 
 shirt_unlock.addEventListener("click", () => {
-    confirm("Would you like to unlock this shirt?");
+    if( confirm("Would you like to unlock this shirt?") ) {
+        const path_to_unlock = shirts[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
 })
 
 shoes_unlock.addEventListener("click", () => {
-    confirm("Would you like to unlock these shoes?");
+    if( confirm("Would you like to unlock these shoes?") ) {
+        const path_to_unlock = shoes[hat_idx];
+        window.socket.emit("unlock_item", path_to_unlock);
+    }
 })
 
