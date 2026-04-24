@@ -75,16 +75,9 @@ def handle_connect():
     user_data = get_user_data(user) if user else None
 
     if user_data:
-        if 'banned_until' in user_data:
-            banned_until = datetime.fromisoformat(user_data['banned_until'])
-            if datetime.now() < banned_until:
-                emit("banned", {"until": user_data['banned_until']})
-                return
-            else:
-                # Ban expired, remove ban info
-                db = firebase.database()
-                db.child("users").child(user['localId']).child("banned_until").remove(token=user['idToken'])
-                print(f"Ban expired for user: {user_data.get('username')}")
+        if user_data.get("banned"):
+            emit("banned", {"until": user_data["banned_until"]})
+            return
         print(f"Connected: {user_data.get('username')} (Session Active)")
     else:
         print("Connected: Anonymous (Session Empty)")
@@ -251,7 +244,7 @@ def handle_get_event_locations():
                             "longitude": lng,
                             "id": id
                         })
-    print(f"Event locations prepared to send: {locations}")
+    #print(f"Event locations prepared to send: {locations}")
 
     emit("event_locations_got", locations)
 
@@ -282,6 +275,15 @@ def report_issue(message):
     result = store_report(user, message)
     emit("issue_reported", result)
 
+@socketio.on("make_suggestion")
+def make_suggestion(message, suggest_type):
+    user = session.get('user')
+    if not user:
+        emit("error", "Not logged in")
+        return
+    result = store_suggestion(user, message, suggest_type)
+    emit("suggestion_made", result)
+
 @socketio.on("report_user")
 def handle_report_user(subject_username, message):
     user = session.get('user')
@@ -292,10 +294,34 @@ def handle_report_user(subject_username, message):
     emit("user_reported", result)
 
 @socketio.on("create_event")
-def event_create(name, start_time, end_time, locationids, attendee_ids):
+def event_create(name, start_time, end_time, locationids, attendee_ids, is_poi=False):
     user = session.get('user')
-    key = create_event(user, name, start_time, end_time, locationids, attendee_ids)
+    key = create_event(user, name, start_time, end_time, locationids, attendee_ids, is_poi)
     emit("event_created", key)
+
+@socketio.on("get_pois")
+def handle_get_pois():
+    user = session.get('user')
+    if not user:
+        return
+
+    raw_pois = get_pois(user)
+    processed_pois = []
+
+    for poi in raw_pois:
+        # Check if coordinates are already there; if not, look them up via locationids
+        if "latitude" not in poi and "locationids" in poi and poi["locationids"]:
+            # Use the first ID in the list to represent the POI location
+            loc_id = poi["locationids"][0]
+            loc_data = pathfinder.get_location_by_id(loc_id)
+
+            if loc_data:
+                poi["latitude"] = loc_data.get_latitude()
+                poi["longitude"] = loc_data.get_longitude()
+
+        processed_pois.append(poi)
+
+    emit("pois_got", processed_pois)
 
 @socketio.on("get_privacy")
 def get_privacy():
@@ -383,13 +409,21 @@ def friend_get():
 def user_ban(username):
     user = session.get('user')
     user_data = get_user_data(user)
-    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
-    print("PREPARING TO BAN USER: `{user_data}`")
-    if user_data.get("admin"):
-        ban_user(user, username, now_time)
-        emit("ban_response", "Success")
-    else:
+    print(f"This is the user data: {user_data}")
+    if not user_data.get("admin"):
         emit("ban_response", "Failed")
+        return
+    target_data = get_target_user_data(user, username)
+    if target_data and target_data.get("banned_until"):
+        banned_until = datetime.fromisoformat(target_data["banned_until"])
+        if datetime.now(timezone.utc) < banned_until:
+            ban_user(user, username, None)
+            emit("ban_response", "Unbanned")
+            return
+    now_time = (datetime.now(timezone.utc) + timedelta(weeks=1)).isoformat()
+    print(f"PREPARING TO BAN USER: {target_data}")
+    ban_user(user, username, now_time)
+    emit("ban_response", "Success")
 
 @socketio.on("get_all_users")
 def handle_get_all_users():
@@ -586,6 +620,46 @@ def handle_get_hotspots():
         return emit("hotspot_result", {"status": "error", "message": "Not logged in"})
     hotspots = get_hotspots(user)
     emit("hotspot_result", {"status": "success", "hotspots": hotspots})
+
+_HATS = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat1.png"),
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat2.png"),
+    os.path.join(_src_dir, "static", "images", "Hats", "Avatar_Hat3.png"),
+]
+_SHIRTS = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt1.png"),
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt2.png"),
+    os.path.join(_src_dir, "static", "images", "Shirts", "Avatar_Shirt3.png"),
+]
+_SHOES = [
+    None,
+    os.path.join(_src_dir, "static", "images", "Shoes", "Avatar_Shoes1.png"),
+]
+
+@socketio.on("set_icon_image")
+def handle_set_icon_image(hat_idx, shirt_idx, shoe_idx):
+    user = session.get('user')
+    if not user:
+        return emit("icon_set", {"status": "error"})
+
+    images = {
+        "hat": _HATS[hat_idx] if 0 <= hat_idx < len(_HATS) else None,
+        "shirt": _SHIRTS[shirt_idx] if 0 <= shirt_idx < len(_SHIRTS) else None,
+        "shoes": _SHOES[shoe_idx] if 0 <= shoe_idx < len(_SHOES) else None,
+    }
+
+    set_user_icon_image(user, images)
+    emit("icon_set", {"status": "success"})
+
+@socketio.on("add_feature_items")
+def unlock_item(path):
+    user = session.get('user')
+    if user:
+        emit("feature purchase", add_feature_items(user, path))
+    else:
+        emit("user error")
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8080, allow_unsafe_werkzeug=True)

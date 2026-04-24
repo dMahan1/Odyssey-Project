@@ -10,6 +10,15 @@ let unownedEventLocations = [];
 let pinMarkers = {};  // keyed by pin.id → Leaflet marker
 let hotspots = [];
 let pinLayerGroup;
+let poiLayerGroup;
+
+const suggestions_background = document.getElementById('suggestions_popup_background');
+const suggestions_button = document.getElementById('suggestions_btn');
+const close_suggestions = document.getElementById('close_suggestions');
+const suggestions_text = document.getElementById('suggestions_text');
+const send_suggestions = document.getElementById('send_suggestions');
+const path_check = document.getElementById('path_check');
+const location_check = document.getElementById('location_check');
 
 function initMap() {
   let southWest = L.latLng(40.405, -86.955);
@@ -34,7 +43,8 @@ function initMap() {
       attribution: "© OpenStreetMap",
   }).addTo(map);
 
-  pinLayerGroup = L.layerGroup().addTo(map);
+    pinLayerGroup = L.layerGroup().addTo(map);
+    poiLayerGroup = L.layerGroup().addTo(map);
 }
 
 let locationSuccess = false;
@@ -80,6 +90,7 @@ function updateLoc() {
         console.log(locationSuccess + ", " + latitude + ", " + longitude + ", " + updated);
         window.socket.emit("get_hotspots");
         window.socket.emit("get_user_pins");
+        window.socket.emit("get_pois");
     } else {
         locFail();
     }
@@ -244,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
             users.forEach(u => {
                 if (u.latitude == null || u.longitude == null) return;
                 seenIds.add(u.id);
-                const iconUrl = (u.icon_image_path && u.icon_image_path.startsWith('http'))
+                const iconUrl = (u.icon_image_path && (u.icon_image_path.startsWith('http') || u.icon_image_path.startsWith('/static/')))
                     ? u.icon_image_path
                     : '../static/images/Default.png';
                 if (otherUserMarkers[u.id]) {
@@ -282,8 +293,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     socket.emit("get_user");
     window.socket.once("return_user", (user) => {
+        if (user && user.banned) {
+            alert(`You have been banned until ${new Date(user.banned_until).toLocaleString()}.`);
+            window.location.href = "Signin.html";
+            return;
+        }
         if (user) {
-            const iconUrl = (user.icon_image_path && user.icon_image_path.startsWith('http'))
+            const iconUrl = (user.icon_image_path && (user.icon_image_path.startsWith('http') || user.icon_image_path.startsWith('/static/')))
                 ? user.icon_image_path
                 : '../static/images/Default.png';
             userIcon = L.icon({
@@ -378,6 +394,46 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("fetching pins");
 
     window.socket.emit("get_user_pins");
+    window.socket.emit("get_pois");
+});
+
+window.socket.on("pois_got", (data) => {
+    console.log("POIs received:", JSON.stringify(data, null, 2));
+
+    poiLayerGroup.clearLayers();
+
+    console.log(current_user)
+    const id = current_user["localId"];
+    data.forEach(poi => {
+        if (poi.attendee_ids && poi.attendee_ids.some(attendeeId => String(attendeeId) === String(id))) {
+            return;
+        }
+        if (poi.latitude && poi.longitude) {
+            const poiIcon = L.divIcon({
+                className: '',
+                html: `<img src="https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png"
+                            style="filter: hue-rotate(150deg) brightness(1.2);
+                                   width: 25px; height: 41px;">`,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+            });
+
+            const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon }).addTo(map);
+
+            marker.bindPopup(`
+                <div class="poi-popup" style="text-align: center;">
+                    <b>⭐ POI: ${poi.name} ⭐</b><br>
+                    <sub>Created by ${poi.creator_username}</sub>
+                    <button type="button"
+                          style="background-color: #FFD700; border: 1px solid black; border-radius: 4px; cursor: pointer; padding: 4px 8px;"
+                          onclick="window.socket.emit('join_event', '${poi.id}')">
+                          Join Event
+                    </button>
+                </div>
+            `);
+        }
+    });
 });
 
 window.socket.on("search_result", (data) => {
@@ -662,8 +718,61 @@ window.socket.on("hotspot_result", (data) => {
     }
 });
 
+window.socket.on("event_joined", (data) => {
+    window.socket.emit("get_pois");
+});
+
 // Confirmation handlers to trigger the refresh
 window.socket.on("pin_dropped", () => window.socket.emit("get_user_pins"));
 window.socket.on("pin_pulled", () => {
     window.socket.emit("get_user_pins");
 });
+
+close_suggestions.addEventListener('click', () => {
+    suggestions_background.style.display = "none";
+    suggestions_text.value = null;
+})
+
+send_suggestions.addEventListener('click', () => {
+    if (location_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Location");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your location suggestion!");
+            } else {
+                alert("Failed to submit your location suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else if (path_check.checked) {
+        window.socket.emit("make_suggestion", suggestions_text.value, "Path");
+        window.socket.once("suggestion_made", (success) => {
+            if (success) {
+                alert("Thank you for your path suggestion!");
+            } else {
+                alert("Failed to submit your path suggestion. Please try again later.");
+            }
+        });
+        suggestions_background.style.display = "none";
+        suggestions_text.value = null;
+    } else {
+        alert("Please chose suggestion type!");
+    }
+})
+
+location_check.addEventListener("click", () => {
+    if (path_check.checked === true) {
+        path_check.checked = false;
+    }
+})
+
+path_check.addEventListener("click", () => {
+    if (location_check.checked === true) {
+        location_check.checked = false;
+    }
+})
+
+suggestions_button.addEventListener("click", () => {
+    suggestions_background.style.display = "block";
+})
