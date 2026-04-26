@@ -1,5 +1,5 @@
 describe('map action', () => {
-    const PIN_SELECTOR = 'img.leaflet-marker-icon[src*="marker-icon.png"]';
+    const PIN_SELECTOR = 'img.leaflet-marker-icon[src*="marker-icon-2x.png"]';
     it('pin', () => {
         cy.visit('/');
         cy.stubGeolocation();
