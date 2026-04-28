@@ -137,6 +137,13 @@ async function addMarker() {
         await new Promise(r => setTimeout(r, 200));
     }
     userMarker = L.marker([latitude, longitude], {icon: userIcon}).addTo(map);
+    const userIconEl = userMarker._icon;
+    if (userIconEl) {
+        userIconEl.onerror = function() {
+            this.src = '../static/images/Default.png';
+            this.onerror = null;
+        };
+    }
     map.setView([latitude, longitude], 15);
     window.socket.emit("update_loc", latitude, longitude);
     window.socket.once("updated_loc", () => {

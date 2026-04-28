@@ -221,6 +221,7 @@ def set_user_icon_image(user, images):
             base.paste(img3, (0, 0), img3)
 
         save_path = os.path.join(_src_dir, "static", "images", "Users", f"{user['localId']}.png")
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         base.save(save_path)
 
         db.child("Users").child(user["localId"]).update(
