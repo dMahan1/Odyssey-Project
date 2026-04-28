@@ -270,6 +270,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     otherUserMarkers[u.id] = L.marker([u.latitude, u.longitude], { icon: otherIcon })
                         .addTo(map)
                         .bindPopup(u.username || 'User');
+                    const otherIconEl = otherUserMarkers[u.id]._icon;
+                    if (otherIconEl) {
+                        otherIconEl.onerror = function() {
+                            this.src = '../static/images/Default.png';
+                            this.onerror = null;
+                        };
+                    }
                 }
             });
             // Remove markers for users no longer public
@@ -312,6 +319,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (userMarker) {
                 userMarker.setIcon(userIcon);
                 userMarker.update();
+                const userIconEl = userMarker._icon;
+                if (userIconEl) {
+                    userIconEl.onerror = function() {
+                        this.src = '../static/images/Default.png';
+                        this.onerror = null;
+                    };
+                }
             }
         }
     });
@@ -419,7 +433,7 @@ window.socket.on("pois_got", (data) => {
                 popupAnchor: [1, -34]
             });
 
-            const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon }).addTo(map);
+            const marker = L.marker([poi.latitude, poi.longitude], { icon: poiIcon });
 
             marker.bindPopup(`
                 <div class="poi-popup" style="text-align: center;">
@@ -432,6 +446,7 @@ window.socket.on("pois_got", (data) => {
                     </button>
                 </div>
             `);
+            poiLayerGroup.addLayer(marker);
         }
     });
 });
