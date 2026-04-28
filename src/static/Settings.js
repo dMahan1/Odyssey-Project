@@ -437,7 +437,10 @@ document.getElementById('save_avatar').addEventListener('click', () => {
     window.socket.emit("get_user");
     window.socket.once("return_user", (user_data) => {
         const owned = user_data.owned_feature_ids;
-        if (!owned.includes(hats[hat_idx]) || !owned.includes(shirts[shirt_idx]) || !owned.includes(shoes[shoe_idx])) {
+        const missingHat = hat_idx !== 0 && !owned.includes(hats[hat_idx]);
+        const missingShirt = shirt_idx !== 0 && !owned.includes(shirts[shirt_idx]);
+        const missingShoes = shoe_idx !== 0 && !owned.includes(shoes[shoe_idx]);
+        if (missingHat || missingShirt || missingShoes) {
             alert("You don't own all the selected items. Please unlock them before saving your avatar.");
             return;
         }

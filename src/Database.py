@@ -178,7 +178,7 @@ def create_user(email, username, password, latitude, longitude):
             "dropped_pins": [],
             "curr_location": {"latitude": latitude, "longitude": longitude},
             "location_public": True,
-            "icon_image_path": "../images/Default.png",
+            "icon_image_path": "/static/images/Default.png",
             "toucoins": 0,
             "new_messages": [],
         }
