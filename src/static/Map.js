@@ -30,6 +30,13 @@ function initMap() {
       maxBoundsViscosity: 1,
       minZoom: 14
   }).setView([40.4237, -86.9212], 15);
+  window.leafletMap = map;
+  window.leafletMap = map;
+  window.appLatitude = () => latitude;
+  window.appLongitude = () => longitude;
+  window.currentRouteLayer = currentRouteLayer;
+  window.setAppLocation = (lat, lng) => { latitude = lat; longitude = lng; };
+  
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -525,6 +532,8 @@ socket.on("id_coords_result", (data) => {
             opacity: 1.0,
             smoothFactor: 1
         }).addTo(map);
+
+        window.currentRouteLayer = currentRouteLayer;
 
         map.fitBounds(currentRouteLayer.getBounds(), { padding: [30, 30] });
     } else {

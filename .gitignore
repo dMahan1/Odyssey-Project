@@ -4,6 +4,7 @@
 *:Zone.Identifier
 __pycache__/
 **.pyc
+**.pyd
 .idea/
 logs/
 /node_modules/
