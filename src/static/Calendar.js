@@ -686,6 +686,7 @@ function clear_event_window() {
     end_time.value = null;
     update_permanent_locations();
     attendeeText.innerText = `Attendees`;
+    document.getElementById("event_is_poi").checked = false;
 }
 
 /* On run */

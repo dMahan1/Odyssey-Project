@@ -458,12 +458,13 @@ body {
     margin-left: auto;
 }
 
-#end_label, #start_label {
+#end_label, #start_label, #poi_checkbox {
     font-family: Rockwell, monaco, monospace;
     background-color: #D4AF37;
     text-align: left;
     width: 75%;
     border: 1px solid black;
+    font-size: 20px;
 }
 
 .event_invite, .friend_invite, .message {
